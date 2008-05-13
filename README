@@ -81,8 +81,14 @@ rm -u|-undo
 rm FILE
 	This will delete the file
 
-rm -f FILE
+rm -f|-force FILE
 	This will permanently delete the FILE
+
+rm -s|-size 
+	This will display the size of the trash folder.
+
+rm -h|-help
+	This will show the usage.
 
 NOTES
 --
