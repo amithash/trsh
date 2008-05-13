@@ -22,8 +22,7 @@ use warnings;
 use Cwd;
 
 if($#ARGV != 0){
-	print "Usage: ./setup.pl <shell>\n";
-	print "Supported shells: bash, C-Shell\n";
+	usage();
 	exit;
 }
 my $home = $ENV{HOME} || (getpwuid($<))[7];
@@ -71,7 +70,7 @@ elsif($ARGV[0] eq "-help" or $ARGV[0] eq "-h"){
 	exit;
 }
 else{
-	print "Unsupported shell $ARGV[0]\n";
+	usage();
 	exit;
 }
 
@@ -102,9 +101,14 @@ sub check{
 
 sub usage{
 	print "USAGE:
-	setup.pl <SHELL TYPE>
-	<SHELL TYPE> = bash for the Bourne again shell,
-		     = csh for the C-Shell
-	NOTE: for bash it is assumed that the .bashrc file in the home
-	dir is present. and the same goes for the c-shell (.cshrc).\n"
+
+setup.pl SHELL
+
+SHELL  = \"bash\" for the Bourne again shell,
+       = \"csh\" for the C-Shell
+
+NOTE: for bash it is assumed that the .bashrc file in the home
+dir is present. and the same goes for the c-shell (.cshrc).
+Refer the README for a manual install if you have a different
+shell.\n"
 }
