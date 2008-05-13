@@ -128,9 +128,10 @@ elsif($empty == 1){
 }
 else{
 	if($remaining ne ''){
-		my @rem = split(/ /,$remaining);
+		my @rem = split(/\s/,$remaining);
 		my @not_there;
 		my $file_with_space = "";
+		my $file_name_with_space = "";
 		open HISTORY,">>$history" or die "Could not open the .history file in TRSH DIR\n";
 		foreach my $item (@rem){
 			my $i = 0;
@@ -152,22 +153,24 @@ else{
 				my @items = split(/\//,$item);
 				my $item_name = $items[$#items];
 				if($file_with_space eq ""){
-					$file_with_space = $item_name;
+					$file_with_space = $item;
+					$file_name_with_space = $item_name;
 				}
 				else{
 					$file_with_space = $file_with_space . " " . $item_name;
+					$file_name_with_space = $file_name_with_space . " " . $item_name;
 				}
 				if(-e "$file_with_space"){
-					if(-e "$trash/$file_with_space"){
-						while(-e "$trash/$file_with_space\@$i"){
+					if(-e "$trash/$file_name_with_space"){
+						while(-e "$trash/$file_name_with_space\@$i"){
 							$i = $i + 1;
 						}
-						system("mv \'$file_with_space\' \'$trash/$file_with_space\@$i\'");
+						system("mv \'$file_with_space\' \'$trash/$file_name_with_space\@$i\'");
 					}
 					else{
-						system("mv \'$file_with_space\' \'$trash/$file_with_space\'");
+						system("mv \'$file_with_space\' \'$trash/$file_name_with_space\'");
 					}
-					print HISTORY "$file_with_space\n";
+					print HISTORY "$file_name_with_space\n";
 					$file_with_space = "";
 				}
 			}	

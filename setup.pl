@@ -29,32 +29,42 @@ if($#ARGV != 0){
 my $home = $ENV{HOME} || (getpwuid($<))[7];
 print "Your Home is: $home\n";
 system("cp ./trsh.pl $home/.trsh.pl");
-system("mkdir $home/.Trash");
-system("touch $home/.Trash/.history");
+system("mkdir $home/.Trash") unless(-d "$home/.Trash");
+system("touch $home/.Trash/.history") unless (-e "$home/.Trash/.history");
 
 if($ARGV[0] eq "bash"){
-	backup("$home/.bashrc");
-	open BASHRC, ">>$home/.bashrc" or die "Could not open $home/.bashrc in append mode\n";
-	print BASHRC "################################################################\n";
-	print BASHRC "#                          TRSH                                #\n";
-	print BASHRC "################################################################\n";
-	print BASHRC "export TRASH_DIR=\"$home/.Trash\"\n";
-	print BASHRC "alias rm=\"$home/.trsh.pl\"\n";
-	print BASHRC "alias undo=\"$home/.trsh.pl -u\"\n";
-	print BASHRC "################################################################\n";
-	close(BASHRC);
+	if(check("$home/.bashrc") == 0){
+		backup("$home/.bashrc");
+		open BASHRC, ">>$home/.bashrc" or die "Could not open $home/.bashrc in append mode\n";
+		print BASHRC "################################################################\n";
+		print BASHRC "#                          TRSH                                #\n";
+		print BASHRC "################################################################\n";
+		print BASHRC "export TRASH_DIR=\"$home/.Trash\"\n";
+		print BASHRC "alias rm=\"$home/.trsh.pl\"\n";
+		print BASHRC "alias undo=\"$home/.trsh.pl -u\"\n";
+		print BASHRC "################################################################\n";
+		close(BASHRC);
+	}
+	else{
+		print "Entries in $home/.bashrc seems to exist, leaving it alone\n";
+	}
 }
 elsif($ARGV[0] eq "csh"){
-	backup("$home/.cshrc");
-	open CSHRC, ">>$home/.cshrc" or die "Could not open $home/.cshrc in append mode\n";
-	print CSHRC "################################################################\n";
-	print CSHRC "#                          TRSH                                #\n";
-	print CSHRC "################################################################\n";
-	print CSHRC "setenv TRASH_DIR $home/.Trash\n";
-	print CSHRC "alias rm \"$home/.trsh.pl\"\n";
-	print CSHRC "alias undo \"$home/.trsh.pl -u\"\n";
-	print CSHRC "################################################################\n";
-	close(CSHRC);
+	if(check("$home/.cshrc") == 0){
+		backup("$home/.cshrc");
+		open CSHRC, ">>$home/.cshrc" or die "Could not open $home/.cshrc in append mode\n";
+		print CSHRC "################################################################\n";
+		print CSHRC "#                          TRSH                                #\n";
+		print CSHRC "################################################################\n";
+		print CSHRC "setenv TRASH_DIR $home/.Trash\n";
+		print CSHRC "alias rm \"$home/.trsh.pl\"\n";
+		print CSHRC "alias undo \"$home/.trsh.pl -u\"\n";
+		print CSHRC "################################################################\n";
+		close(CSHRC);
+	}
+	else{
+		print "Entries in $home/.cshrc seems to exist, leaving it alone\n";
+	}
 }
 else{
 	print "Unsupported shell $ARGV[0]\n";
@@ -72,4 +82,16 @@ sub backup{
 	}
 	close(BAC);
 }
-
+sub check{
+	my $file = shift;
+	open RC,"$file" or die "Could not open $file\n";
+	my $exist = 0;
+	while(my $line = <RC>){
+		if($line =~ /TRSH/){
+			$exist = 1;
+			last;
+		}
+	}
+	close(RC);
+	return $exist;
+}
