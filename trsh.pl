@@ -31,6 +31,7 @@ my $remaining;
 my $view = 0;
 my $force = 0;
 my $undo = 0;
+my $size = 0;
 
 if (not defined $ENV{TRASH_DIR}) {
     print "The environment variable TRASH_DIR is not set\n";
@@ -38,12 +39,12 @@ if (not defined $ENV{TRASH_DIR}) {
 }
 my $trash = $ENV{TRASH_DIR};
 my $history = "$ENV{TRASH_DIR}/.history";
-
 GetOptions( 'recover=s' => \$recover,
             'empty'     => \$empty, 
             'view'      => \$view,
 	    'force'	=> \$force,
-	    'undo'	=> \$undo);
+	    'undo'	=> \$undo,
+	    'size'	=> \$size);
 
 $remaining = join(' ', @ARGV);
 
@@ -54,6 +55,14 @@ if( !(-e $trash) ) {
 if( !(-e $history)){
 	print "Could not find the history file. Creating it... \n";
 	system("touch $history");
+}
+
+if($size == 1){
+	open SZ,"du -sh $trash |";
+	my @sz = split(/\s/,<SZ>);
+	print "$sz[0]B\n";
+	close(SZ);
+	exit;
 }
 
 if($undo == 1){
