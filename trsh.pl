@@ -32,6 +32,7 @@ my $view = 0;
 my $force = 0;
 my $undo = 0;
 my $size = 0;
+my $help = 0;
 
 if (not defined $ENV{TRASH_DIR}) {
     print "The environment variable TRASH_DIR is not set\n";
@@ -44,7 +45,8 @@ GetOptions( 'recover=s' => \$recover,
             'view'      => \$view,
 	    'force'	=> \$force,
 	    'undo'	=> \$undo,
-	    'size'	=> \$size);
+	    'size'	=> \$size,
+	    'help'	=> \$help);
 
 $remaining = join(' ', @ARGV);
 
@@ -55,6 +57,11 @@ if( !(-e $trash) ) {
 if( !(-e $history)){
 	print "Could not find the history file. Creating it... \n";
 	system("touch $history");
+}
+
+if($help == 1){
+	usage();
+	exit;
 }
 
 if($size == 1){
@@ -193,5 +200,28 @@ else{
 		print "Nothing to be deleted\n";
 		exit;
 	}
-}
+} 
+sub usage{
+	print "Usage:
 
+rm -r|-recover FILE
+\tthis will move the deleted file named FILE from the trash to the current dir
+
+rm -v|-view
+\tThis will list the contents of the trash
+
+rm -e|-empty
+\tThis will empty the trash bin
+
+rm -u|-undo
+\tThis will restore the previously deleted file.
+
+rm FILE
+\tThis will delete the file
+
+rm -f|-force FILE
+\tThis will permanently delete the FILE
+
+rm -s|-size
+\tThis will display the size of the trash folder.\n\n";
+}

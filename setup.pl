@@ -66,6 +66,10 @@ elsif($ARGV[0] eq "csh"){
 		print "Entries in $home/.cshrc seems to exist, leaving it alone\n";
 	}
 }
+elsif($ARGV[0] eq "-help" or $ARGV[0] eq "-h"){
+	usage();
+	exit;
+}
 else{
 	print "Unsupported shell $ARGV[0]\n";
 	exit;
@@ -94,4 +98,13 @@ sub check{
 	}
 	close(RC);
 	return $exist;
+}
+
+sub usage{
+	print "USAGE:
+	setup.pl <SHELL TYPE>
+	<SHELL TYPE> = bash for the Bourne again shell,
+		     = csh for the C-Shell
+	NOTE: for bash it is assumed that the .bashrc file in the home
+	dir is present. and the same goes for the c-shell (.cshrc).\n"
 }
