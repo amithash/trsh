@@ -33,6 +33,7 @@ my $force = 0;
 my $undo = 0;
 my $size = 0;
 my $help = 0;
+my $warn = 0;
 
 if (not defined $ENV{TRASH_DIR}) {
     print "The environment variable TRASH_DIR is not set\n";
@@ -46,10 +47,10 @@ GetOptions( 'recover=s' => \$recover,
 	    'force'	=> \$force,
 	    'undo'	=> \$undo,
 	    'size'	=> \$size,
-	    'help'	=> \$help);
+	    'help'	=> \$help,
+	    'warn'	=> \$warn);	
 
 $remaining = join(' ', @ARGV);
-
 if( !(-e $trash) ) {
 	print "Could not find the trash directory, creating it...\n";
         system("mkdir $trash");
@@ -154,6 +155,11 @@ else{
 			if(-e $item){
 				my @items = split(/\//,$item);
 				my $item_name = $items[$#items];
+				if($warn == 1){
+					if(-d $item){
+						next unless(get_response($item_name) == 1);
+					}
+				}
 				if(-e "$trash/$item_name"){
 					while(-e "$trash/$item_name\@$i"){
 						$i = $i + 1;
@@ -181,6 +187,13 @@ else{
 						while(-e "$trash/$file_name_with_space\@$i"){
 							$i = $i + 1;
 						}
+						if($warn == 1){
+							if(get_response($file_with_space) == 0){
+								$file_with_space = "";
+								$file_name_with_space = "";
+								next;
+							}
+						}
 						system("mv \'$file_with_space\' \'$trash/$file_name_with_space\@$i\'");
 					}
 					else{
@@ -188,6 +201,7 @@ else{
 					}
 					print HISTORY "$file_name_with_space\n";
 					$file_with_space = "";
+					$file_name_with_space = "";
 				}
 			}	
 		}
@@ -225,3 +239,21 @@ rm -f|-force FILE
 rm -s|-size
 \tThis will display the size of the trash folder.\n\n";
 }
+
+sub get_response{
+	my $item_name = shift;
+	my $ret = 0;
+	print "are you sure you want to remove $item_name? (y/n):";
+	my $response = <STDIN>;
+	chomp($response);
+	while(not ($response eq "y" or $response eq "n")){
+		print "are you sure you want to remove $item_name? (y/n):";
+		$response = <STDIN>;
+		chomp($response);
+	}
+	if($response eq "y"){
+		$ret = 1;
+	}
+	return $ret;
+}
+
