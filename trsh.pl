@@ -155,10 +155,11 @@ else{
 			if(-e $item){
 				my @items = split(/\//,$item);
 				my $item_name = $items[$#items];
-				if($warn == 1){
-					if(-d $item){
-						next unless(get_response($item_name) == 1);
-					}
+				if(-d $item){
+					next unless(get_response($item_name) == 1);
+				}
+				elsif($warn == 1){
+					next unless(get_response($item_name) == 1);
 				}
 				if(-e "$trash/$item_name"){
 					while(-e "$trash/$item_name\@$i"){
@@ -183,16 +184,23 @@ else{
 					$file_name_with_space = $file_name_with_space . " " . $item_name;
 				}
 				if(-e "$file_with_space"){
+					if(-d "$file_with_space"){
+						if(get_response($file_with_space) == 0){
+							$file_with_space = "";
+							$file_name_with_space = "";
+							next;
+						}
+					}
+					elsif($warn == 1){
+						if(get_response($file_with_space) == 0){
+							$file_with_space = "";
+							$file_name_with_space = "";
+							next;
+						}
+					}
 					if(-e "$trash/$file_name_with_space"){
 						while(-e "$trash/$file_name_with_space\@$i"){
 							$i = $i + 1;
-						}
-						if($warn == 1){
-							if(get_response($file_with_space) == 0){
-								$file_with_space = "";
-								$file_name_with_space = "";
-								next;
-							}
 						}
 						system("mv \'$file_with_space\' \'$trash/$file_name_with_space\@$i\'");
 					}
