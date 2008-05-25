@@ -1,5 +1,8 @@
 #!/bin/sh
 
+echo "WARNING: This test was designed for bash."
+echo "         If you are not running BASH, too bad"
+
 alias rm="/home/prasadae/.trsh.pl"
 alias undo="/home/prasadae/.trsh.pl -u"
 
