@@ -62,6 +62,16 @@ then add an alias to stop using the rm command and using this instead.
 alias rm='~/.trsh.pl'
 alias undo='~/.trsh.pl -u'
 
+TEST
+--
+
+First of all, before using trsh, due to the nature of its dependency,
+Run tests test-trsh.sh and if any fail, raise a bug and NOT NOT USE further.
+
+I understand that this is under the GNU license, and I am not responsible 
+for your data loss, but still, does not mean that I cannot feel bad if
+my program ate your system! 
+
 
 USAGE
 --
