@@ -16,6 +16,7 @@ echo "Starting as a virgin"
 cd $HOME
 /bin/rm -rf .Trash
 rm
+##################################################################################
 
 # TEST 1
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
@@ -27,6 +28,7 @@ then
 else
 	echo "TEST 1 FAILED: Trash does not exist" >&2
 fi
+##################################################################################
 
 # TEST 2
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
@@ -38,6 +40,7 @@ then
 else
 	echo "TEST 2 FAILED: history does not exist" >&2
 fi
+##################################################################################
 
 # TEST 3 remove
 echo "TEST 3: Tests basic file delete" >&2
@@ -52,6 +55,7 @@ then
 else
 	echo "TEST 3A FAILED: file test3 does not exist in trash" >&2
 fi
+##################################################################################
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e $HOME/test3 ]
 then
@@ -60,6 +64,7 @@ else
 	echo "TEST 3B PASSED: file test3 deleted" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 fi
+##################################################################################
 # TEST 4 recover
 echo "TEST 4: Tests basic file recovery" >&2
 cd $HOME
@@ -72,6 +77,7 @@ else
 	echo "TEST 4A PASSED: file test3 does not exist in trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 fi
+##################################################################################
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e $HOME/test3 ]
 then
@@ -80,6 +86,7 @@ then
 else
 	echo "TEST 4B FAILED: file test3 not recovered" >&2
 fi
+##################################################################################
 /bin/rm test3
 
 # TEST 5 delete multiple files
@@ -97,6 +104,7 @@ then
 else
 	echo "TEST 5A FAILED: Files test41 test42 and test43 do not exist in Trash" >&2
 fi
+##################################################################################
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e $HOME/test41 ] && [ -e $HOME/test42 ] && [ -e $HOME/test43 ]
 then
@@ -106,6 +114,7 @@ else
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 fi
 
+##################################################################################
 # TEST 6 undo
 echo "TEST 6 tests undo" >&2
 undo
@@ -117,6 +126,7 @@ then
 else
 	echo "TEST 6A FAILED: File test43 not recovered" >&2
 fi
+##################################################################################
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e $HOME/.Trash/test43 ]
 then
@@ -125,6 +135,7 @@ else
 	echo "TEST 6A PASSED: File test43 does not exist in trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 fi
+##################################################################################
 
 # TEST 7 Multiple files with same name
 echo "TEST 7: tests multi files same name" >&2
@@ -142,6 +153,7 @@ then
 else
 	echo "TEST 7 FAILED: All three files not deleted and do not exist in the trash" >&2
 fi
+##################################################################################
 
 # TEST 8 recover using undo
 echo "TEST 8: tests recover with multiple files." >&2
@@ -154,6 +166,7 @@ then
 else
 	echo "TEST 8A FAILED: either 2 other files do not exist or the 3'd also exists or both" >&2
 fi
+##################################################################################
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e $HOME/test5 ] 
 then
@@ -162,6 +175,7 @@ then
 else
 	echo "TEST 8B FAILED: File not recovered as itself" >&2
 fi
+##################################################################################
 
 # TEST 9: File name with space
 echo "TEST 9: Testing capability to handler file name with spaces." >&2
@@ -175,6 +189,7 @@ then
 else
 	echo "TEST 9 FAILED: File \"test 9\" does not exist in trash" >&2
 fi
+##################################################################################
 
 # TEST 10: Removal of dirs:
 echo "Test 10: Testing removal of dirs" >&2
@@ -191,6 +206,7 @@ then
 else
 	echo "TEST 10B FAILED: Dir test10a does not exist in trash" >&2
 fi
+##################################################################################
 mkdir test10b
 rm test10b < nn
 echo ""
@@ -202,6 +218,7 @@ else
 	echo "TEST 10B PASSED: Dir test10b not removed upon no from user" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 fi
+##################################################################################
 
 # TEST 11: Interactive mode. 
 touch test11a1
@@ -222,6 +239,7 @@ then
 else
 	echo "TEST 11A FAILED: All or some of the files are deleted on a no" >&2
 fi
+##################################################################################
 rm -i test11a1 test11a2 test11a3 < yyy
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e $HOME/test11a1 ] && [ -e $HOME/test11a2 ] && [ -e $HOME/test11a3 ]
@@ -231,11 +249,8 @@ else
 	echo "TEST 11B PASSED: All three files are deleted on a yes" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 fi
+##################################################################################
 
-# TEST 13
-
-# TEST 14
-	
 # Do not leave stray test files.
 /bin/rm -rf .Trash test3 test41 test42 test43 test5 yy nn test10b yyy nnn 
 /bin/rm -f test\ 9
