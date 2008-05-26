@@ -47,7 +47,7 @@ if($ARGV[0] eq "bash"){
 	else{
 		print "Entries in $home/.bashrc seems to exist, leaving it alone\n";
 	}
-	system("./test-trsh.sh > /dev/null");
+	system("./test-trsh.bash > /dev/null");
 }
 elsif($ARGV[0] eq "csh"){
 	if(check("$home/.cshrc") == 0){
