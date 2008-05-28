@@ -258,4 +258,7 @@ mv $HOME/.Trash_backup $HOME/.Trash
 
 echo "END OF TESTS" >&2
 echo "$PASSED_COUNT OF $TOTAL_COUNT TESTS PASSED." >&2
-
+if [ $PASSED_COUNT -eq $TOTAL_COUNT ] 
+then
+	echo "ALL TESTS PASSED. BASIC FEATURES WORKING" >&2
+fi
