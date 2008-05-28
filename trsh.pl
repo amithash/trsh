@@ -221,8 +221,8 @@ sub delete_file{
 		system("mv $item $trash");
 	}
 	else{
-		push_to_history("$item_name\@$count");
-		system("mv $item $trash/$item\@$count");
+		push_to_history("$item_name\______$count");
+		system("mv $item $trash/$item\______$count");
 	}
 }
 
@@ -240,8 +240,8 @@ sub restore_file{
 		system("mv $trash/$item $cwd/$item");
 	}
 	else{
-		seek_and_destroy_in_history("$item\@$index");
-		system("mv $trash/$item\@$index $cwd/$item");
+		seek_and_destroy_in_history("$item\_____$index");
+		system("mv $trash/$item\______$index $cwd/$item");
 	}
 }
 
@@ -250,7 +250,7 @@ sub restore_last_file{
 	my $item = pop_from_history();
 	my $item_cmd = join(" ", split(/\\\s/,$item));
 	if(-e "$trash/$item_cmd"){
-		if($item =~ /(.+)@\d+/){
+		if($item =~ /(.+)______\d+/){
 			print "Restoring $1...\n";
 			system("mv $trash/$item $cwd/$1");
 		}
@@ -280,7 +280,7 @@ sub does_item_exist_in_history{
 	my $count = 0;
 	my @contents = get_history();
 	foreach my $i (@contents){
-		if($i =~ /^$item@\d+/){
+		if($i =~ /^$item\______\d+/){
 			$count++;
 		}
 		elsif($i =~ /^$item/){

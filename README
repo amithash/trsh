@@ -112,45 +112,13 @@ This is not supposed to mimic the commands of rm, and here are the pecularities:
 2. point 1 gets away with the -r option (which is different now)
 3. NONE OF THE OPTIONS OF RM WORKS AS THEY ARE SUPPOSED TO IN TRSH
 
-WHAT IF?
+If multiple files of the same name are deleted, they are stored in the trash as if it were a stack.
+Thus any recover will be like popping the files from the trash stack! 
+
+KNOWN ISSUES
 --
-(NEW!)
+If a file has exactly 6 consicutive underscores, then bad things will happen! :-)
+That is if a file is named: *______*, then bad things will happen. You are better 
+off deleting this forcefully! 
 
-if you delete a file called "test" using trsh,
-rm -v -> .... test ....
-what if you create another file called "test" and then delete it?? Then 
-rm -v -> .... test test@0 ....
-<notice that the file in the trash is not overwritten.>
 
-Thus if you recover test.
-rm -r test,
-ls . -> .... test ....
-rm -v -> .... test ....
-
-and again
-rm -r test
-ls . -> .... test ....
-rm -v -> .... ....
-
-Therefore if multiple files of the same name are deleted, they are stored in the trash as if it were a stack.
-Thus any recover will be like popping the files from the trash stack!
-
-TO DO!
---
-
-If you delete multiple files with the same name in different locations and then recover them,
-then they get moved to the current dir irrespective of what dir they were deleted from.
-
-I do not know if this is a feature or a bug!
-(Arguments from both sides):
-BUG:     In Microsoft(R) windows(R) if a file goes to the recycle bin, then when "restored" it goes to where it was.
-
-FEATURE: Why should I worry where the file was? Probably I was working on another project, and 
-	 realized that one of the test cases I wrote for the previous project works for this one
-	 So i recover the test.pl to the projects current dir, I do not want it to go to the original
-	 Dir! In fact most of the time the usr uses the recover function is when he/she accidently
-	 deletes something important! And hence he/she is always in the current directory!
-
-I will take polls from friends who are linux users and find out if they really want their unix shell to 
-behave like windows. If you feel so, just drop me an email, or even better, include it and send me your
-trsh.pl!!! 

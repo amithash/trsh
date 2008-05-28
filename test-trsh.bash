@@ -146,7 +146,7 @@ rm test5
 touch test5
 rm test5
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/.Trash/test5 ] && [ -e $HOME/.Trash/test5@1 ] && [ -e $HOME/.Trash/test5@2 ]
+if [ -e $HOME/.Trash/test5 ] && [ -e $HOME/.Trash/test5______1 ] && [ -e $HOME/.Trash/test5______2 ]
 then
 	echo "TEST 7 PASSED: All three files deleted and exist in trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -159,7 +159,7 @@ fi
 echo "TEST 8: tests recover with multiple files."
 undo
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/.Trash/test5 ] && [ -e $HOME/.Trash/test5@1 ] && [ ! -e $HOME/.Trash/test5@2 ]
+if [ -e $HOME/.Trash/test5 ] && [ -e $HOME/.Trash/test5______1 ] && [ ! -e $HOME/.Trash/test5______2 ]
 then
 	echo "TEST 8A PASSED: 2 other files still exist and the 3'd file does not in the trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
