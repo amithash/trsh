@@ -34,7 +34,7 @@ my $size = 0;
 my $help = 0;
 my $warn = 0;
 
-my $remaining;
+my @remaining;
 
 if (not defined $ENV{TRASH_DIR}) {
     print "The environment variable TRASH_DIR is not set\n";
@@ -52,7 +52,7 @@ GetOptions( 'recover' => \$recover,
 	    'interactive'=> \$warn,
 	    'warn'	=> \$warn);
 
-$remaining = join(' ', @ARGV);
+@remaining = @ARGV;
 
 if( !(-e $trash) ) {
 	print "Could not find the trash directory, creating it...\n";
@@ -87,11 +87,10 @@ if($undo == 1){
 # If the force flag is on, then rm instead of moving to trash.
 if($force == 1){
 	# If the warn flag is on, delete interactively. 
-	if($warn == 1){
-		system("rm -ri $remaining");
-	}
-	else{
-		system("rm -r $remaining");
+	my $cmd = "rm -r";
+	$cmd = $cmd . "i" if($warn == 1);
+	foreach my $this (@remaining){
+		system("$cmd $this");
 	}
 	exit;
 }
@@ -112,77 +111,32 @@ if($empty == 1){
 }
 
 
-if($remaining ne ''){
-	my @rem = split(/\s/,$remaining);
+if($#remaining >= 0){
 	my @not_there;
 	my $file_with_space = "";
 	my $file_with_space_cmd = "";
-	foreach my $item (@rem){
+	foreach my $item_index (@remaining){
 		my $i = 0;
+		my $item = check_and_replace($item_index);
 		if($recover == 1){
 			if(does_item_exist_in_history($item) > 0){
 				restore_file("$item");
 			}
 			else{
-				if($file_with_space == ""){
-					$file_with_space = $item;
-				}
-				else{
-					$file_with_space = $file_with_space . " " . $item;
-					$file_with_space_cmd = $file_with_space_cmd . "\\ " . $item;
-					if(does_item_exist_in_history($file_with_space_cmd) > 0){
-						restore_file($file_with_space_cmd);
-						$file_with_space = "";
-						$file_with_space_cmd = "";
-					}
-				}
+				print "Item DOes not exist in history\n";
 			}
 		}
-		# If we were dealing with a file with space... or so we think
-		elsif($file_with_space ne ""){
-			if(-e $item){
-				print "WARN: $item exists, but I am looking for the rest of the file $file_with_space\n";
-				print "      If you wanted to delete $item, then $file_with_space does not exist!\n"
-			}
-			$file_with_space = $file_with_space . " " . $item;
-			$file_with_space_cmd = $file_with_space_cmd . "\\ " . $item;
-			if(-e $file_with_space){
-				if(-d $file_with_space){
-					if(get_response("Are you sure you want to delete directory: $file_with_space") == 1){
-						delete_file($file_with_space_cmd);
-					}
-				}
-				elsif($warn == 1){
-					if(get_response("Are you sure you want to delete file: $file_with_space") == 1){
-						delete_file($file_with_space_cmd);
-					}
-				}
-				else{	
-					delete_file($file_with_space_cmd);
-				}
-				$file_with_space = "";
-				$file_with_space_cmd = "";
-			}
-		}
-		elsif(-e $item){  
-			if($file_with_space ne ""){
-				print "WARN: Cowardly refusing to delete imaginary file(s): $file_with_space\n";
-				$file_with_space = "";
-			}
-			if(-d $item){
-				next unless(get_response("Are you sure you want to delete directory: $item") == 1);
+		elsif(-e $item_index){  
+			if(-d $item_index){
+				next unless(get_response("Are you sure you want to delete directory: \"$item_index\"") == 1);
 			}
 			elsif($warn == 1){
-				next unless(get_response("Are you sure you want to delete file: $item") == 1);
+				next unless(get_response("Are you sure you want to delete file: \"$item_index\"") == 1);
 			}
 			delete_file("$item");
 		}
 		else{
-			# Either this file does not exist or it is the first part of a file name with space...
-			# So optimimistically starting that leg.
-
-			$file_with_space = $item;
-			$file_with_space_cmd = $item;
+			print "Cowardly refusing to delete an imaginary file\n";
 		}	
 	}
 	if($file_with_space ne ""){
@@ -201,6 +155,12 @@ else{
 #####################################################
 # MISL FUNCTIONS
 #####################################################
+
+sub check_and_replace{
+	my $f = shift;
+	my $x = join("\\ ", split(/\s/,$f));
+	return $x;
+}
 
 sub usage{
 	print "Usage:
