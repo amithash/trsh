@@ -27,6 +27,10 @@ AUTOMATIC METHOD (Supported shells: bash and korn)
 run setup.pl with an argument about your shell:
 for BASH:
 ./setup.pl bash
+As a plus for bash users (I am a bash user and hence the extra feature)
+I have a series of tests which are executed automatically on setup.
+If it says something failed, remove trsh completely (including alias in .bashrc)
+And report it as a bug.
 
 for C-Shell:
 ./setup.pl csh

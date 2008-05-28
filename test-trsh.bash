@@ -20,7 +20,7 @@ rm
 
 # TEST 1
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-echo "TEST 1: Tests .Trash creation" >&2
+echo "TEST 1: Tests .Trash creation"
 if [ -d $HOME/.Trash ]
 then
 	echo "TEST 1 PASSED: Trash exists" >&2
@@ -32,7 +32,7 @@ fi
 
 # TEST 2
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-echo "TEST 2: Tests .history creation" >&2
+echo "TEST 2: Tests .history creation"
 if [ -e $HOME/.Trash/.history ]
 then
 	echo "TEST 2 PASSED: history exists" >&2
@@ -43,7 +43,7 @@ fi
 ##################################################################################
 
 # TEST 3 remove
-echo "TEST 3: Tests basic file delete" >&2
+echo "TEST 3: Tests basic file delete"
 cd $HOME
 touch test3
 rm test3
@@ -66,7 +66,7 @@ else
 fi
 ##################################################################################
 # TEST 4 recover
-echo "TEST 4: Tests basic file recovery" >&2
+echo "TEST 4: Tests basic file recovery"
 cd $HOME
 rm -r test3
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
@@ -90,7 +90,7 @@ fi
 /bin/rm test3
 
 # TEST 5 delete multiple files
-echo "TEST 5 tests delete multiple files" >&2
+echo "TEST 5 tests delete multiple files"
 cd $HOME
 touch test41 
 touch test42
@@ -116,7 +116,7 @@ fi
 
 ##################################################################################
 # TEST 6 undo
-echo "TEST 6 tests undo" >&2
+echo "TEST 6 tests undo"
 undo
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e $HOME/test43 ]
@@ -130,15 +130,15 @@ fi
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e $HOME/.Trash/test43 ]
 then
-	echo "TEST 6A FAILED: File test43 exists in trash" >&2
+	echo "TEST 6B FAILED: File test43 exists in trash" >&2
 else
-	echo "TEST 6A PASSED: File test43 does not exist in trash" >&2
+	echo "TEST 6B PASSED: File test43 does not exist in trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 fi
 ##################################################################################
 
 # TEST 7 Multiple files with same name
-echo "TEST 7: tests multi files same name" >&2
+echo "TEST 7: tests multi files same name"
 touch test5
 rm test5
 touch test5
@@ -156,7 +156,7 @@ fi
 ##################################################################################
 
 # TEST 8 recover using undo
-echo "TEST 8: tests recover with multiple files." >&2
+echo "TEST 8: tests recover with multiple files."
 undo
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e $HOME/.Trash/test5 ] && [ -e $HOME/.Trash/test5@1 ] && [ ! -e $HOME/.Trash/test5@2 ]
@@ -178,7 +178,7 @@ fi
 ##################################################################################
 
 # TEST 9: File name with space
-echo "TEST 9: Testing capability to handler file name with spaces." >&2
+echo "TEST 9: Testing capability to handler file name with spaces."
 touch test\ 9
 rm test\ 9
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
@@ -192,7 +192,7 @@ fi
 ##################################################################################
 
 # TEST 10: Removal of dirs:
-echo "Test 10: Testing removal of dirs" >&2
+echo "Test 10: Testing removal of dirs"
 mkdir test10a
 echo "y" >> yy
 echo "n" >> nn
@@ -257,5 +257,5 @@ fi
 mv $HOME/.Trash_backup $HOME/.Trash
 
 echo "END OF TESTS" >&2
-echo "$PASSED_COUNT of $TOTAL_COUNT tests passed." >&2
+echo "$PASSED_COUNT OF $TOTAL_COUNT TESTS PASSED." >&2
 

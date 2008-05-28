@@ -232,8 +232,6 @@ rm -i|-interactively|-w|-warn
 rm -h|-help
 \tThis will display this screen
 \n";
-
-
 }
 
 sub get_response{
