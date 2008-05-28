@@ -20,14 +20,26 @@
 use strict;
 use warnings;
 use Cwd;
+use Getopt::Long;
+
+my $user = 0;
+
+GetOptions("user" => \$user);
 
 if($#ARGV != 0){
 	usage();
 	exit;
 }
 my $home = $ENV{HOME} || (getpwuid($<))[7];
+
 print "Your Home is: $home\n";
-system("cp ./trsh.pl $home/.trsh.pl");
+if($user == 1){
+	system("cp ./trsh.pl $home/.trsh.pl");
+}
+else{
+	system("cp ./trsh.pl /usr/bin");
+	system("cp trsh.1.gz /usr/share/man/man1");
+}
 system("mkdir $home/.Trash") unless(-d "$home/.Trash");
 system("touch $home/.Trash/.history") unless (-e "$home/.Trash/.history");
 
@@ -39,8 +51,14 @@ if($ARGV[0] eq "bash"){
 		print BASHRC "#                          TRSH                                #\n";
 		print BASHRC "################################################################\n";
 		print BASHRC "export TRASH_DIR=\"$home/.Trash\"\n";
-		print BASHRC "alias rm=\"$home/.trsh.pl\"\n";
-		print BASHRC "alias undo=\"$home/.trsh.pl -u\"\n";
+		if($user == 1){
+			print BASHRC "alias rm=\"$home/.trsh.pl\"\n";
+			print BASHRC "alias undo=\"$home/.trsh.pl -u\"\n";
+		}
+		else{
+			print BASHRC "alias rm=\"trsh.pl\"\n";
+			print BASHRC "alias undo=\"trsh.pl -u\"\n";
+		}
 		print BASHRC "################################################################\n";
 		close(BASHRC);
 	}
@@ -57,8 +75,14 @@ elsif($ARGV[0] eq "csh"){
 		print CSHRC "#                          TRSH                                #\n";
 		print CSHRC "################################################################\n";
 		print CSHRC "setenv TRASH_DIR $home/.Trash\n";
-		print CSHRC "alias rm \"$home/.trsh.pl\"\n";
-		print CSHRC "alias undo \"$home/.trsh.pl -u\"\n";
+		if($user == 1){
+			print CSHRC "alias rm \"$home/.trsh.pl\"\n";
+			print CSHRC "alias undo \"$home/.trsh.pl -u\"\n";
+		}
+		else{
+			print CSHRC "alias rm \"trsh.pl\"\n";
+			print CSHRC "alias undo \"trsh.pl -u\"\n";
+		}
 		print CSHRC "################################################################\n";
 		close(CSHRC);
 	}
@@ -103,10 +127,13 @@ sub check{
 sub usage{
 	print "USAGE:
 
-setup.pl SHELL
+setup.pl [-u] SHELL
 
 SHELL  = \"bash\" for the Bourne again shell,
        = \"csh\" for the C-Shell
+-u     = If provided, a user installation is performed and you
+	 do not need root permissions, but you do not get a man 
+	 page!
 
 NOTE: for bash it is assumed that the .bashrc file in the home
 dir is present. and the same goes for the c-shell (.cshrc).
