@@ -136,7 +136,7 @@ if($#remaining >= 0){
 			delete_file("$item");
 		}
 		else{
-			print "Cowardly refusing to delete an imaginary file\n";
+			print "Cowardly refused to delete an imaginary file \"$item_index\"\n";
 		}	
 	}
 	if($file_with_space ne ""){
