@@ -33,6 +33,7 @@ my $undo = 0;
 my $size = 0;
 my $help = 0;
 my $warn = 0;
+my $recursive = 0;
 
 my @remaining;
 
@@ -42,15 +43,17 @@ if (not defined $ENV{TRASH_DIR}) {
 }
 my $trash = $ENV{TRASH_DIR};
 my $history = "$ENV{TRASH_DIR}/.history";
-GetOptions( 'recover' => \$recover,
-            'empty'     => \$empty, 
-            'view'      => \$view,
-	    'force'	=> \$force,
-	    'undo'	=> \$undo,
-	    'size'	=> \$size,
-	    'help'	=> \$help,
-	    'interactive'=> \$warn,
-	    'warn'	=> \$warn);
+
+Getopt::Long::Configure('bundling');
+
+GetOptions( 'e|empty'      => \$empty, 
+            'l|list'       => \$view,
+	    'f|force'	   => \$force,
+	    'u|undo'	   => \$undo,
+	    's|size'	   => \$size,
+	    'h|help'       => \$help,
+	    'i|interactive'=> \$warn,
+    	    'r|recursive'  => \$recursive);
 
 @remaining = @ARGV;
 
@@ -63,6 +66,10 @@ if( !(-e $history)){
 	system("touch $history");
 }
 
+if($undo == 1 and $#remaining >= 0){
+	$recover = 1;
+	$undo = 0;
+}
 
 if($help == 1){
 	usage();
@@ -128,7 +135,10 @@ if($#remaining >= 0){
 		}
 		elsif(-e $item_index){  
 			if(-d $item_index){
-				next unless(get_response("Are you sure you want to delete directory: \"$item_index\"") == 1);
+				if($recursive == 0){
+					print STDERR "Cannot remove directory \"$item_index\"\n";
+					next;
+				}
 			}
 			elsif($warn == 1){
 				next unless(get_response("Are you sure you want to delete file: \"$item_index\"") == 1);

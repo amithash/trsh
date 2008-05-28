@@ -1,0 +1,97 @@
+.TH trsh 1 5/28/2008
+
+.SH trsh
+trsh is a wrapper for the rm command which allows trash facilities and allows a user to undo and restore deleted files.
+Note that this is NOT a recovery package, but just a wrapper to rm.
+
+.SH SYNOPSIS
+rm [OPTIONS]... [FILES]...
+
+.SH AVALIABILITY
+All UNIX Flavours and can be downloaded from: http://code.google.com/p/trsh
+Depends upon rm,ls,mv.
+
+.SH DESCRIPTION
+This manual page documents trsh a wrapper to rm. Which allows a user to move a file to a trash and restore them if needed.
+This tools was written when I accidently deleted the source code of my home work which in the end, made me to re-write all 
+of it right from the begenning. And hence the inception of this tool, which was a direct result of the fustration which 
+resulted out of that experience. 
+.P
+As a default installation, trsh is either copied into /usr/bin/trsh.pl (For a full system install) or $HOME/.trsh.pl (For
+a user install), and then aliases are added to the shell's rc file (.bashrc for BASH or .cshrc for CSH) to create aliases
+for rm -> trsh.pl and undo -> trsh.pl -u. This allows users to use trsh as rm and the aliased command undo provides a convienent
+interface to undo a delete operation.
+.P
+trsh prompts a user while deleting directories as a default behavior rather than mimic rm where another option -r is expected
+to remove directories. -i or -w when provided, will prompt the user for each and every file. The -f option will just direct 
+all the files to be removed by rm. 
+
+.SH OPTIONS
+FILES:
+This is a list of files to recover or delete.
+.P
+-r|-recover 
+This option instructs trsh to recover FILES from the trash and place them into the current working directory.
+.P
+-f|-force
+This option instructs trsh to permanently delete FILES and completely bybass the trash
+.P
+-i|-w|-interactively|-warn
+This option will instruct trsh to prompt the user before deleting each and every file.
+.P
+-u|-undo
+This will recover the previously deleted file and places that in the current working directory.
+.P
+-v|-view
+This displays the list of files in the Trash.
+.P
+-e|-empty
+This empties the trash.
+.P
+-s|-size
+This displays the size of the Trash directory. 
+.P
+-h|-help
+Displays this help and exits.
+.P
+rm FILES just moves FILES to the trash.
+.P
+
+.SH EXAMPLES
+
+If you need to delete a file test1:
+rm test1
+If you want to recover test1 from the trash:
+rm -r test1
+If you want to undo your last delete:
+rm -u or undo
+If you want to view the contents of the trash:
+rm -v
+If you want to check the size of the trash directory:
+rm -s
+(This is helpful to have cron jobs to periodically check the size of the trash and hence empty it)
+rm -e empties the trash.
+
+.SH AUTHOR
+Amithash Prasad {amithash@gmail.com}
+
+.SH FILES
+$HOME/.Trash - Is the default but configurable Trash folder.
+$TRASH_DIR/.history - Is the history of files deleted. Helpful to undo a delete.
+
+.SH "REPORTING BUGS"
+ You can file a bug report at http://code.google.com/p/trsh/issues/list
+
+.SH COPYRIGHT
+Copyright (C) 2008 Amithash Prasad 
+This is free software; See the source for copying conditions. There is NO warranty. Not even for MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE.
+
+.SH CAVEATS
+trsh.pl -r restores a file, /bin/rm -r recursively deletes a file.
+This can confuse new users who are used to rm.
+
+.SH "SEE ALSO"
+rm(1)
+
+ 
