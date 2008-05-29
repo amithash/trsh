@@ -9,13 +9,10 @@ mv $HOME/.Trash $HOME/.Trash_backup
 PASSED_COUNT=0
 TOTAL_COUNT=0
 
-alias rm="$HOME/.trsh.pl"
-alias undo="$HOME/.trsh.pl -u"
-
 echo "Starting as a virgin"
 cd $HOME
 /bin/rm -rf .Trash
-rm
+trsh.pl
 ##################################################################################
 
 # TEST 1
@@ -46,7 +43,7 @@ fi
 echo "TEST 3: Tests basic file delete"
 cd $HOME
 touch test3
-rm test3
+trsh.pl test3
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e $HOME/.Trash/test3 ]
 then
@@ -68,7 +65,7 @@ fi
 # TEST 4 recover
 echo "TEST 4: Tests basic file recovery"
 cd $HOME
-rm -r test3
+trsh.pl -u test3
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e $HOME/.Trash/test3 ]
 then
@@ -95,7 +92,7 @@ cd $HOME
 touch test41 
 touch test42
 touch test43
-rm test41 test42 test43
+trsh.pl test41 test42 test43
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e $HOME/.Trash/test41 ] && [ -e $HOME/.Trash/test42 ] && [ -e $HOME/.Trash/test43 ]
 then
@@ -115,9 +112,9 @@ else
 fi
 
 ##################################################################################
-# TEST 6 undo
-echo "TEST 6 tests undo"
-undo
+# TEST 6 trsh.pl -u
+echo "TEST 6 tests trsh.pl -u"
+trsh.pl -u
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e $HOME/test43 ]
 then
@@ -140,11 +137,11 @@ fi
 # TEST 7 Multiple files with same name
 echo "TEST 7: tests multi files same name"
 touch test5
-rm test5
+trsh.pl test5
 touch test5
-rm test5
+trsh.pl test5
 touch test5
-rm test5
+trsh.pl test5
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e $HOME/.Trash/test5 ] && [ -e $HOME/.Trash/test5______1 ] && [ -e $HOME/.Trash/test5______2 ]
 then
@@ -155,9 +152,9 @@ else
 fi
 ##################################################################################
 
-# TEST 8 recover using undo
+# TEST 8 recover using trsh.pl -u
 echo "TEST 8: tests recover with multiple files."
-undo
+trsh.pl -u
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e $HOME/.Trash/test5 ] && [ -e $HOME/.Trash/test5______1 ] && [ ! -e $HOME/.Trash/test5______2 ]
 then
@@ -180,7 +177,7 @@ fi
 # TEST 9: File name with space
 echo "TEST 9: Testing capability to handler file name with spaces."
 touch test\ 9
-rm test\ 9
+trsh.pl test\ 9
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e "$HOME/.Trash/test 9" ]
 then
@@ -194,29 +191,27 @@ fi
 # TEST 10: Removal of dirs:
 echo "Test 10: Testing removal of dirs"
 mkdir test10a
-echo "y" >> yy
-echo "n" >> nn
-rm test10a < yy
+trsh.pl test10a
 echo ""
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -d "$HOME/.Trash/test10a" ]
+if [ -d "$HOME/test10a" ]
 then
-	echo "TEST 10A PASSED: Dir test10a exists in trash" >&2
+	echo "TEST 10A PASSED: Dir test10a not removed" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 else
-	echo "TEST 10B FAILED: Dir test10a does not exist in trash" >&2
+	echo "TEST 10A FAILED: Dir test10a removed" >&2
 fi
 ##################################################################################
 mkdir test10b
-rm test10b < nn
+trsh.pl -r test10b
 echo ""
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -d "$HOME/.Trash/test10b" ]
 then
-	echo "TEST 10A FAILED: Dir test10b removed upon no from user" >&2
-else
-	echo "TEST 10B PASSED: Dir test10b not removed upon no from user" >&2
+	echo "TEST 10A PASSED: Dir test10b removed" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
+else
+	echo "TEST 10B FAILED: Dir test10b not removed" >&2
 fi
 ##################################################################################
 
@@ -230,7 +225,7 @@ echo "y" >> yyy
 echo "n" >> nnn
 echo "n" >> nnn
 echo "n" >> nnn
-rm -i test11a1 test11a2 test11a3 < nnn
+trsh.pl -i test11a1 test11a2 test11a3 < nnn
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e $HOME/test11a1 ] && [ -e $HOME/test11a2 ] && [ -e $HOME/test11a3 ]
 then
@@ -240,7 +235,7 @@ else
 	echo "TEST 11A FAILED: All or some of the files are deleted on a no" >&2
 fi
 ##################################################################################
-rm -i test11a1 test11a2 test11a3 < yyy
+trsh.pl -i test11a1 test11a2 test11a3 < yyy
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e $HOME/test11a1 ] && [ -e $HOME/test11a2 ] && [ -e $HOME/test11a3 ]
 then
@@ -252,7 +247,7 @@ fi
 ##################################################################################
 
 # Do not leave stray test files.
-/bin/rm -rf .Trash test3 test41 test42 test43 test5 yy nn test10b yyy nnn 
+/bin/rm -rf .Trash test3 test41 test42 test43 test5 yy nn test10a test10b yyy nnn 
 /bin/rm -f test\ 9
 mv $HOME/.Trash_backup $HOME/.Trash
 

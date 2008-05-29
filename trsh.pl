@@ -33,6 +33,7 @@ my $undo = 0;
 my $size = 0;
 my $help = 0;
 my $warn = 0;
+my $verbose = 0;
 my $recursive = 0;
 
 my @remaining;
@@ -53,6 +54,7 @@ GetOptions( 'e|empty'      => \$empty,
 	    's|size'	   => \$size,
 	    'h|help'       => \$help,
 	    'i|interactive'=> \$warn,
+	    'v|verbose'    => \$verbose,
     	    'r|recursive'  => \$recursive);
 
 @remaining = @ARGV;
@@ -97,6 +99,7 @@ if($force == 1){
 	my $cmd = "rm -r";
 	$cmd = $cmd . "i" if($warn == 1);
 	foreach my $this (@remaining){
+		print "Removing $this permanently\n" if($verbose == 1);
 		system("$cmd $this");
 	}
 	exit;
@@ -127,6 +130,7 @@ if($#remaining >= 0){
 		my $item = check_and_replace($item_index);
 		if($recover == 1){
 			if(does_item_exist_in_history($item) > 0){
+				print "Recovering file $item\n" if($verbose == 1);
 				restore_file("$item");
 			}
 			else{
@@ -134,11 +138,10 @@ if($#remaining >= 0){
 			}
 		}
 		elsif(-e $item_index){  
-			if(-d $item_index){
-				if($recursive == 0){
-					print STDERR "Cannot remove directory \"$item_index\"\n";
-					next;
-				}
+			print "Deleting $item\n" if($verbose == 1);
+			if(-d $item_index and $recursive == 0){
+				print STDERR "Cannot remove directory \"$item_index\"\n";
+				next;
 			}
 			elsif($warn == 1){
 				next unless(get_response("Are you sure you want to delete file: \"$item_index\"") == 1);
