@@ -25,6 +25,45 @@ use Getopt::Long;
 use File::Find;
 use Cwd;
 
+my $usage_string = "
+USAGE: rm [OPTIONS]... [FILES]...
+
+FILES:
+This is a list of files to recover or delete.
+
+OPTIONS:
+-u|--undo [FILES]
+This option instructs trsh to recover FILES from the trash and place them into the current working directory.
+If FILES is not provided, the last deleted file is recovered and placed into the current working directory.
+
+-f|--force
+This option instructs trsh to permanently delete FILES and completely bybass the trash
+
+-i|--interactively
+This option will instruct trsh to prompt the user before deleting each and every file.
+
+-v|--verbose
+This option will instruct trsh to talk about whatever it is doing.
+
+-e|--empty
+This empties the trash.
+
+-r|--recursive
+This option if provided will allow directories to be deleted.
+
+-l|--list
+This will display the contents of the trash.
+
+-s|--size
+This displays the size of the Trash directory. 
+
+-h|--help
+Displays this help and exits.
+
+rm FILES just moves FILES to the trash. By default, directories are not deleted.
+\n";
+
+
 my $recover = 0;
 my $empty = 0;
 my $view = 0;
@@ -176,35 +215,15 @@ sub check_and_replace{
 }
 
 sub usage{
-	print "Usage:
-
-rm -r|-recover FILE
-\tthis will move the deleted file named FILE from the trash to the current dir
-
-rm -v|-view
-\tThis will list the contents of the trash
-
-rm -e|-empty
-\tThis will empty the trash bin
-
-rm -u|-undo
-\tThis will restore the previously deleted file.
-
-rm FILE
-\tThis will delete the file
-
-rm -f|-force FILE
-\tThis will permanently delete the FILE
-
-rm -s|-size
-\tThis will display the size of the trash folder.
-
-rm -i|-interactively|-w|-warn
-\tThis will nag the user for every file
-
-rm -h|-help
-\tThis will display this screen
-\n";
+	if(-e "/usr/share/man/man1/trsh.1.gz"){
+		system("man trsh");
+	}
+	elsif(-e "$ENV{HOME}/.trsh.1.gz"){
+		system("man $ENV{HOME}/.trsh.1.gz");
+	}
+	else{
+		print $usage_string;
+	}
 }
 
 sub get_response{
@@ -261,6 +280,10 @@ sub restore_file{
 sub restore_last_file{
 	my $cwd = cwd();
 	my $item = pop_from_history();
+	if($item eq "NULL______NULL"){
+		print "Nothing to restore";
+		exit;
+	}
 	my $item_cmd = join(" ", split(/\\\s/,$item));
 	if(-e "$trash/$item_cmd"){
 		if($item =~ /(.+)______\d+/){
@@ -305,8 +328,13 @@ sub does_item_exist_in_history{
 
 sub pop_from_history{
 	my @contents = get_history();
-	make_history(@contents[0..($#contents-1)]);
-	return $contents[$#contents];
+	if($#contents >= 0){
+		make_history(@contents[0..($#contents-1)]);
+		return $contents[$#contents];
+	}
+	else{
+		return "NULL______NULL";
+	}
 }
 
 sub seek_and_destroy_in_history{
@@ -338,5 +366,4 @@ sub make_history{
 	print HIST "$h";
 	close(HIST);
 }
-
 

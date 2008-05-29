@@ -35,6 +35,7 @@ my $home = $ENV{HOME} || (getpwuid($<))[7];
 print "Your Home is: $home\n";
 if($user == 1){
 	system("cp ./trsh.pl $home/.trsh.pl");
+	system("cp ./trsh.1.gz $home/.trsh.1.gz");
 }
 else{
 	system("cp ./trsh.pl /usr/bin");
@@ -65,7 +66,6 @@ if($ARGV[0] eq "bash"){
 	else{
 		print "Entries in $home/.bashrc seems to exist, leaving it alone\n";
 	}
-	system("./test-trsh.bash > /dev/null");
 }
 elsif($ARGV[0] eq "csh"){
 	if(check("$home/.cshrc") == 0){
