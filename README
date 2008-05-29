@@ -19,11 +19,11 @@
 
 A safe rm.
 
-I wrote this script when I accidently deleted my homework.
+I wrote this script when I accidentally deleted my homework.
 
 SETUP
 --
-AUTOMATIC METHOD (Supported shells: bash and korn)
+AUTOMATIC METHOD (Supported shells: bash and c-shell)
 
 for BASH:
 
@@ -54,7 +54,7 @@ I usually copy it to my home directory and rename it to .trsh.pl
 so I do not see it or to my /usr/bin dir which is in the path.
 
 edit your .Xrc file (for bash it is .bashrc, and the examples are for bash)
-create an enviornment variable called TRASH_DIR pointing to what you want
+create an environment variable called TRASH_DIR pointing to what you want
 to be used as a trash directory.
 
 export TRASH_DIR='~/.Trash'
@@ -125,7 +125,6 @@ Thus any recover will be like popping the files from the trash stack!
 
 KNOWN ISSUES
 --
-If a file has exactly 6 consicutive underscores, then bad things will happen! :-)
+If a file has exactly 6 consecutive underscores, then bad things will happen! :-)
 That is if a file is named: SOMETHING______SOMETHING,. You are better 
 off deleting this forcefully! 
-
