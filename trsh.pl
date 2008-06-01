@@ -107,7 +107,10 @@ if( !(-e $history)){
 	system("touch $history");
 }
 
-if($undo == 1 and $#remaining >= 0){
+if($undo == 1 and $#remaining == 0 and ($remaining[0] =~ /^(\d+)$/) and (does_item_exist_in_history($remaining[0]) == 0)){
+	$undo = $1 + 0;
+}
+elsif($undo == 1 and $#remaining >= 0){
 	$recover = 1;
 	$undo = 0;
 }
@@ -127,8 +130,10 @@ if($size == 1){
 }
 
 # Restore the last deleted file
-if($undo == 1){
-	restore_last_file();
+if($undo > 0){
+	for(my $i=0;$i<$undo;$i++){
+		restore_last_file();
+	}
 	exit;
 }
 
@@ -281,7 +286,7 @@ sub restore_last_file{
 	my $cwd = cwd();
 	my $item = pop_from_history();
 	if($item eq "NULL______NULL"){
-		print "Nothing to restore";
+		print "Nothing to restore\n";
 		exit;
 	}
 	my $item_cmd = join(" ", split(/\\\s/,$item));
