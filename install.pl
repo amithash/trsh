@@ -80,9 +80,6 @@ else{
 }
 $undo = "$rm -u";
 
-system("mkdir $home/.Trash") unless(-d "$home/.Trash");
-system("touch $home/.Trash/.history") unless (-e "$home/.Trash/.history");
-
 if($shell eq "bash"){
 	if($user == 0){
 		if(-e "/etc/bash.bashrc"){
