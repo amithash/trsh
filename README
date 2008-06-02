@@ -23,35 +23,31 @@ I wrote this script when I accidentally deleted my homework.
 
 SETUP
 --
-./install.pl -u
-for a user install.
-sudo ./install.pl # or ./install.pl as root
-for a full system install.
+./install.pl
 
-The difference between a user install and a full system install is that in a
-full system install trsh is installed for all user and hence must be performed
-as root. This is not needed for a user install and the installation will be
-local to the user's home directory. (Helpful if you do not have permissions).
+Answer all the quick questions, and you are done. install.pl will try the level
+best to get the system parameters and hence most of the time it is best to use
+the default options. Note the contents in the square brackets [] are the defaults
+if you press enter without entering anything. These defaults are not the ones which
+I choose, it is the ones which install.pl determines from your system.
 
-MANUAL METHOD:
+If you use an unsupported shell (like the z shell). You need to find out all the 
+parameters for that shell like: does aliases work like bash or c-shell?, where
+is the user rc file? where is the system wide rc file? etc and try your luck.
+If things fail, you need to make a manual install: copy trsh.pl to wherever you 
+want, put that in the path, create aliases for rm and undo to point where you
+have installed trsh. and finally copy the man page (trsh.1.gz).
 
-If the above does not work, probably you do not use either of the supported
-shells (C-SHELL or its deveravatives or BASH), or you wanted your own aliases
-or you wanted to place the files in non default locations.
-
-
-1. copy the trsh.pl to where ever you want,
-I usually copy it to my home directory and rename it to .trsh.pl
-so I do not see it or to my /usr/bin dir which is in the path.
-
-edit your .Xrc file (for bash it is .bashrc, and the examples are for bash)
-alias rm='~/.trsh.pl'
-alias undo='~/.trsh.pl -u'
+Run uninstall.pl if you want to remove trsh completely from your system. 
+(If you had performed a system wide install, please, run ./uninstall.pl
+as root).
 
 TEST
 --
 
 First of all, before using trsh, due to the nature of its dependency,
+(Meaning, once users are in bliss that they can restore a deleted file,
+but trsh does not..... The horror, The horror)
 Run tests test-trsh.sh and if any fail, raise a bug and DO NOT USE any further.
 
 I understand that this is under the GNU license, and I am not responsible 
