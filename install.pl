@@ -26,10 +26,17 @@ my $user = 0;
 my $shell = "";
 my $uid;
 my $rc_file;
+my $help = 0;
+my $rm;
+my $undo;
 
-GetOptions("user" => \$user);
+GetOptions("user" => \$user,
+	   "help" => \$help);
 
-
+if($help == 1){
+	usage();
+	exit;
+}
 ########## USER VALIDATION #################
 
 open UID, "id -u |";
@@ -64,11 +71,15 @@ print "Trash dir choosen: $trash_dir\n";
 if($user == 1){
 	system("cp ./trsh.pl $home/.trsh.pl");
 	system("cp ./trsh.1.gz $home/.trsh.1.gz");
+	$rm = "$home/.trsh.pl";
 }
 else{
 	system("cp ./trsh.pl /usr/bin");
 	system("cp trsh.1.gz /usr/share/man/man1");
+	$rm = "/usr/bin/trsh.pl";
 }
+$undo = "$rm -u";
+
 system("mkdir $home/.Trash") unless(-d "$home/.Trash");
 system("touch $home/.Trash/.history") unless (-e "$home/.Trash/.history");
 
@@ -81,11 +92,13 @@ if($shell eq "bash"){
 			$rc_file = "/etc/bashrc";
 		}
 		else{
-			$rc_file = ask_user("Please enter the system wide rc file (defaults do not exist");
+			$rc_file = ask_user("Please enter the system wide rc file (defaults do not exist)");
 			if(! -e $rc_file){
-				die "$rc_file does not exist. Try an user install\n";
+				die "$rc_file does not exist. Try a user install\n";
 			}
 		}
+		$rm = "/usr/bin/trsh.pl";
+		$undo = "$rm -u"
 	}
 	else{
 		if(-e "$home/.bashrc"){
@@ -94,60 +107,57 @@ if($shell eq "bash"){
 		else{
 			$rc_file = ask_user("Enter the path to the user bashrc file");
 		}
+		$rm = "$home/.trsh.pl";
+		$undo = "$rm -u";
 	}	
 	print "Using RC file: $rc_file\n";
 
 	if(check($rc_file) == 0){
 		backup($rc_file);
 		open BASHRC, ">>$rc_file" or die "Could not open $rc_file in append mode\n";
-		print BASHRC "################################################################\n";
-		print BASHRC "#                          TRSH                                #\n";
-		print BASHRC "################################################################\n";
-		print BASHRC "export TRASH_DIR=\"$home/.Trash\"\n";
-		if($user == 1){
-			print BASHRC "alias rm=\"$home/.trsh.pl\"\n";
-			print BASHRC "alias undo=\"$home/.trsh.pl -u\"\n";
-		}
-		else{
-			print BASHRC "alias rm=\"trsh.pl\"\n";
-			print BASHRC "alias undo=\"trsh.pl -u\"\n";
-		}
-		print BASHRC "################################################################\n";
+		print BASHRC "alias rm=\"$rm\" # TRSH\n";
+		print BASHRC "alias undo=\"$undo\" # TRSH\n";
 		close(BASHRC);
 	}
 	else{
 		print "Entries in $rc_file seems to exist, leaving it alone\n";
 	}
 }
-elsif($shell eq "csh"){
-	print "RC File: $home/.cashrc\n";
-	print "Due to lack of support, full system install for c-shell does not exist.\n";
-	print "please ask your users to add to their cshrc the changes made to your cshrc\n";
-	if(check("$home/.cshrc") == 0){
-		backup("$home/.cshrc");
-		open CSHRC, ">>$home/.cshrc" or die "Could not open $home/.cshrc in append mode\n";
-		print CSHRC "################################################################\n";
-		print CSHRC "#                          TRSH                                #\n";
-		print CSHRC "################################################################\n";
-		print CSHRC "setenv TRASH_DIR $home/.Trash\n";
-		if($user == 1){
-			print CSHRC "alias rm \"$home/.trsh.pl\"\n";
-			print CSHRC "alias undo \"$home/.trsh.pl -u\"\n";
+elsif($shell eq "csh" or $shell eq "tcsh"){
+	if($user == 0){
+		if(-e "/etc/csh.cshrc"){
+			$rc_file = "/etc/csh.cshrc";
+		}
+		elsif(-e "/etc/cshrc"){
+			$rc_file = "/etc/cshrc";
 		}
 		else{
-			print CSHRC "alias rm \"trsh.pl\"\n";
-			print CSHRC "alias undo \"trsh.pl -u\"\n";
+			$rc_file = ask_user("Please enter the system wide rc file (defaults do not exist)");
+			if(! -e $rc_file){
+				die "$rc_file does not exist. Try a user install\n";
+			}
 		}
-		print CSHRC "################################################################\n";
+
+	}
+	else{
+		if(-e "$home/.cshrc"){
+			$rc_file = "$home/.cshrc";
+		}
+		else{
+			$rc_file = ask_user("Enter the path to the user cshrc file");
+		}
+	}	
+	print "Using RC file: $rc_file\n";
+	if(check($rc_file) == 0){
+		backup($rc_file);
+		open CSHRC, ">>$rc_file" or die "Could not open $rc_file in append mode\n";
+		print CSHRC "alias rm \"$rm\" # TRSH\n"; 
+		print CSHRC "alias undo \"$undo\" # TRSH\n"; 
 		close(CSHRC);
 	}
 	else{
 		print "Entries in $home/.cshrc seems to exist, leaving it alone\n";
 	}
-}
-elsif($shell eq "-help" or $shell eq "-h"){
-	usage();
-	exit;
 }
 else{
 	usage();
@@ -182,7 +192,7 @@ sub check{
 sub usage{
 	print "USAGE:
 
-setup.pl [-u] SHELL
+setup.pl [-u]
 
 SHELL  = \"bash\" for the Bourne again shell,
        = \"csh\" for the C-Shell

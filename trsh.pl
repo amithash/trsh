@@ -77,12 +77,12 @@ my $recursive = 0;
 
 my @remaining;
 
-if (not defined $ENV{TRASH_DIR}) {
-    print "The environment variable TRASH_DIR is not set\n";
+if (not defined $ENV{HOME}) {
+    print "The environment variable HOME is not set\n";
     exit;
 }
-my $trash = $ENV{TRASH_DIR};
-my $history = "$ENV{TRASH_DIR}/.history";
+my $trash = "$ENV{HOME}/.Trash";
+my $history = "$trash/.history";
 
 Getopt::Long::Configure('bundling');
 
