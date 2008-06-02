@@ -27,8 +27,6 @@ my $shell = "";
 my $uid;
 my $rc_file;
 my $help = 0;
-my $rm;
-my $undo;
 
 GetOptions("user" => \$user,
 	   "help" => \$help);
@@ -68,10 +66,10 @@ if(! -e "$home/$trash"){
 }
 
 my $user_or_system = "system";
-get_from_user("Type of Install? ",\$user_or_system);
+get_from_user("Type of Install? (user / system)",\$user_or_system);
 if($uid != 0 and $user_or_system eq "system"){
 	$user_or_system = "exit";
-	get_from_user("Cannot perform system install as a regular user. Select user to perform a user install instead. (exit | user)? ",\$user_or_system)
+	get_from_user("Cannot perform system install as a regular user. Select user to perform a user install instead. (exit | user)? ",\$user_or_system);
 	if($user_or_system eq "exit"){
 		exit;
 	}
@@ -87,7 +85,7 @@ if($trash ne "/.Trash"){
 my $dest;
 my $man_dest;
 
-if($user == 1){
+if($user_or_system eq "user"){
 	$dest = "$home/.trsh.pl";
 	get_from_user("Where do you trsh to be installed?", \$dest);
 	$man_dest = "$home/.trsh.1.gz";
@@ -103,13 +101,8 @@ else{
 	get_from_user("Where do you want the man pages to be installed? ", \$man_dest);
 }
 
-
-
-$rm = $dest;
-$undo = "$rm -u";
-
 if($shell eq "bash"){
-	if($user == 0){
+	if($user_or_system eq  "system"){
 		if(-e "/etc/bash.bashrc"){
 			$rc_file = "/etc/bash.bashrc";
 		}
@@ -118,7 +111,7 @@ if($shell eq "bash"){
 		}
 		get_from_user("What is your system wide RC file?",\$rc_file);
 		if(! -e $rc_file){
-			print "$rc_file does not exist. Exiting\n":
+			print "$rc_file does not exist. Exiting\n";
 		}
 	}
 	else{
@@ -143,7 +136,7 @@ if($shell eq "bash"){
 	}
 }
 elsif($shell eq "csh" or $shell eq "tcsh"){
-	if($user == 0){
+	if($user_or_system eq "system"){
 		if(-e "/etc/csh.cshrc"){
 			$rc_file = "/etc/csh.cshrc";
 		}
@@ -152,7 +145,7 @@ elsif($shell eq "csh" or $shell eq "tcsh"){
 		}
 		get_from_user("What is your system wide RC file?",\$rc_file);
 		if(! -e $rc_file){
-			print "$rc_file does not exist. Exiting\n":
+			print "$rc_file does not exist. Exiting\n";
 		}
 
 	}

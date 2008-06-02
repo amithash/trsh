@@ -166,23 +166,19 @@ if($empty == 1){
 
 
 if($#remaining >= 0){
-	my @not_there;
-	my $file_with_space = "";
-	my $file_with_space_cmd = "";
 	foreach my $item_index (@remaining){
-		my $i = 0;
-		my $item = check_and_replace($item_index);
+		my $item = join("\\ ", split(/\s/,$item_index));
 		if($recover == 1){
 			if(does_item_exist_in_history($item) > 0){
 				print "Recovering file $item\n" if($verbose == 1);
 				restore_file("$item");
 			}
 			else{
-				print "Item DOes not exist in history\n";
+				print "Item Does not exist in history\n";
 			}
 		}
 		elsif(-e $item_index){  
-			print "Deleting $item\n" if($verbose == 1);
+			print "Deleting \"$item_index\"\n" if($verbose == 1);
 			if(-d $item_index and $recursive == 0){
 				print STDERR "Cannot remove directory \"$item_index\"\n";
 				next;
@@ -195,9 +191,6 @@ if($#remaining >= 0){
 		else{
 			print "Cowardly refused to delete an imaginary file \"$item_index\"\n";
 		}	
-	}
-	if($file_with_space ne ""){
-		print "Could not delete $file_with_space\n";
 	}
 }
 else{
@@ -212,12 +205,6 @@ else{
 #####################################################
 # MISL FUNCTIONS
 #####################################################
-
-sub check_and_replace{
-	my $f = shift;
-	my $x = join("\\ ", split(/\s/,$f));
-	return $x;
-}
 
 sub usage{
 	if(-e "/usr/share/man/man1/trsh.1.gz"){
