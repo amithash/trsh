@@ -23,47 +23,28 @@ I wrote this script when I accidentally deleted my homework.
 
 SETUP
 --
-AUTOMATIC METHOD (Supported shells: bash and c-shell)
+./install.pl -u
+for a user install.
+sudo ./install.pl # or ./install.pl as root
+for a full system install.
 
-for BASH:
-
-sudo ./setup.pl bash
-
-for C-Shell:
-sudo ./setup.pl csh
-
-This sets the following:
-trash dir = HOME/.Trash
-script copied to /usr/bin/trsh.pl
-
-aliases set for:
-rm = trsh.pl
-undo = trsh.pl -u
-
-OPTIONAL: setup.pl takes an option -u which will perform a user installation instead.
-Then trsh is copied to $HOME/.trsh.pl instead. (Sometimes, you might need this
-on machines you do not have root access to)
-
-If you do not like this, or your shell is not supported, 
-try the manual method described below
+The difference between a user install and a full system install is that in a
+full system install trsh is installed for all user and hence must be performed
+as root. This is not needed for a user install and the installation will be
+local to the user's home directory. (Helpful if you do not have permissions).
 
 MANUAL METHOD:
+
+If the above does not work, probably you do not use either of the supported
+shells (C-SHELL or its deveravatives or BASH), or you wanted your own aliases
+or you wanted to place the files in non default locations.
+
 
 1. copy the trsh.pl to where ever you want,
 I usually copy it to my home directory and rename it to .trsh.pl
 so I do not see it or to my /usr/bin dir which is in the path.
 
 edit your .Xrc file (for bash it is .bashrc, and the examples are for bash)
-create an environment variable called TRASH_DIR pointing to what you want
-to be used as a trash directory.
-
-export TRASH_DIR='~/.Trash'
-
-again, i choose the name of my trash dir to start with a "." therefore I 
-do not generally see it on a ls.
-
-then add an alias to stop using the rm command and using this instead.
-
 alias rm='~/.trsh.pl'
 alias undo='~/.trsh.pl -u'
 
@@ -87,9 +68,10 @@ This is a list of files to recover or delete.
 
 OPTIONS:
 
--u|--undo [FILES]
+-u|--undo [FILES | NUMBER]
 This option instructs trsh to recover FILES from the trash and place them into the current working directory.
 If FILES is not provided, the last deleted file is recovered and placed into the current working directory.
+If instead a number is provided as an option, that many undo's are performed. 
 
 -f|--force
 This option instructs trsh to permanently delete FILES and completely bypass the trash
@@ -128,3 +110,4 @@ KNOWN ISSUES
 If a file has exactly 6 consecutive underscores, then bad things will happen! :-)
 That is if a file is named: SOMETHING______SOMETHING,. You are better 
 off deleting this forcefully! 
+
