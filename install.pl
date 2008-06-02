@@ -23,16 +23,44 @@ use Cwd;
 use Getopt::Long;
 
 my $user = 0;
+my $shell = "";
+my $uid;
+my $rc_file;
 
 GetOptions("user" => \$user);
 
-if($#ARGV != 0){
-	usage();
+
+########## USER VALIDATION #################
+
+open UID, "id -u |";
+$uid = <UID>;
+$uid = $uid + 0;
+close(UID);
+
+if($uid != 0 and $user == 0){
+	print STDERR "\nSorry, you need to be root to make a system wide install.\n";
+	print STDERR "Login as root and try again, or you can use sudo.\n";
+	print STDERR "If you want/can do neither, try a user install with a -u option\n\n";
 	exit;
 }
+
+########## WHICH SHELL? ######################
+
+if(defined $ENV{SHELL}){
+	my @temp = split(/\//, $ENV{SHELL});
+	$shell = $temp[$#temp];
+	print "Shell Used: $shell\n";
+}
+else{
+	$shell = ask_user("Please enter the name of your shell");
+}
+
 my $home = $ENV{HOME} || (getpwuid($<))[7];
+my $trash_dir = $home . "/.Trash";
 
 print "Your Home is: $home\n";
+print "Trash dir choosen: $trash_dir\n";
+
 if($user == 1){
 	system("cp ./trsh.pl $home/.trsh.pl");
 	system("cp ./trsh.1.gz $home/.trsh.1.gz");
@@ -44,10 +72,34 @@ else{
 system("mkdir $home/.Trash") unless(-d "$home/.Trash");
 system("touch $home/.Trash/.history") unless (-e "$home/.Trash/.history");
 
-if($ARGV[0] eq "bash"){
-	if(check("$home/.bashrc") == 0){
-		backup("$home/.bashrc");
-		open BASHRC, ">>$home/.bashrc" or die "Could not open $home/.bashrc in append mode\n";
+if($shell eq "bash"){
+	if($user == 0){
+		if(-e "/etc/bash.bashrc"){
+			$rc_file = "/etc/bash.bashrc";
+		}
+		elsif(-e "/etc/bashrc"){
+			$rc_file = "/etc/bashrc";
+		}
+		else{
+			$rc_file = ask_user("Please enter the system wide rc file (defaults do not exist");
+			if(! -e $rc_file){
+				die "$rc_file does not exist. Try an user install\n";
+			}
+		}
+	}
+	else{
+		if(-e "$home/.bashrc"){
+			$rc_file = "$home/.bashrc";
+		}
+		else{
+			$rc_file = ask_user("Enter the path to the user bashrc file");
+		}
+	}	
+	print "Using RC file: $rc_file\n";
+
+	if(check($rc_file) == 0){
+		backup($rc_file);
+		open BASHRC, ">>$rc_file" or die "Could not open $rc_file in append mode\n";
 		print BASHRC "################################################################\n";
 		print BASHRC "#                          TRSH                                #\n";
 		print BASHRC "################################################################\n";
@@ -64,10 +116,13 @@ if($ARGV[0] eq "bash"){
 		close(BASHRC);
 	}
 	else{
-		print "Entries in $home/.bashrc seems to exist, leaving it alone\n";
+		print "Entries in $rc_file seems to exist, leaving it alone\n";
 	}
 }
-elsif($ARGV[0] eq "csh"){
+elsif($shell eq "csh"){
+	print "RC File: $home/.cashrc\n";
+	print "Due to lack of support, full system install for c-shell does not exist.\n";
+	print "please ask your users to add to their cshrc the changes made to your cshrc\n";
 	if(check("$home/.cshrc") == 0){
 		backup("$home/.cshrc");
 		open CSHRC, ">>$home/.cshrc" or die "Could not open $home/.cshrc in append mode\n";
@@ -90,7 +145,7 @@ elsif($ARGV[0] eq "csh"){
 		print "Entries in $home/.cshrc seems to exist, leaving it alone\n";
 	}
 }
-elsif($ARGV[0] eq "-help" or $ARGV[0] eq "-h"){
+elsif($shell eq "-help" or $shell eq "-h"){
 	usage();
 	exit;
 }
@@ -140,3 +195,12 @@ dir is present. and the same goes for the c-shell (.cshrc).
 Refer the README for a manual install if you have a different
 shell.\n"
 }
+
+sub ask_user{
+	my $msg = shift;
+	print "$msg :";
+	my $inp = <STDIN>;
+	chomp($inp);
+	return $inp;
+}
+
