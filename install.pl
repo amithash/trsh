@@ -44,29 +44,34 @@ $uid = <UID>;
 $uid = $uid + 0;
 close(UID);
 
-if($uid != 0 and $user == 0){
-	print STDERR "\nSorry, you need to be root to make a system wide install.\n";
-	print STDERR "Login as root and try again, or you can use sudo.\n";
-	print STDERR "If you want/can do neither, try a user install with a -u option\n\n";
-	exit;
-}
 
 ########## WHICH SHELL? ######################
 
 if(defined $ENV{SHELL}){
 	my @temp = split(/\//, $ENV{SHELL});
 	$shell = $temp[$#temp];
-	print "Shell Used: $shell\n";
 }
-else{
-	$shell = ask_user("Please enter the name of your shell");
-}
+
+do{
+	get_from_user("What is your default shell? ",\$shell);
+}while($shell eq "");
 
 my $home = $ENV{HOME} || (getpwuid($<))[7];
-my $trash_dir = $home . "/.Trash";
+my $trash = "HOME/.Trash";
+
+get_from_user("What is your home directory? ", \$home);
+get_from_user("Where do you like your trash (Relative to your home directory)? ",\$trash);
+my $user_or_system = "system";
+get_from_user("Type of Install? ",\$user_or_system);
+if($uid != 0 and $user_or_system eq "system"){
+	get_from_user("Cannot perform system install as a regular user. (exit | user)? ",\$user_or_system){
+		if($user_or_system eq "exit"){
+		exit;
+		}
+
 
 print "Your Home is: $home\n";
-print "Trash dir choosen: $trash_dir\n";
+print "Trash dir choosen: $trash\n";
 
 if($user == 1){
 	system("cp ./trsh.pl $home/.trsh.pl");
@@ -209,5 +214,17 @@ sub ask_user{
 	my $inp = <STDIN>;
 	chomp($inp);
 	return $inp;
+}
+
+sub get_from_user{
+	my $msg = shift;
+	my $ref_var = shift;
+	my $message = $msg . "[$$ref_var]: ";
+	print $message;
+	my $res = <STDIN>;
+	chomp($res);
+	if($res ne ""){
+		$$ref_var = $res;
+	}
 }
 
