@@ -57,32 +57,55 @@ do{
 }while($shell eq "");
 
 my $home = $ENV{HOME} || (getpwuid($<))[7];
-my $trash = "HOME/.Trash";
+my $trash = "/.Trash";
 
 get_from_user("What is your home directory? ", \$home);
 get_from_user("Where do you like your trash (Relative to your home directory)? ",\$trash);
+system("mkdir $home"."$trash");
+if(! -e "$home/$trash"){
+	print "Invalid TRASH DIRECTORY: $home$trash selection. Please choose a valid trash directory. Exiting installation...\n";
+	exit;
+}
+
 my $user_or_system = "system";
 get_from_user("Type of Install? ",\$user_or_system);
 if($uid != 0 and $user_or_system eq "system"){
-	get_from_user("Cannot perform system install as a regular user. (exit | user)? ",\$user_or_system){
-		if($user_or_system eq "exit"){
+	$user_or_system = "exit";
+	get_from_user("Cannot perform system install as a regular user. Select user to perform a user install instead. (exit | user)? ",\$user_or_system)
+	if($user_or_system eq "exit"){
 		exit;
-		}
+	}
+}
+open TRSH,"trsh.pl" or die "Wierd, your installation dir does not contain the main component (trsh)!\n";
+my @trsh_contents = <TRSH>;
+close(TRSH);
 
+if($trash ne "/.Trash"){
+	search_and_replace(\@trsh_contents, "my \$trash = \"\$ENV{HOME}\/.Trash\"", "my |$trash = \"\$ENV{HOME}$trash\""); 
+}
 
-print "Your Home is: $home\n";
-print "Trash dir choosen: $trash\n";
+my $dest;
+my $man_dest;
 
 if($user == 1){
-	system("cp ./trsh.pl $home/.trsh.pl");
-	system("cp ./trsh.1.gz $home/.trsh.1.gz");
-	$rm = "$home/.trsh.pl";
+	$dest = "$home/.trsh.pl";
+	get_from_user("Where do you trsh to be installed?", \$dest);
+	$man_dest = "$home/.trsh.1.gz";
+	get_from_user("Where do you want the man pages to be installed? ", \$man_dest);
+	if($man_dest ne "$home/.trsh.1.gz"){
+		search_and_replace(\@trsh_contents, "\$ENV{HOME}/.trsh.1.gz",$man_dest);
+	}
 }
 else{
-	system("cp ./trsh.pl /usr/bin");
-	system("cp trsh.1.gz /usr/share/man/man1");
-	$rm = "/usr/bin/trsh.pl";
+	$dest = "/usr/bin/trsh.pl";
+	get_from_user("Where do you trsh to be installed?", \$dest);
+	$man_dest = "/usr/share/man/man1/trsh.1.gz";
+	get_from_user("Where do you want the man pages to be installed? ", \$man_dest);
 }
+
+
+
+$rm = $dest;
 $undo = "$rm -u";
 
 if($shell eq "bash"){
@@ -93,32 +116,26 @@ if($shell eq "bash"){
 		elsif(-e "/etc/bashrc"){
 			$rc_file = "/etc/bashrc";
 		}
-		else{
-			$rc_file = ask_user("Please enter the system wide rc file (defaults do not exist)");
-			if(! -e $rc_file){
-				die "$rc_file does not exist. Try a user install\n";
-			}
+		get_from_user("What is your system wide RC file?",\$rc_file);
+		if(! -e $rc_file){
+			print "$rc_file does not exist. Exiting\n":
 		}
-		$rm = "/usr/bin/trsh.pl";
-		$undo = "$rm -u"
 	}
 	else{
 		if(-e "$home/.bashrc"){
 			$rc_file = "$home/.bashrc";
 		}
-		else{
-			$rc_file = ask_user("Enter the path to the user bashrc file");
+		get_from_user("What is the local RC file?", \$rc_file);
+		if(! -e $rc_file){
+			print "$rc_file does not exist. Exiting\n";
 		}
-		$rm = "$home/.trsh.pl";
-		$undo = "$rm -u";
 	}	
-	print "Using RC file: $rc_file\n";
 
 	if(check($rc_file) == 0){
 		backup($rc_file);
 		open BASHRC, ">>$rc_file" or die "Could not open $rc_file in append mode\n";
-		print BASHRC "alias rm=\"$rm\" # TRSH\n";
-		print BASHRC "alias undo=\"$undo\" # TRSH\n";
+		print BASHRC "alias rm=\"$dest\" # TRSH\n";
+		print BASHRC "alias undo=\"$dest -u\" # TRSH\n";
 		close(BASHRC);
 	}
 	else{
@@ -133,11 +150,9 @@ elsif($shell eq "csh" or $shell eq "tcsh"){
 		elsif(-e "/etc/cshrc"){
 			$rc_file = "/etc/cshrc";
 		}
-		else{
-			$rc_file = ask_user("Please enter the system wide rc file (defaults do not exist)");
-			if(! -e $rc_file){
-				die "$rc_file does not exist. Try a user install\n";
-			}
+		get_from_user("What is your system wide RC file?",\$rc_file);
+		if(! -e $rc_file){
+			print "$rc_file does not exist. Exiting\n":
 		}
 
 	}
@@ -145,26 +160,37 @@ elsif($shell eq "csh" or $shell eq "tcsh"){
 		if(-e "$home/.cshrc"){
 			$rc_file = "$home/.cshrc";
 		}
-		else{
-			$rc_file = ask_user("Enter the path to the user cshrc file");
+		get_from_user("What is the local RC file?", \$rc_file);
+		if(! -e $rc_file){
+			print "$rc_file does not exist. Exiting\n";
 		}
 	}	
-	print "Using RC file: $rc_file\n";
 	if(check($rc_file) == 0){
 		backup($rc_file);
 		open CSHRC, ">>$rc_file" or die "Could not open $rc_file in append mode\n";
-		print CSHRC "alias rm \"$rm\" # TRSH\n"; 
-		print CSHRC "alias undo \"$undo\" # TRSH\n"; 
+		print CSHRC "alias rm \"$dest\" # TRSH\n"; 
+		print CSHRC "alias undo \"$dest -u\" # TRSH\n"; 
 		close(CSHRC);
 	}
 	else{
-		print "Entries in $home/.cshrc seems to exist, leaving it alone\n";
+		print "Entries in $rc_file seems to exist, leaving it alone\n";
 	}
 }
 else{
-	usage();
+	print "Sorry, it seems that your shell: $shell is not supported by this installation. (not bash, csh or tcsh)\n";
+	print "Exiting\n";
 	exit;
 }
+open TRSH_NEW, "+>./trsh.pl.new" or die "Could not create trsh.pl.new\n";
+foreach my $line (@trsh_contents){
+	print TRSH_NEW "$line";
+}
+close(TRSH_NEW);
+system("mv ./trsh.pl.new $dest");
+system("cp ./trsh.1.gz $man_dest");
+system("chmod +x $dest");
+
+########### SUBS ##################
 
 sub backup{
 	my $file = shift;
@@ -228,3 +254,12 @@ sub get_from_user{
 	}
 }
 
+sub search_and_replace{
+	my $arr_ref = shift;
+	my $what = shift;
+	my $with = shift;
+	my $len = $#$arr_ref;
+	for(my $i=0;$i<=$len;$i++){
+		$$arr_ref[$i] =~ s/$what/$with/;
+	}
+}
