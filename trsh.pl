@@ -98,6 +98,13 @@ GetOptions( 'e|empty'      => \$empty,
 
 @remaining = @ARGV;
 
+my $dom = dom();
+if($dom >=1 and $dom <= 3){
+	if(size() > 500000){
+		print "WARNING: Your Trash Folder has exceeded 500MB. Please empty your trash (rm -e)\n";
+	}
+}
+
 if( !(-e $trash) ) {
 	print "Could not find the trash directory, creating it...\n";
         system("mkdir $trash");
@@ -122,10 +129,8 @@ if($help == 1){
 
 
 if($size == 1){
-	open SZ,"du -sh $trash |";
-	my @sz = split(/\s/,<SZ>);
-	print "$sz[0]B\n";
-	close(SZ);
+	my $sz = get_size_human_readable();
+	print "$sz" . "B\n";
 	exit;
 }
 
@@ -151,16 +156,12 @@ if($force == 1){
 
 # If the view flag is on, ls the files
 if($view == 1){
-	system("ls -l $trash");
+	display_trash();
 	exit;
 }
 
 if($empty == 1){
-	if(get_response("Are you sure you want to empty the trash?") == 1){
-		system ("rm -rf $history");
-		system ("rm -rf $trash/*");
-		system ("touch $history");
-	}
+	empty_trash();
 	exit;
 }
 
@@ -359,3 +360,67 @@ sub make_history{
 	close(HIST);
 }
 
+################# MISL TRASH FUNCTIONS ######################
+
+sub get_size_human_readable{
+	open SZ,"du -sh $trash |";
+	my $sz = <SZ>;
+	close(SZ);
+	chomp($sz);
+	my @temp = split(/\s/, $sz);
+	$sz = $temp[0];
+	return $sz;
+}
+
+sub get_size{
+	open SZ,"du -s $trash |";
+	my $sz = <SZ>;
+	close(SZ);
+	chomp($sz);
+	my @temp = split(/\s/, $sz);
+	$sz = $temp[0] + 0;
+	return $sz;
+}
+
+sub empty_trash{
+	if(get_response("Are you sure you want to empty the trash?") == 1){
+		system ("rm -rf $history");
+		open LS, "ls -a $trash |";
+		my @contents = <LS>;
+		close(LS);
+		foreach my $entry (@contents){
+			chomp($entry);
+			if($entry ne "." and $entry ne ".."){
+				system("rm -rf $trash/$entry");
+			}
+		}
+		system ("touch $history");
+	}
+}
+
+sub display_trash{
+	open LS, "ls -l -a $trash |";
+	my @contents = <LS>;
+	close(LS);
+	my $first = 1;
+	foreach my $entry (@contents){
+		if($first == 1){
+			$first = 0;
+			next;
+		}
+		chomp($entry);
+		my @temp = split(/\s/,$entry);
+		my $name = $temp[$#temp];
+		if($name ne "." and $name ne ".." and $name ne ".history"){
+			print "$entry\n";
+		}
+	}
+}
+
+sub dom{
+	open DATE, "date +%d |";
+	my $dt = <DATE>;
+	close(DATE);
+	$dt += 0;
+	return $dt;
+}
