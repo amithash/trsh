@@ -59,11 +59,12 @@ my $trash = "/.Trash";
 
 get_from_user("What is your home directory? ", \$home);
 get_from_user("Where do you like your trash (Relative to your home directory)? ",\$trash);
-system("mkdir $home"."$trash");
-if(! -e "$home/$trash"){
-	print "Invalid TRASH DIRECTORY: $home$trash selection. Please choose a valid trash directory. Exiting installation...\n";
-	exit;
+if(not ($trash =~ /^\//)){   # Check if it has a trailing forward slash, if it does not add it!
+	$trash = "/$trash";
 }
+
+############# KIND OF INSTALL and USER VALIDATION #############
+
 
 my $user_or_system = "system";
 get_from_user("Type of Install? (user / system)",\$user_or_system);
@@ -74,12 +75,15 @@ if($uid != 0 and $user_or_system eq "system"){
 		exit;
 	}
 }
+
+# Open trsh.pl and make changes with the user entered configuration.
+
 open TRSH,"trsh.pl" or die "Wierd, your installation dir does not contain the main component (trsh)!\n";
 my @trsh_contents = <TRSH>;
 close(TRSH);
 
 if($trash ne "/.Trash"){
-	search_and_replace(\@trsh_contents, "my \$trash = \"\$ENV{HOME}\/.Trash\"", "my |$trash = \"\$ENV{HOME}$trash\""); 
+	search_and_replace(\@trsh_contents, qr/my \$trash = "\$ENV{HOME}\/.Trash"/, "my \$trash = \"\$ENV{HOME}$trash\""); 
 }
 
 my $dest;
@@ -91,7 +95,7 @@ if($user_or_system eq "user"){
 	$man_dest = "$home/.trsh.1.gz";
 	get_from_user("Where do you want the man pages to be installed? ", \$man_dest);
 	if($man_dest ne "$home/.trsh.1.gz"){
-		search_and_replace(\@trsh_contents, "\$ENV{HOME}/.trsh.1.gz",$man_dest);
+		search_and_replace(\@trsh_contents, qr/\$ENV{HOME}\/.trsh.1.gz/, $man_dest);
 	}
 }
 else{
@@ -174,14 +178,20 @@ else{
 	print "Exiting\n";
 	exit;
 }
-open TRSH_NEW, "+>./trsh.pl.new" or die "Could not create trsh.pl.new\n";
+
+open TRSH_NEW, "+>$dest" or die "Could not create $dest, either the path does not exist, or you do not have write permissions there.\n";
 foreach my $line (@trsh_contents){
 	print TRSH_NEW "$line";
 }
 close(TRSH_NEW);
-system("mv ./trsh.pl.new $dest");
 system("cp ./trsh.1.gz $man_dest");
 system("chmod +x $dest");
+
+print "\n\nCongratulations, trsh is installed. Restart all current terminal sessions and try it out!\n";
+print "Report bugs to http://code.google.com/p/trsh/issues\n";
+if($user_or_system eq "system"){
+	print "You have installed trsh for all users. Please inform all your users the same. An uninformed feature is as dangerious as a buggy feature!\n";
+}
 
 ########### SUBS ##################
 
@@ -227,14 +237,6 @@ Refer the README for a manual install if you have a different
 shell.\n"
 }
 
-sub ask_user{
-	my $msg = shift;
-	print "$msg :";
-	my $inp = <STDIN>;
-	chomp($inp);
-	return $inp;
-}
-
 sub get_from_user{
 	my $msg = shift;
 	my $ref_var = shift;
@@ -251,8 +253,8 @@ sub search_and_replace{
 	my $arr_ref = shift;
 	my $what = shift;
 	my $with = shift;
-	my $len = $#$arr_ref;
-	for(my $i=0;$i<=$len;$i++){
+	for(my $i=0;$i<=$#$arr_ref;$i++){
 		$$arr_ref[$i] =~ s/$what/$with/;
 	}
 }
+

@@ -50,9 +50,15 @@ First of all, before using trsh, due to the nature of its dependency,
 but trsh does not..... The horror, The horror)
 Run tests test-trsh.sh and if any fail, raise a bug and DO NOT USE any further.
 
-I understand that this is under the GNU license, and I am not responsible 
-for your data loss, but still, does not mean that I cannot feel bad if
-my program ate your system! 
+NOTE: The test script assumes a DEFAULT USER INSTALLATION and works ONLY ON BASH
+So, it looks for :
+trsh in $HOME/.trsh.pl
+TRASH in $HOME/.Trash
+
+So, if you are at all skeptical about trsh, first install it as a user
+with your bash shell and then run the test-trsh.sh script. If all passes,
+uninstall it and reinstall it for all users (or your custom user install).
+Else, raise a bug (Refer reporting bugs).
 
 
 USAGE
@@ -106,4 +112,16 @@ KNOWN ISSUES
 If a file has exactly 6 consecutive underscores, then bad things will happen! :-)
 That is if a file is named: SOMETHING______SOMETHING,. You are better 
 off deleting this forcefully! 
+
+REPORTING BUGS
+--
+
+Report all bugs to:
+http://code.google.com/p/trsh/issues
+
+AUTHOR
+--
+
+Amithash Prasad {amithash@gmail.com}
+
 
