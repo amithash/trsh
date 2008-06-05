@@ -247,7 +247,7 @@ sub delete_file{
 	}
 	else{
 		push_to_history("$item_name\______$count");
-		system("mv $item $trash/$item\______$count");
+		system("mv $item $trash/$item_name\______$count");
 	}
 }
 
