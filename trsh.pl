@@ -144,12 +144,13 @@ if($undo > 0){
 
 # If the force flag is on, then rm instead of moving to trash.
 if($force == 1){
-	# If the warn flag is on, delete interactively. 
-	my $cmd = "rm -r";
-	$cmd = $cmd . "i" if($warn == 1);
+	my $cmd = "rm ";
+	$cmd = $cmd . "-r " if($recursive == 1); # Pass the recursive flag to rm
+	$cmd = $cmd . "-i " if($warn == 1); # Pass the interactive flag to rm
 	foreach my $this (@remaining){
-		print "Removing $this permanently\n" if($verbose == 1);
-		system("$cmd $this");
+		my $item = join("\\ ", split(/\s/,$this));
+		print "Removing \"$this\" permanently\n" if($verbose == 1);
+		system("$cmd $item");
 	}
 	exit;
 }
