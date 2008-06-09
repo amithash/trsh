@@ -22,25 +22,24 @@ use warnings;
 use Cwd;
 use Getopt::Long;
 
-my $user = 0;
 my $shell = "";
-my $uid;
 my $rc_file;
-my $help = 0;
 
-GetOptions("user" => \$user,
-	   "help" => \$help);
-
-if($help == 1){
-	usage();
-	exit;
-}
 ########## USER VALIDATION #################
 
 open UID, "id -u |";
-$uid = <UID>;
+my $uid = <UID>;
 $uid = $uid + 0;
 close(UID);
+
+print "Hi, welcome to the installation script of trsh. I will ask few quick questions, and then we are done.\n";
+print "Just hit Enter (Return) to accept the default value. For most cases, this will be just fine.\n";
+my $yes = "yes";
+get_from_user("Do you want to continue?",\$yes);
+if(not($yes eq "yes" or $yes eq "y" or $yes eq "Y")){
+	print "Goodbye\n";
+	exit;
+}
 
 
 ########## WHICH SHELL? ######################
