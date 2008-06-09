@@ -110,13 +110,6 @@ Thus any recover will be like popping the files from the trash stack!
 trsh warns the user on the 1st through the 2nd of every month if their trash size has gone beyond 500MB.
 (Where have all my space gone warnings!)
 
-
-KNOWN ISSUES
---
-If a file has exactly 6 consecutive underscores, then bad things will happen! :-)
-That is if a file is named: SOMETHING______SOMETHING,. You are better 
-off deleting this forcefully! 
-
 REPORTING BUGS
 --
 
