@@ -239,37 +239,49 @@ sub get_response{
 
 sub delete_file{
 	my $item = shift;
-	my @item_names = split(/\//, $item);
-	my $item_name = $item_names[$#item_names];
+	my @temp = split(/\//, $item);
+	my $item_name = pop(@temp);
 	my $count = does_item_exist_in_history($item_name);
-	if($count == 0){
-		push_to_history($item_name);
-		system("mv $item $trash");
-	}
-	else{
-		push_to_history("$item_name\______$count");
-		system("mv $item $trash/$item_name\______$count");
-	}
+	push_to_history("$item_name\______$count");
+	system("mv $item $trash/$item_name\______$count");
 }
 
 sub restore_file{
 	my $item = shift;
+	if(is_regex($item) == 1){
+		restore_regex($item);
+		return;
+	}
 	my $cwd = cwd();
 	my $count = does_item_exist_in_history($item);
 	my $index = $count - 1;
 	if($count == 0){
-		print "Could not restore $item, it does not appear to exist in the trash\n";
-		return;
-	}
-	elsif($count == 1){
-		seek_and_destroy_in_history($item);
-		system("mv $trash/$item $cwd/$item");
+		# Nothing like that found. 
+		print "$item does not exist in the trash.\n";
 	}
 	else{
-		seek_and_destroy_in_history("$item\_____$index");
+		seek_and_destroy_in_history("$item\______$index");
 		system("mv $trash/$item\______$index $cwd/$item");
 	}
 }
+
+# EXPER
+sub restore_regex{
+	my $reg = shift;
+	$reg =~ s/\*/\.\*/g;
+	$reg = qr/^(${reg})______\d+/; # Build the search regex.
+	my @hist = get_history();
+	my %matched;
+	foreach my $entry (@hist){
+		if($entry =~ $reg){
+			$matched{$1} = 1;
+		}
+	}
+	foreach my $entry (keys %matched){
+		restore_file($entry);
+	}
+}
+
 
 sub restore_last_file{
 	my $cwd = cwd();
@@ -280,13 +292,12 @@ sub restore_last_file{
 	}
 	my $item_cmd = join(" ", split(/\\\s/,$item));
 	if(-e "$trash/$item_cmd"){
-		if($item =~ /(.+)______\d+/){
+		if($item =~ /(.+)______\d+$/){
 			print "Restoring $1...\n";
 			system("mv $trash/$item $cwd/$1");
 		}
 		else{
-			print "Restoring $item...\n";
-			system("mv $trash/$item $cwd/$item");
+			print "ERROR! Something wierd happened. This should never happen\n";
 		}
 	}
 	else{
@@ -310,10 +321,7 @@ sub does_item_exist_in_history{
 	my $count = 0;
 	my @contents = get_history();
 	foreach my $i (@contents){
-		if($i =~ /^$item\______\d+/){
-			$count++;
-		}
-		elsif($i =~ /^$item/){
+		if($i =~ /^$item\______\d+$/){
 			$count++;
 		}
 	}
@@ -400,21 +408,28 @@ sub empty_trash{
 }
 
 sub display_trash{
-	open LS, "ls -l -a $trash |";
-	my @contents = <LS>;
-	close(LS);
-	my $first = 1;
-	foreach my $entry (@contents){
-		if($first == 1){
-			$first = 0;
-			next;
+	my @hist = get_history();
+	my %cont;
+	if($#hist >= 0){
+		print "File\t\t\tNumber\n";
+		print "----\t\t\t------\n";
+		foreach my $entry (@hist){
+			if($entry =~ /(.+)______\d+$/){
+				my $name = $1;
+				if(defined($cont{$name})){
+					$cont{$name} += 1;
+				}
+				else{
+					$cont{$name} = 1;
+				}
+			}
 		}
-		chomp($entry);
-		my @temp = split(/\s/,$entry);
-		my $name = $temp[$#temp];
-		if($name ne "." and $name ne ".." and $name ne ".history"){
-			print "$entry\n";
+		foreach my $entry (keys %cont){
+			print "$entry\t\t\t$cont{$entry}\n";
 		}
+	}
+	else{
+		print "Trash is empty!\n";
 	}
 }
 
@@ -425,3 +440,14 @@ sub dom{
 	$dt += 0;
 	return $dt;
 }
+
+sub is_regex{
+	my $inp = shift;
+	if($inp =~ /\*/){
+		return 1;
+	}
+	else{
+		return 0;
+	}
+}
+
