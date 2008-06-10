@@ -63,7 +63,7 @@ cd $HOME
 touch test3
 trsh.pl test3
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/.Trash/test3 ]
+if [ -e $HOME/.Trash/test3______0 ]
 then
 	echo "TEST 3A PASSED: file test3 exists in trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -112,7 +112,7 @@ touch test42
 touch test43
 trsh.pl test41 test42 test43
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/.Trash/test41 ] && [ -e $HOME/.Trash/test42 ] && [ -e $HOME/.Trash/test43 ]
+if [ -e $HOME/.Trash/test41______0 ] && [ -e $HOME/.Trash/test42______0 ] && [ -e $HOME/.Trash/test43______0 ]
 then
 	echo "TEST 5A PASSED: Files test41 test42 and test43 exist in Trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -161,7 +161,7 @@ trsh.pl test5
 touch test5
 trsh.pl test5
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/.Trash/test5 ] && [ -e $HOME/.Trash/test5______1 ] && [ -e $HOME/.Trash/test5______2 ]
+if [ -e $HOME/.Trash/test5______0 ] && [ -e $HOME/.Trash/test5______1 ] && [ -e $HOME/.Trash/test5______2 ]
 then
 	echo "TEST 7 PASSED: All three files deleted and exist in trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -174,7 +174,7 @@ fi
 echo "TEST 8: tests recover with multiple files."
 trsh.pl -u
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/.Trash/test5 ] && [ -e $HOME/.Trash/test5______1 ] && [ ! -e $HOME/.Trash/test5______2 ]
+if [ -e $HOME/.Trash/test5______0 ] && [ -e $HOME/.Trash/test5______1 ] && [ ! -e $HOME/.Trash/test5______2 ]
 then
 	echo "TEST 8A PASSED: 2 other files still exist and the 3'd file does not in the trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -197,7 +197,7 @@ echo "TEST 9: Testing capability to handler file name with spaces."
 touch test\ 9
 trsh.pl test\ 9
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e "$HOME/.Trash/test 9" ]
+if [ -e "$HOME/.Trash/test 9______0" ]
 then
 	echo "TEST 9 PASSED: File \"test 9\" exists in trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -224,7 +224,7 @@ mkdir test10b
 trsh.pl -r test10b
 echo ""
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -d "$HOME/.Trash/test10b" ]
+if [ -d "$HOME/.Trash/test10b______0" ]
 then
 	echo "TEST 10A PASSED: Dir test10b removed" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
