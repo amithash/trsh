@@ -411,8 +411,8 @@ sub display_trash{
 	my @hist = get_history();
 	my %cont;
 	if($#hist >= 0){
-		print "File\t\t\tNumber\n";
-		print "----\t\t\t------\n";
+		print "Count\tFile\n";
+		print "-----\t----\n";
 		foreach my $entry (@hist){
 			if($entry =~ /(.+)______\d+$/){
 				my $name = $1;
@@ -425,7 +425,7 @@ sub display_trash{
 			}
 		}
 		foreach my $entry (keys %cont){
-			print "$entry\t\t\t$cont{$entry}\n";
+			print "$cont{$entry}\t$entry\n";
 		}
 	}
 	else{
