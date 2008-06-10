@@ -411,6 +411,8 @@ sub display_trash{
 	my @hist = get_history();
 	my %cont;
 	if($#hist >= 0){
+		my $sz = get_size_human_readable();
+		print "Trash Size: $sz\n";
 		print "Count\tFile\n";
 		print "-----\t----\n";
 		foreach my $entry (@hist){
