@@ -114,9 +114,6 @@ if( !(-e $history)){
 	system("touch $history");
 }
 
-if($undo == 1 and $#remaining == 0 and ($remaining[0] =~ /^(\d+)$/) and (does_item_exist_in_history($remaining[0]) == 0)){
-	$undo = $1 + 0;
-}
 elsif($undo == 1 and $#remaining >= 0){
 	$recover = 1;
 	$undo = 0;
@@ -171,13 +168,7 @@ if($#remaining >= 0){
 	foreach my $item_index (@remaining){
 		my $item = join("\\ ", split(/\s/,$item_index));
 		if($recover == 1){
-			if(does_item_exist_in_history($item) > 0){
-				print "Recovering file $item\n" if($verbose == 1);
-				restore_file("$item");
-			}
-			else{
-				print "Item Does not exist in history\n";
-			}
+			restore_file("$item");
 		}
 		elsif(-e $item_index){  
 			print "Deleting \"$item_index\"\n" if($verbose == 1);
@@ -252,22 +243,26 @@ sub restore_file{
 		restore_regex($item);
 		return;
 	}
-	my $cwd = cwd();
-	my $count = does_item_exist_in_history($item);
-	my $index = $count - 1;
-	if($count == 0){
-		# Nothing like that found. 
-		print "$item does not exist in the trash.\n";
-	}
 	else{
-		seek_and_destroy_in_history("$item\______$index");
-		system("mv $trash/$item\______$index $cwd/$item");
+		my $cwd = cwd();
+		my $count = does_item_exist_in_history($item);
+		my $index = $count - 1;
+		if($count == 0){
+			# Nothing like that found. 
+			print "$item does not exist in the trash.\n";
+		}
+		else{
+			print "Restoring file $item...\n" if($verbose == 1);
+			seek_and_destroy_in_history("$item\______$index");
+			system("mv $trash/$item\______$index $cwd/$item");
+		}
 	}
 }
 
 # EXPER
 sub restore_regex{
 	my $reg = shift;
+	$reg =~ s/\./\\\./g;
 	$reg =~ s/\*/\.\*/g;
 	$reg = qr/^(${reg})______\d+/; # Build the search regex.
 	my @hist = get_history();
@@ -321,7 +316,7 @@ sub does_item_exist_in_history{
 	my $count = 0;
 	my @contents = get_history();
 	foreach my $i (@contents){
-		if($i =~ /^$item\______\d+$/){
+		if($i =~ /^${item}______\d+$/){
 			$count++;
 		}
 	}
