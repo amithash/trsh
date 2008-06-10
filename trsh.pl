@@ -99,7 +99,7 @@ GetOptions( 'e|empty'      => \$empty,
 @remaining = @ARGV;
 
 my $dom = dom();
-if($dom >=1 and $dom <= 3){
+if($dom == 1 or $dom == 2){
 	if(size() > 500000){
 		print "WARNING: Your Trash Folder has exceeded 500MB. Please empty your trash (rm -e)\n";
 	}
@@ -113,8 +113,7 @@ if( !(-e $history)){
 	print "Could not find the history file. Creating it... \n";
 	system("touch $history");
 }
-
-elsif($undo == 1 and $#remaining >= 0){
+if($undo == 1 and $#remaining >= 0){
 	$recover = 1;
 	$undo = 0;
 }
@@ -124,7 +123,6 @@ if($help == 1){
 	exit;
 }
 
-
 if($size == 1){
 	my $sz = get_size_human_readable();
 	print "$sz" . "B\n";
@@ -133,9 +131,7 @@ if($size == 1){
 
 # Restore the last deleted file
 if($undo > 0){
-	for(my $i=0;$i<$undo;$i++){
-		restore_last_file();
-	}
+	restore_last_file();
 	exit;
 }
 
@@ -159,7 +155,14 @@ if($view == 1){
 }
 
 if($empty == 1){
-	empty_trash();
+	if($#remaining >= 0){
+		foreach my $entry (@remaining){
+			remove_from_trash($entry);
+		}
+	}
+	else{
+		empty_trash();
+	}
 	exit;
 }
 
@@ -259,20 +262,10 @@ sub restore_file{
 	}
 }
 
-# EXPER
 sub restore_regex{
 	my $reg = shift;
-	$reg =~ s/\./\\\./g;
-	$reg =~ s/\*/\.\*/g;
-	$reg = qr/^(${reg})______\d+/; # Build the search regex.
-	my @hist = get_history();
-	my %matched;
-	foreach my $entry (@hist){
-		if($entry =~ $reg){
-			$matched{$1} = 1;
-		}
-	}
-	foreach my $entry (keys %matched){
+	my @matched = get_matched_files($reg);
+	foreach my $entry (@matched){
 		restore_file($entry);
 	}
 }
@@ -299,6 +292,40 @@ sub restore_last_file{
 		print "Something is wrong... $item was in the history, but not in the trash... Raise a bug\n";
 	}
 }
+
+sub remove_from_trash{
+	my $item = shift;
+	if(is_regex($item) == 1){
+		remove_from_trash_regex($item);
+		return;
+	}
+	else{
+		my $count = does_item_exist_in_history($item);
+		if($count == 0){
+			# Nothing like that found. 
+			print "$item does not exist in the trash.\n";
+		}
+		else{
+			if(get_response("Are you sure you want to remove $item from the trash?") == 1){
+				print "Removing $item from the trash...\n" if($verbose == 1);
+				for(my $i=0;$i<$count;$i++){
+					seek_and_destroy_in_history("$item\______$i");
+					system("rm -rf $trash/$item\______$i");
+				}
+			}
+		}
+	}
+}
+
+sub remove_from_trash_regex{
+	my $reg = shift;
+	my @matched = get_matched_files($reg);
+	foreach my $entry (@matched){
+		remove_from_trash($entry);
+	}
+}
+
+
 
 #############################################################
 # BASIC HISTORY FUNCTIONS
@@ -446,5 +473,25 @@ sub is_regex{
 	else{
 		return 0;
 	}
+}
+sub convert_regex{
+	my $reg = shift;
+	$reg =~ s/\./\\\./g;
+	$reg =~ s/\*/\.\*/g;
+	$reg = qr/^(${reg})______\d+/; # Build the search regex.
+	return $reg;
+}
+
+sub get_matched_files{
+	my $reg = shift;
+	$reg = convert_regex($reg);
+	my @hist = get_history();
+	my %matched;
+	foreach my $entry (@hist){
+		if($entry =~ $reg){
+			$matched{$1} = 1;
+		}
+	}
+	return keys(%matched);
 }
 

@@ -19,7 +19,10 @@
 
 A safe rm.
 
-I wrote this script when I accidentally deleted my homework.
+MOTIVATION
+--
+
+I wrote this script when I accidentally deleted my homework. Enough Said...
 
 SETUP
 --
@@ -70,10 +73,11 @@ This is a list of files to recover or delete.
 
 OPTIONS:
 
--u|--undo [FILES | NUMBER]
-This option instructs trsh to recover FILES from the trash and place them into the current working directory.
-If FILES is not provided, the last deleted file is recovered and placed into the current working directory.
-If instead a number is provided as an option, that many undo's are performed. 
+-u|--undo [FILES | REGEX]
+If this option is provided without any other arguments, the latest deleted file will be restored.
+If FILE/FILES are provided, the latest copy of these (If they exist in the trash) is recovered
+If instead a regex is provided, then all files in the trash matching with the regex is recovered. 
+(For regex usage, refer the subsection on regex below)
 
 -f|--force
 This option instructs trsh to permanently delete FILES and completely bypass the trash
@@ -85,7 +89,10 @@ This option will instruct trsh to prompt the user before deleting each and every
 This option will instruct trsh to talk about whatever it is doing.
 
 -e|--empty
-This empties the trash.
+If this option is provided without any other arguments, Trash is emptied.
+If FILE/FILES are provided, All copies of FILE is removed permanently from the trash
+If instead a regex is provided, then all files in the trash matching with the regex is permanently removed.
+(For regex usage, refer the subsection on regex below)
 
 -r|--recursive
 This option if provided will allow directories to be deleted.
@@ -100,6 +107,16 @@ This displays the size of the Trash directory.
 Displays this help and exits.
 
 rm FILES just moves FILES to the trash. By default, directories are not deleted.
+
+REGEX
+--
+A regex is accepted for restoration and emptying the trash (refer -e and -u options above).
+Currently only the * operator is accpeted. But as the shell tries to expand these, you will have
+to escape the * by either putting the entire regex in quotes or escaping every instance of the *.
+rm -u "some*"  # Correct
+rm -r "some\*  # Correct
+rm -u some*    # Wrong
+
 
 NOTES
 --
