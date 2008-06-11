@@ -75,15 +75,6 @@ my $warn = 0;
 my $verbose = 0;
 my $recursive = 0;
 
-my @remaining;
-
-if (not defined $ENV{HOME}) {
-    print "The environment variable HOME is not set\n";
-    exit;
-}
-my $trash = "$ENV{HOME}/.Trash";
-my $history = "$trash/.history";
-
 Getopt::Long::Configure('bundling');
 
 GetOptions( 'e|empty'      => \$empty, 
@@ -96,7 +87,15 @@ GetOptions( 'e|empty'      => \$empty,
 	    'v|verbose'    => \$verbose,
     	    'r|recursive'  => \$recursive);
 
-@remaining = @ARGV;
+
+my @remaining = @ARGV;
+
+if (not defined $ENV{HOME}) {
+    print "The environment variable HOME is not set\n";
+    exit;
+}
+my $trash = "$ENV{HOME}/.Trash";
+my $history = "$trash/.history";
 
 my $dom = dom();
 if($dom == 1 or $dom == 2){
@@ -237,39 +236,28 @@ sub delete_file{
 	my $item_name = pop(@temp);
 	my $count = does_item_exist_in_history($item_name);
 	push_to_history("$item_name\______$count");
-	system("mv $item $trash/$item_name\______$count");
+	system("mv \"$item\" \"$trash/$item_name\______$count\"");
 }
 
 sub restore_file{
 	my $item = shift;
-	if(is_regex($item) == 1){
-		restore_regex($item);
-		return;
-	}
-	else{
-		my $cwd = cwd();
-		my $count = does_item_exist_in_history($item);
+	my @matched = get_matched_files($item);
+	$matched[0] = $item if($#matched < 0); # Deffer error reporting if there are no matches.
+	my $cwd = cwd();
+	foreach my $entry (@matched){
+		my $count = does_item_exist_in_history($entry);
 		my $index = $count - 1;
 		if($count == 0){
 			# Nothing like that found. 
-			print "$item does not exist in the trash.\n";
+			print "$entry does not exist in the trash.\n";
 		}
 		else{
-			print "Restoring file $item...\n" if($verbose == 1);
-			seek_and_destroy_in_history("$item\______$index");
-			system("mv $trash/$item\______$index $cwd/$item");
+			print "Restoring file $entry...\n" if($verbose == 1);
+			seek_and_destroy_in_history("$entry\______$index");
+			system("mv \"$trash/${entry}______$index\" \"$cwd/$entry\"");
 		}
 	}
 }
-
-sub restore_regex{
-	my $reg = shift;
-	my @matched = get_matched_files($reg);
-	foreach my $entry (@matched){
-		restore_file($entry);
-	}
-}
-
 
 sub restore_last_file{
 	my $cwd = cwd();
@@ -295,36 +283,25 @@ sub restore_last_file{
 
 sub remove_from_trash{
 	my $item = shift;
-	if(is_regex($item) == 1){
-		remove_from_trash_regex($item);
-		return;
-	}
-	else{
-		my $count = does_item_exist_in_history($item);
+	my @matched = get_matched_files($item);
+	$matched[0] = $item if($#matched < 0); # Deffer error reporting if there are no matches.
+	foreach my $entry (@matched){
+		my $count = does_item_exist_in_history($entry);
 		if($count == 0){
 			# Nothing like that found. 
-			print "$item does not exist in the trash.\n";
+			print "$entry does not exist in the trash.\n";
 		}
 		else{
-			if(get_response("Are you sure you want to remove $item from the trash?") == 1){
-				print "Removing $item from the trash...\n" if($verbose == 1);
+			if(get_response("Are you sure you want to remove $entry from the trash?") == 1){
+				print "Removing $entry from the trash...\n" if($verbose == 1);
 				for(my $i=0;$i<$count;$i++){
-					seek_and_destroy_in_history("$item\______$i");
-					system("rm -rf $trash/$item\______$i");
+					seek_and_destroy_in_history("$entry\______$i");
+					system("rm -rf \"$trash/$entry\______$i\"");
 				}
 			}
 		}
 	}
 }
-
-sub remove_from_trash_regex{
-	my $reg = shift;
-	my @matched = get_matched_files($reg);
-	foreach my $entry (@matched){
-		remove_from_trash($entry);
-	}
-}
-
 
 
 #############################################################
@@ -343,7 +320,9 @@ sub does_item_exist_in_history{
 	my $count = 0;
 	my @contents = get_history();
 	foreach my $i (@contents){
-		if($i =~ /^${item}______\d+$/){
+		# Now we do exact matching as we know that __0 has to come before __1
+		# and there is no point of a regex match (Screws if a filename has a * in it)
+		if($i eq "${item}______$count"){ 
 			$count++;
 		}
 	}
@@ -366,6 +345,7 @@ sub seek_and_destroy_in_history{
 	my $item_name = shift;
 	my @contents = get_history();
 	my $count = 0;
+	$item_name =~ s/\\\*/\*/g;
 	foreach my $i (@contents){
 		if($i eq "$item_name"){
 			my @new_countents = @contents[0..($count-1),($count+1)..$#contents];
