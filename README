@@ -106,6 +106,9 @@ This displays the size of the Trash directory.
 -h|--help
 Displays this help and exits.
 
+-x|--force-regex
+This forces trsh to assume that the provided arguments are regex's. (Not needed most of the time, Read the REGEX Section)
+
 rm FILES just moves FILES to the trash. By default, directories are not deleted.
 
 REGEX
@@ -116,6 +119,13 @@ to escape the * by either putting the entire regex in quotes or escaping every i
 rm -u "some*"  # Correct
 rm -r "some\*  # Correct
 rm -u some*    # Wrong
+
+The -x option is probably going to be the least used. Here is one of the scenarios where it might be useful:
+touch test1 te\*t1
+rm test1 te\*t1
+rm -u "te\*t1"    # This will restore only te\*t1.
+rm -ux "te\*t1"   # This will restore both test1 and te\*t1.
+But rm -u "te*" will still restore both.
 
 
 NOTES

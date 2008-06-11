@@ -74,6 +74,7 @@ my $help = 0;
 my $warn = 0;
 my $verbose = 0;
 my $recursive = 0;
+my $regex_force = 0;
 
 Getopt::Long::Configure('bundling');
 
@@ -85,6 +86,7 @@ GetOptions( 'e|empty'      => \$empty,
 	    'h|help'       => \$help,
 	    'i|interactive'=> \$warn,
 	    'v|verbose'    => \$verbose,
+	    'x|force-regex'=> \$regex_force,
     	    'r|recursive'  => \$recursive);
 
 
@@ -241,7 +243,10 @@ sub delete_file{
 
 sub restore_file{
 	my $item = shift;
-	my @matched = get_matched_files($item);
+	my @matched;
+	if((! -e "$trash/${item}______0") or $regex_force == 1){ # Only match of file is not there.
+		@matched = get_matched_files($item);
+	}
 	$matched[0] = $item if($#matched < 0); # Deffer error reporting if there are no matches.
 	my $cwd = cwd();
 	foreach my $entry (@matched){
@@ -283,7 +288,10 @@ sub restore_last_file{
 
 sub remove_from_trash{
 	my $item = shift;
-	my @matched = get_matched_files($item);
+	my @matched;
+	if((! -e "$trash/${item}______0") or $regex_force == 1){ # Only match if file does not exist.
+		@matched = get_matched_files($item);
+	}
 	$matched[0] = $item if($#matched < 0); # Deffer error reporting if there are no matches.
 	foreach my $entry (@matched){
 		my $count = does_item_exist_in_history($entry);
