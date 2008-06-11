@@ -345,7 +345,6 @@ sub seek_and_destroy_in_history{
 	my $item_name = shift;
 	my @contents = get_history();
 	my $count = 0;
-	$item_name =~ s/\\\*/\*/g;
 	foreach my $i (@contents){
 		if($i eq "$item_name"){
 			my @new_countents = @contents[0..($count-1),($count+1)..$#contents];
