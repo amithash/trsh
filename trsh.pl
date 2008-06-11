@@ -334,7 +334,7 @@ sub remove_from_trash_regex{
 sub push_to_history{
 	my $item = shift;
 	my @contents = get_history();
-	$contents[$#contents+1] = $item;
+	push(@contents,$item);
 	make_history(@contents);
 }
 
@@ -353,8 +353,9 @@ sub does_item_exist_in_history{
 sub pop_from_history{
 	my @contents = get_history();
 	if($#contents >= 0){
-		make_history(@contents[0..($#contents-1)]);
-		return $contents[$#contents];
+		my $last = pop(@contents);
+		make_history(@contents);
+		return $last;
 	}
 	else{
 		return "NULL______NULL";
