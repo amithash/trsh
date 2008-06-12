@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #*************************************************************************
 # Copyright 2008 Amithash Prasad                                         *
 #									 *
@@ -22,7 +22,13 @@ echo "WARNING: This test was designed for bash."
 echo "         If you are not running BASH, too bad"
 
 echo "Backing up existing trash."
-mv $HOME/.Trash $HOME/.Trash_backup
+if [ -d $HOME/.Trash ]
+then
+	mv $HOME/.Trash $HOME/.Trash_backup
+fi
+export PATH=`pwd`:$PATH
+
+which trsh.pl
 
 PASSED_COUNT=0
 TOTAL_COUNT=0
@@ -194,8 +200,8 @@ fi
 
 # TEST 9: File name with space
 echo "TEST 9: Testing capability to handler file name with spaces."
-touch test\ 9
-trsh.pl test\ 9
+touch "test 9"
+trsh.pl "test 9"
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e "$HOME/.Trash/test 9______0" ]
 then
@@ -264,14 +270,76 @@ else
 fi
 ##################################################################################
 
-# Do not leave stray test files.
-/bin/rm -rf .Trash test3 test41 test42 test43 test5 yy nn test10a test10b yyy nnn 
+# Cleanup
+/bin/rm -rf .Trash test3 test41 test42 test43 test5 nn test10a test10b yyy nnn 
 /bin/rm -f test\ 9
-mv $HOME/.Trash_backup $HOME/.Trash
+echo "END OF REQUIRED TESTS" >&2
+echo "" >&2
 
-echo "END OF TESTS" >&2
 echo "$PASSED_COUNT OF $TOTAL_COUNT TESTS PASSED." >&2
 if [ $PASSED_COUNT -eq $TOTAL_COUNT ] 
 then
 	echo "ALL TESTS PASSED. BASIC FEATURES WORKING" >&2
 fi
+echo "" >&2
+PASSED_COUNT=0
+TOTAL_COUNT=0
+
+##################################################################################
+echo "Running Extended Tests" >&2
+echo "y" >> yy
+echo "y" >> yy
+
+touch test1 test2
+trsh.pl test1 test2
+trsh.pl -u "test*"
+
+TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
+if [ -e $HOME/test1 ] && [ -e $HOME/test2 ]
+then
+	echo "TEST 12 PASSED: Recover regex" >&2
+	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
+else
+	echo "TEST 12 FAILED: Recover regex" >&2
+fi
+##################################################################################
+trsh.pl test1 test2
+trsh.pl -e "test*" < ./yy
+
+TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
+if [ -e $HOME/.Trash/test1______0 ] || [ -e $HOME/.Trash/test2______0 ]
+then
+	echo "TEST 13 FAILED: Erase regex" >&2
+else
+	echo "TEST 13 PASSED: Erase regex" >&2
+	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
+fi
+##################################################################################
+touch test1 test2
+trsh.pl test1 test2
+trsh.pl -e "test1" < ./yy
+
+TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
+if [ -e $HOME/.Trash/test1______0 ] || [ ! -e $HOME/.Trash/test2______0 ]
+then
+	echo "TEST 14 FAILED: Erase specific file" >&2
+else
+	echo "TEST 14 PASSED: Erase specific file" >&2
+	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
+fi
+
+
+echo "END OF RECOMMENDED TESTS" >&2
+echo "" >&2
+echo "$PASSED_COUNT OF $TOTAL_COUNT TESTS PASSED." >&2
+if [ $PASSED_COUNT -eq $TOTAL_COUNT ] 
+then
+	echo "ALL RECOMMENDED TESTS PASSED. EXTENDED FEATURES WORKING" >&2
+fi
+echo "" >&2
+
+if [ -d $HOME/.Trash_backup ]
+then
+	mv $HOME/.Trash_backup $HOME/.Trash
+fi
+

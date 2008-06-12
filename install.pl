@@ -21,6 +21,7 @@ use strict;
 use warnings;
 use Cwd;
 use Getopt::Long;
+use Term::ANSIColor;
 
 my $shell = "";
 my $rc_file;
@@ -32,15 +33,16 @@ my $uid = <UID>;
 $uid = $uid + 0;
 close(UID);
 
-print "Hi, welcome to the installation script of trsh. I will ask few quick questions, and then we are done.\n";
-print "Just hit Enter (Return) to accept the default value. For most cases, this will be just fine.\n";
+print color("Blue"), "Hi, welcome to the installation script of trsh. I will ask few quick questions, and then we are done.\n";
+print color("Blue"), "Just hit Enter (Return) to accept the default value. For most cases, this will be just fine.\n\n";
 my $yes = "yes";
 get_from_user("Do you want to continue?",\$yes);
 if(not($yes eq "yes" or $yes eq "y" or $yes eq "Y")){
 	print "Goodbye\n";
+	print color("White"),"\n";
 	exit;
 }
-
+print "\n";
 
 ########## WHICH SHELL? ######################
 
@@ -175,6 +177,7 @@ elsif($shell eq "csh" or $shell eq "tcsh"){
 else{
 	print "Sorry, it seems that your shell: $shell is not supported by this installation. (not bash, csh or tcsh)\n";
 	print "Exiting\n";
+	print color("White"),"\n";
 	exit;
 }
 
@@ -186,11 +189,12 @@ close(TRSH_NEW);
 system("cp ./trsh.1.gz $man_dest");
 system("chmod +x $dest");
 
-print "\n\nCongratulations, trsh is installed. Restart all current terminal sessions and try it out!\n";
-print "Report bugs to http://code.google.com/p/trsh/issues\n";
+print color("Green"), "\n\nCongratulations, trsh is installed. Restart all current terminal sessions and try it out!\n";
+print color("Green"), "Report bugs to http://code.google.com/p/trsh/issues\n";
 if($user_or_system eq "system"){
-	print "You have installed trsh for all users. Please inform all your users the same. An uninformed feature is as dangerious as a buggy feature!\n";
+	print color("Red"),"You have installed trsh for all users. Please inform all your users the same. An uninformed feature is as dangerious as a buggy feature!\n";
 }
+print color("White"), "\n";
 
 ########### SUBS ##################
 
@@ -219,28 +223,12 @@ sub check{
 	return $exist;
 }
 
-sub usage{
-	print "USAGE:
-
-setup.pl [-u]
-
-SHELL  = \"bash\" for the Bourne again shell,
-       = \"csh\" for the C-Shell
--u     = If provided, a user installation is performed and you
-	 do not need root permissions, but you do not get a man 
-	 page!
-
-NOTE: for bash it is assumed that the .bashrc file in the home
-dir is present. and the same goes for the c-shell (.cshrc).
-Refer the README for a manual install if you have a different
-shell.\n"
-}
-
 sub get_from_user{
 	my $msg = shift;
 	my $ref_var = shift;
-	my $message = $msg . "[$$ref_var]: ";
-	print $message;
+	print color("White"), $msg;
+	print color("Red"), " [$$ref_var]";
+	print color("White"), ": ";
 	my $res = <STDIN>;
 	chomp($res);
 	if($res ne ""){

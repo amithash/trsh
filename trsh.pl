@@ -142,9 +142,8 @@ if($force == 1){
 	$cmd = $cmd . "-r " if($recursive == 1); # Pass the recursive flag to rm
 	$cmd = $cmd . "-i " if($warn == 1); # Pass the interactive flag to rm
 	foreach my $this (@remaining){
-		my $item = join("\\ ", split(/\s/,$this));
 		print "Removing \"$this\" permanently\n" if($verbose == 1);
-		system("$cmd $item");
+		system("$cmd \"$this\"");
 	}
 	exit;
 }
@@ -170,9 +169,8 @@ if($empty == 1){
 
 if($#remaining >= 0){
 	foreach my $item_index (@remaining){
-		my $item = join("\\ ", split(/\s/,$item_index));
 		if($recover == 1){
-			restore_file("$item");
+			restore_file("$item_index");
 		}
 		elsif(-e $item_index){  
 			print "Deleting \"$item_index\"\n" if($verbose == 1);
@@ -183,7 +181,7 @@ if($#remaining >= 0){
 			elsif($warn == 1){
 				next unless(get_response("Are you sure you want to delete file: \"$item_index\"") == 1);
 			}
-			delete_file("$item");
+			delete_file("$item_index");
 		}
 		else{
 			print "Cowardly refused to delete an imaginary file \"$item_index\"\n";
@@ -218,8 +216,9 @@ sub usage{
 sub get_response{
 	my $message = shift;
 	my $ret = 0;
+	my $response = "n";
 	print "$message (y/n):";
-	my $response = <STDIN>;
+	$response = <STDIN>;
 	chomp($response);
 	# Any response, other than y,Y is considered as a n. 
 	if($response eq "y" or $response eq "Y"){

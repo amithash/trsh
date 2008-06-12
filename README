@@ -53,16 +53,10 @@ First of all, before using trsh, due to the nature of its dependency,
 but trsh does not..... The horror, The horror)
 Run tests test-trsh.sh and if any fail, raise a bug and DO NOT USE any further.
 
-NOTE: The test script assumes a DEFAULT USER INSTALLATION and works ONLY ON BASH
-So, it looks for :
-trsh in $HOME/.trsh.pl
-TRASH in $HOME/.Trash
+Note that test-trsh.bash assumes that you are running it from trsh's install
+directory. (It uses pwd to set the path to point to trsh.pl)
 
-So, if you are at all skeptical about trsh, first install it as a user
-with your bash shell and then run the test-trsh.sh script. If all passes,
-uninstall it and reinstall it for all users (or your custom user install).
-Else, raise a bug (Refer reporting bugs).
-
+So, if you are a but concerned, you can run this tests to make sure that it works!
 
 USAGE
 --
