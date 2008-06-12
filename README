@@ -48,15 +48,16 @@ as root).
 TEST
 --
 
-First of all, before using trsh, due to the nature of its dependency,
-(Meaning, once users are in bliss that they can restore a deleted file,
-but trsh does not..... The horror, The horror)
-Run tests test-trsh.sh and if any fail, raise a bug and DO NOT USE any further.
+BASH: test-trsh.bash
+CSH/TCSH: test-trsh.csh
+Run it, and if anything fails, raise a bug (See below) and do not install. :-)
 
-Note that test-trsh.bash assumes that you are running it from trsh's install
-directory. (It uses pwd to set the path to point to trsh.pl)
+You can redirect stdout to /dev/null to not see so much output for the bash script by:
+./test-trsh.bash > /dev/null
 
-So, if you are a but concerned, you can run this tests to make sure that it works!
+Sorry, csh folks, no such thing for the csh equivalent script! You will have
+to live with the screen dump! :-)
+
 
 USAGE
 --

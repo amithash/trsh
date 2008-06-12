@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
 #*************************************************************************
 
-echo "WARNING: This test was designed for bash."
+echo "WARNING: This test_trsh was designed for bash."
 echo "         If you are not running BASH, too bad"
 
 echo "Backing up existing trash."
@@ -66,108 +66,108 @@ fi
 # TEST 3 remove
 echo "TEST 3: Tests basic file delete"
 cd $HOME
-touch test3
-trsh.pl test3
+touch test_trsh3
+trsh.pl test_trsh3
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/.Trash/test3______0 ]
+if [ -e $HOME/.Trash/test_trsh3______0 ]
 then
-	echo "TEST 3A PASSED: file test3 exists in trash" >&2
+	echo "TEST 3A PASSED: file test_trsh3 exists in trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 else
-	echo "TEST 3A FAILED: file test3 does not exist in trash" >&2
+	echo "TEST 3A FAILED: file test_trsh3 does not exist in trash" >&2
 fi
 ##################################################################################
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/test3 ]
+if [ -e $HOME/test_trsh3 ]
 then
-	echo "TEST 3B FAILED: file test3 not deleted" >&2
+	echo "TEST 3B FAILED: file test_trsh3 not deleted" >&2
 else
-	echo "TEST 3B PASSED: file test3 deleted" >&2
+	echo "TEST 3B PASSED: file test_trsh3 deleted" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 fi
 ##################################################################################
 # TEST 4 recover
 echo "TEST 4: Tests basic file recovery"
 cd $HOME
-trsh.pl -u test3
+trsh.pl -u test_trsh3
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/.Trash/test3 ]
+if [ -e $HOME/.Trash/test_trsh3 ]
 then
-	echo "TEST 4A FAILED: file test3 exists in trash" >&2
+	echo "TEST 4A FAILED: file test_trsh3 exists in trash" >&2
 else
-	echo "TEST 4A PASSED: file test3 does not exist in trash" >&2
+	echo "TEST 4A PASSED: file test_trsh3 does not exist in trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 fi
 ##################################################################################
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/test3 ]
+if [ -e $HOME/test_trsh3 ]
 then
-	echo "TEST 4B PASSED: file test3 recovered" >&2
+	echo "TEST 4B PASSED: file test_trsh3 recovered" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 else
-	echo "TEST 4B FAILED: file test3 not recovered" >&2
+	echo "TEST 4B FAILED: file test_trsh3 not recovered" >&2
 fi
 ##################################################################################
-/bin/rm test3
+/bin/rm test_trsh3
 
 # TEST 5 delete multiple files
-echo "TEST 5 tests delete multiple files"
+echo "TEST 5 test_trshs delete multiple files"
 cd $HOME
-touch test41 
-touch test42
-touch test43
-trsh.pl test41 test42 test43
+touch test_trsh41 
+touch test_trsh42
+touch test_trsh43
+trsh.pl test_trsh41 test_trsh42 test_trsh43
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/.Trash/test41______0 ] && [ -e $HOME/.Trash/test42______0 ] && [ -e $HOME/.Trash/test43______0 ]
+if [ -e $HOME/.Trash/test_trsh41______0 ] && [ -e $HOME/.Trash/test_trsh42______0 ] && [ -e $HOME/.Trash/test_trsh43______0 ]
 then
-	echo "TEST 5A PASSED: Files test41 test42 and test43 exist in Trash" >&2
+	echo "TEST 5A PASSED: Files test_trsh41 test_trsh42 and test_trsh43 exist in Trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 else
-	echo "TEST 5A FAILED: Files test41 test42 and test43 do not exist in Trash" >&2
+	echo "TEST 5A FAILED: Files test_trsh41 test_trsh42 and test_trsh43 do not exist in Trash" >&2
 fi
 ##################################################################################
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/test41 ] && [ -e $HOME/test42 ] && [ -e $HOME/test43 ]
+if [ -e $HOME/test_trsh41 ] && [ -e $HOME/test_trsh42 ] && [ -e $HOME/test_trsh43 ]
 then
-	echo "TEST 5B FAILED: Files test41 test42 and test43 not deleted" >&2
+	echo "TEST 5B FAILED: Files test_trsh41 test_trsh42 and test_trsh43 not deleted" >&2
 else
-	echo "TEST 5B PASSED: Files test41 test42 and test43 are deleted" >&2
+	echo "TEST 5B PASSED: Files test_trsh41 test_trsh42 and test_trsh43 are deleted" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 fi
 
 ##################################################################################
 # TEST 6 trsh.pl -u
-echo "TEST 6 tests trsh.pl -u"
+echo "TEST 6 test_trshs trsh.pl -u"
 trsh.pl -u
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/test43 ]
+if [ -e $HOME/test_trsh43 ]
 then
-	echo "TEST 6A PASSED: File test43 recovered" >&2
+	echo "TEST 6A PASSED: File test_trsh43 recovered" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 else
-	echo "TEST 6A FAILED: File test43 not recovered" >&2
+	echo "TEST 6A FAILED: File test_trsh43 not recovered" >&2
 fi
 ##################################################################################
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/.Trash/test43 ]
+if [ -e $HOME/.Trash/test_trsh43 ]
 then
-	echo "TEST 6B FAILED: File test43 exists in trash" >&2
+	echo "TEST 6B FAILED: File test_trsh43 exists in trash" >&2
 else
-	echo "TEST 6B PASSED: File test43 does not exist in trash" >&2
+	echo "TEST 6B PASSED: File test_trsh43 does not exist in trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 fi
 ##################################################################################
 
 # TEST 7 Multiple files with same name
-echo "TEST 7: tests multi files same name"
-touch test5
-trsh.pl test5
-touch test5
-trsh.pl test5
-touch test5
-trsh.pl test5
+echo "TEST 7: test_trshs multi files same name"
+touch test_trsh5
+trsh.pl test_trsh5
+touch test_trsh5
+trsh.pl test_trsh5
+touch test_trsh5
+trsh.pl test_trsh5
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/.Trash/test5______0 ] && [ -e $HOME/.Trash/test5______1 ] && [ -e $HOME/.Trash/test5______2 ]
+if [ -e $HOME/.Trash/test_trsh5______0 ] && [ -e $HOME/.Trash/test_trsh5______1 ] && [ -e $HOME/.Trash/test_trsh5______2 ]
 then
 	echo "TEST 7 PASSED: All three files deleted and exist in trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -177,10 +177,10 @@ fi
 ##################################################################################
 
 # TEST 8 recover using trsh.pl -u
-echo "TEST 8: tests recover with multiple files."
+echo "TEST 8: test_trshs recover with multiple files."
 trsh.pl -u
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/.Trash/test5______0 ] && [ -e $HOME/.Trash/test5______1 ] && [ ! -e $HOME/.Trash/test5______2 ]
+if [ -e $HOME/.Trash/test_trsh5______0 ] && [ -e $HOME/.Trash/test_trsh5______1 ] && [ ! -e $HOME/.Trash/test_trsh5______2 ]
 then
 	echo "TEST 8A PASSED: 2 other files still exist and the 3'd file does not in the trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -189,7 +189,7 @@ else
 fi
 ##################################################################################
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/test5 ] 
+if [ -e $HOME/test_trsh5 ] 
 then
 	echo "TEST 8B PASSED: File recovered as itself" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -199,59 +199,59 @@ fi
 ##################################################################################
 
 # TEST 9: File name with space
-echo "TEST 9: Testing capability to handler file name with spaces."
-touch "test 9"
-trsh.pl "test 9"
+echo "TEST 9: Testing capability to handle file name with spaces."
+touch "test_trsh 9"
+trsh.pl "test_trsh 9"
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e "$HOME/.Trash/test 9______0" ]
+if [ -e "$HOME/.Trash/test_trsh 9______0" ]
 then
-	echo "TEST 9 PASSED: File \"test 9\" exists in trash" >&2
+	echo "TEST 9 PASSED: File \"test_trsh 9\" exists in trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 else
-	echo "TEST 9 FAILED: File \"test 9\" does not exist in trash" >&2
+	echo "TEST 9 FAILED: File \"test_trsh 9\" does not exist in trash" >&2
 fi
 ##################################################################################
 
 # TEST 10: Removal of dirs:
 echo "Test 10: Testing removal of dirs"
-mkdir test10a
-trsh.pl test10a
+mkdir test_trsh10a
+trsh.pl test_trsh10a
 echo ""
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -d "$HOME/test10a" ]
+if [ -d "$HOME/test_trsh10a" ]
 then
-	echo "TEST 10A PASSED: Dir test10a not removed" >&2
+	echo "TEST 10A PASSED: Dir test_trsh10a not removed" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 else
-	echo "TEST 10A FAILED: Dir test10a removed" >&2
+	echo "TEST 10A FAILED: Dir test_trsh10a removed" >&2
 fi
 ##################################################################################
-mkdir test10b
-trsh.pl -r test10b
+mkdir test_trsh10b
+trsh.pl -r test_trsh10b
 echo ""
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -d "$HOME/.Trash/test10b______0" ]
+if [ -d "$HOME/.Trash/test_trsh10b______0" ]
 then
-	echo "TEST 10A PASSED: Dir test10b removed" >&2
+	echo "TEST 10B PASSED: Dir test_trsh10b removed" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 else
-	echo "TEST 10B FAILED: Dir test10b not removed" >&2
+	echo "TEST 10B FAILED: Dir test_trsh10b not removed" >&2
 fi
 ##################################################################################
 
 # TEST 11: Interactive mode. 
-touch test11a1
-touch test11a2
-touch test11a3
+touch test_trsh11a1
+touch test_trsh11a2
+touch test_trsh11a3
 echo "y" >> yyy
 echo "y" >> yyy
 echo "y" >> yyy
 echo "n" >> nnn
 echo "n" >> nnn
 echo "n" >> nnn
-trsh.pl -i test11a1 test11a2 test11a3 < nnn
+trsh.pl -i test_trsh11a1 test_trsh11a2 test_trsh11a3 < nnn
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/test11a1 ] && [ -e $HOME/test11a2 ] && [ -e $HOME/test11a3 ]
+if [ -e $HOME/test_trsh11a1 ] && [ -e $HOME/test_trsh11a2 ] && [ -e $HOME/test_trsh11a3 ]
 then
 	echo "TEST 11A PASSED: All three files not deleted on a no" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -259,9 +259,9 @@ else
 	echo "TEST 11A FAILED: All or some of the files are deleted on a no" >&2
 fi
 ##################################################################################
-trsh.pl -i test11a1 test11a2 test11a3 < yyy
+trsh.pl -i test_trsh11a1 test_trsh11a2 test_trsh11a3 < yyy
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/test11a1 ] && [ -e $HOME/test11a2 ] && [ -e $HOME/test11a3 ]
+if [ -e $HOME/test_trsh11a1 ] && [ -e $HOME/test_trsh11a2 ] && [ -e $HOME/test_trsh11a3 ]
 then
 	echo "TEST 11B FAILED: All three files not deleted on a yes" >&2
 else
@@ -271,8 +271,8 @@ fi
 ##################################################################################
 
 # Cleanup
-/bin/rm -rf .Trash test3 test41 test42 test43 test5 nn test10a test10b yyy nnn 
-/bin/rm -f test\ 9
+/bin/rm -rf .Trash test_trsh3 test_trsh41 test_trsh42 test_trsh43 test_trsh5 nn test_trsh10a test_trsh10b yyy nnn 
+/bin/rm -f test_trsh\ 9
 echo "END OF REQUIRED TESTS" >&2
 echo "" >&2
 
@@ -290,12 +290,12 @@ echo "Running Extended Tests" >&2
 echo "y" >> yy
 echo "y" >> yy
 
-touch test1 test2
-trsh.pl test1 test2
-trsh.pl -u "test*"
+touch test_trsh1 test_trsh2
+trsh.pl test_trsh1 test_trsh2
+trsh.pl -u "test_trsh*"
 
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/test1 ] && [ -e $HOME/test2 ]
+if [ -e $HOME/test_trsh1 ] && [ -e $HOME/test_trsh2 ]
 then
 	echo "TEST 12 PASSED: Recover regex" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -303,11 +303,11 @@ else
 	echo "TEST 12 FAILED: Recover regex" >&2
 fi
 ##################################################################################
-trsh.pl test1 test2
-trsh.pl -e "test*" < ./yy
+trsh.pl test_trsh1 test_trsh2
+trsh.pl -e "test_trsh*" < ./yy
 
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/.Trash/test1______0 ] || [ -e $HOME/.Trash/test2______0 ]
+if [ -e $HOME/.Trash/test_trsh1______0 ] || [ -e $HOME/.Trash/test_trsh2______0 ]
 then
 	echo "TEST 13 FAILED: Erase regex" >&2
 else
@@ -315,12 +315,12 @@ else
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 fi
 ##################################################################################
-touch test1 test2
-trsh.pl test1 test2
-trsh.pl -e "test1" < ./yy
+touch test_trsh1 test_trsh2
+trsh.pl test_trsh1 test_trsh2
+trsh.pl -e "test_trsh1" < ./yy
 
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/.Trash/test1______0 ] || [ ! -e $HOME/.Trash/test2______0 ]
+if [ -e $HOME/.Trash/test_trsh1______0 ] || [ ! -e $HOME/.Trash/test_trsh2______0 ]
 then
 	echo "TEST 14 FAILED: Erase specific file" >&2
 else
@@ -337,6 +337,8 @@ then
 	echo "ALL RECOMMENDED TESTS PASSED. EXTENDED FEATURES WORKING" >&2
 fi
 echo "" >&2
+
+/bin/rm yy
 
 if [ -d $HOME/.Trash_backup ]
 then
