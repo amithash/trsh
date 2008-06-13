@@ -22,6 +22,8 @@ use warnings;
 use Cwd;
 use Getopt::Long;
 use Term::ANSIColor;
+use Term::ANSIColor qw(:constants);
+$Term::ANSIColor::AUTORESET = 1;
 
 my $shell = "";
 my $rc_file;
@@ -33,14 +35,13 @@ my $uid = <UID>;
 $uid = $uid + 0;
 close(UID);
 
-print color("Blue"), "Hi, welcome to the installation script of trsh. I will ask few quick questions, and then we are done.\n";
-print color("Blue"), "Just hit Enter (Return) to accept the default value. For most cases, this will be just fine.\n\n";
+print color("Green"), "Hi, welcome to the installation script of trsh. I will ask few quick questions, and then we are done.\n";
+print color("Green"), "Just hit Enter (Return) to accept the default value. For most cases, this will be just fine.\n\n";
 my $yes = "yes";
 get_from_user("Do you want to continue?",\$yes);
 if(not($yes eq "yes" or $yes eq "y" or $yes eq "Y")){
 	print "Goodbye\n";
-	print color("White"),"\n";
-	exit;
+	exit1();
 }
 print "\n";
 
@@ -73,7 +74,7 @@ if($uid != 0 and $user_or_system eq "system"){
 	$user_or_system = "exit";
 	get_from_user("Cannot perform system install as a regular user. Select user to perform a user install instead. (exit | user)? ",\$user_or_system);
 	if($user_or_system eq "exit"){
-		exit;
+		exit1();
 	}
 }
 
@@ -177,8 +178,7 @@ elsif($shell eq "csh" or $shell eq "tcsh"){
 else{
 	print "Sorry, it seems that your shell: $shell is not supported by this installation. (not bash, csh or tcsh)\n";
 	print "Exiting\n";
-	print color("White"),"\n";
-	exit;
+	exit1();
 }
 
 open TRSH_NEW, "+>$dest" or die "Could not create $dest, either the path does not exist, or you do not have write permissions there.\n";
@@ -194,7 +194,8 @@ print color("Green"), "Report bugs to http://code.google.com/p/trsh/issues\n";
 if($user_or_system eq "system"){
 	print color("Red"),"You have installed trsh for all users. Please inform all your users the same. An uninformed feature is as dangerious as a buggy feature!\n";
 }
-print color("White"), "\n";
+
+exit1();
 
 ########### SUBS ##################
 
@@ -244,4 +245,7 @@ sub search_and_replace{
 		$$arr_ref[$i] =~ s/$what/$with/;
 	}
 }
-
+sub exit1{
+	print RESET, "\n";
+	exit;
+}
