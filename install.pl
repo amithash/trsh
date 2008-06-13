@@ -245,6 +245,6 @@ sub search_and_replace{
 	}
 }
 sub exit1{
-	print RESET, "\n";
+	print color("reset"), "\n";
 	exit;
 }
