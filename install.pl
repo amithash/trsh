@@ -22,7 +22,6 @@ use warnings;
 use Cwd;
 use Getopt::Long;
 use Term::ANSIColor;
-use Term::ANSIColor qw(:constants);
 $Term::ANSIColor::AUTORESET = 1;
 
 my $shell = "";
