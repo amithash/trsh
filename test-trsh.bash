@@ -18,9 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
 #*************************************************************************
 
-echo "WARNING: This test_trsh was designed for bash."
-echo "         If you are not running BASH, too bad"
-
 echo "Backing up existing trash."
 if [ -d $HOME/.Trash ]
 then
@@ -28,14 +25,11 @@ then
 fi
 export PATH=`pwd`:$PATH
 
-which trsh.pl
+echo "Using trsh from location: `which trsh.pl`"
 
 PASSED_COUNT=0
 TOTAL_COUNT=0
 
-echo "Starting as a virgin"
-cd $HOME
-/bin/rm -rf .Trash
 trsh.pl
 ##################################################################################
 
