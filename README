@@ -129,9 +129,6 @@ NOTES
 If multiple files of the same name are deleted, they are stored in the trash as if it were a stack.
 Thus any recover will be like popping the files from the trash stack! 
 
-trsh warns the user on the 1st through the 2nd of every month if their trash size has gone beyond 500MB.
-(Where have all my space gone warnings!)
-
 REPORTING BUGS
 --
 
