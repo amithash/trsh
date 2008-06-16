@@ -23,7 +23,9 @@ use strict;
 use warnings;
 use Getopt::Long;
 use File::Find;
+use Term::ANSIColor;
 use Cwd;
+$Term::ANSIColor::AUTORESET = 1;
 
 my $usage_string = "
 USAGE: rm [OPTIONS]... [FILES]...
@@ -99,13 +101,6 @@ if (not defined $ENV{HOME}) {
 my $trash = "$ENV{HOME}/.Trash";
 my $history = "$trash/.history";
 
-my $dom = dom();
-if($dom == 1 or $dom == 2){
-	if(size() > 500000){
-		print "WARNING: Your Trash Folder has exceeded 500MB. Please empty your trash (rm -e)\n";
-	}
-}
-
 if( !(-e $trash) ) {
 	print "Could not find the trash directory, creating it...\n";
         system("mkdir $trash");
@@ -119,14 +114,22 @@ if($undo == 1 and $#remaining >= 0){
 	$undo = 0;
 }
 
-if($help == 1){
-	usage();
+
+if($size == 1){
+	my $sz;
+	if($help == 1){
+		$sz = get_size_human_readable();
+		print "$sz" . "B\n";
+	}
+	else{
+		$sz = get_size();
+		print "$sz\n";
+	}
 	exit;
 }
 
-if($size == 1){
-	my $sz = get_size_human_readable();
-	print "$sz" . "B\n";
+if($help == 1){
+	usage();
 	exit;
 }
 
@@ -421,9 +424,8 @@ sub display_trash{
 	my %cont;
 	if($#hist >= 0){
 		my $sz = get_size_human_readable();
-		print "Trash Size: $sz\n";
-		print "Count\tFile\n";
-		print "-----\t----\n";
+		print color("Yellow"),"Trash Size: $sz";
+		print color("reset"), "\n";
 		foreach my $entry (@hist){
 			if($entry =~ /(.+)______\d+$/){
 				my $name = $1;
@@ -436,12 +438,32 @@ sub display_trash{
 			}
 		}
 		foreach my $entry (keys %cont){
-			print "$cont{$entry}\t$entry\n";
+			my $file = "$trash/${entry}______0";
+			if(-d $file){
+				print_colored($cont{$entry},$entry,"Blue");
+			}
+			elsif(-x $file){
+				print_colored($cont{$entry},$entry,"Green");
+			}
+			elsif(-l $file){
+				print_colored($cont{$entry},$entry,"Cyan");
+			}
+			else{
+				print_colored($cont{$entry},$entry,"reset");
+			}
 		}
 	}
 	else{
 		print "Trash is empty!\n";
 	}
+}
+sub print_colored{
+	my $uncolored_text = shift;
+	my $colored_text = shift;
+	my $color = shift;
+	print "($uncolored_text) ";
+	print color($color), "$colored_text";
+	print color("reset"), "\n";
 }
 
 sub dom{

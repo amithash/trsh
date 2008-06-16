@@ -18,9 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
 #*************************************************************************
 
-echo "WARNING: This test_trsh was designed for bash."
-echo "         If you are not running BASH, too bad"
-
 echo "Backing up existing trash."
 if ( -d $HOME/.Trash ) then
 	mv $HOME/.Trash $HOME/.Trash_backup
@@ -32,9 +29,7 @@ which trsh.pl
 set PASSED_COUNT=0
 @ TOTAL_COUNT=0
 
-echo "Starting as a virgin"
 cd $HOME
-/bin/rm -rf .Trash
 trsh.pl
 ##################################################################################
 
@@ -300,6 +295,7 @@ endif
 touch test_trsh1 test_trsh2
 trsh.pl test_trsh1 test_trsh2
 trsh.pl -e "test_trsh1" < ./yy
+echo "" 
 
 @ TOTAL_COUNT = $TOTAL_COUNT + 1
 if ( -e $HOME/.Trash/test_trsh1______0 || ! -e $HOME/.Trash/test_trsh2______0 ) then

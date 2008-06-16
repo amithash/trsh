@@ -30,6 +30,7 @@ echo "Using trsh from location: `which trsh.pl`"
 PASSED_COUNT=0
 TOTAL_COUNT=0
 
+cd $HOME
 trsh.pl
 ##################################################################################
 
@@ -210,7 +211,6 @@ fi
 echo "Test 10: Testing removal of dirs"
 mkdir test_trsh10a
 trsh.pl test_trsh10a
-echo ""
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -d "$HOME/test_trsh10a" ]
 then
@@ -222,7 +222,6 @@ fi
 ##################################################################################
 mkdir test_trsh10b
 trsh.pl -r test_trsh10b
-echo ""
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -d "$HOME/.Trash/test_trsh10b______0" ]
 then
@@ -244,6 +243,7 @@ echo "n" >> nnn
 echo "n" >> nnn
 echo "n" >> nnn
 trsh.pl -i test_trsh11a1 test_trsh11a2 test_trsh11a3 < nnn
+echo ""
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e $HOME/test_trsh11a1 ] && [ -e $HOME/test_trsh11a2 ] && [ -e $HOME/test_trsh11a3 ]
 then
@@ -254,6 +254,7 @@ else
 fi
 ##################################################################################
 trsh.pl -i test_trsh11a1 test_trsh11a2 test_trsh11a3 < yyy
+echo ""
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e $HOME/test_trsh11a1 ] && [ -e $HOME/test_trsh11a2 ] && [ -e $HOME/test_trsh11a3 ]
 then
@@ -299,6 +300,7 @@ fi
 ##################################################################################
 trsh.pl test_trsh1 test_trsh2
 trsh.pl -e "test_trsh*" < ./yy
+echo ""
 
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e $HOME/.Trash/test_trsh1______0 ] || [ -e $HOME/.Trash/test_trsh2______0 ]
@@ -312,6 +314,7 @@ fi
 touch test_trsh1 test_trsh2
 trsh.pl test_trsh1 test_trsh2
 trsh.pl -e "test_trsh1" < ./yy
+echo ""
 
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 if [ -e $HOME/.Trash/test_trsh1______0 ] || [ ! -e $HOME/.Trash/test_trsh2______0 ]
