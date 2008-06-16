@@ -474,19 +474,11 @@ sub dom{
 	return $dt;
 }
 
-sub is_regex{
-	my $inp = shift;
-	if($inp =~ /\*/){
-		return 1;
-	}
-	else{
-		return 0;
-	}
-}
 sub convert_regex{
 	my $reg = shift;
 	$reg =~ s/\./\\\./g;
-	$reg =~ s/\*/\.\*/g;
+	$reg =~ s/\*/\.\*/g; # Convert the * usage to perl regex form
+	$reg =~ s/\?/\.\?/g; # Convert the ? usage to perl regex form
 	$reg = qr/^(${reg})______\d+/; # Build the search regex.
 	return $reg;
 }
