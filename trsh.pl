@@ -19,6 +19,35 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
 #*************************************************************************
 
+# TODO:
+# 1. Get a history in the start as an array, and write on exit.
+#    Currently this is done very badly, by opening and closing history
+#    too many times.... This can create considerable load.
+#
+# 2. The size of each file must be in the history. This allows quick 
+#    file size display. 
+#
+# 3. Due to '1', I need to create a single exit point with the dump to
+#    file. And also find out a way to catch a term/abort signal to dump 
+#    to history.... Else, a term may cause corruption and incoherence
+#    to the history file. BOTH 1 and 3 must be implemented together...
+#
+# 4. Along with an array, create a hash. This will definately 
+#    speed up lookups (Linear to O1) when a lot of files are deleted.
+#    And the regex is done only once.
+#
+# 5. With '2', I can then display the cumilative ( 3 * 4KB) kinda display
+#    on a trsh.pl -l.
+#
+# 6. Usage should not display a man page!!! Now that the usage has setteled
+#    down, remove them... Creates confusion. And hence remove that install
+#    change thing. And a user install will not get a man page! :-)
+#
+# 7. Optimize: Replace all open to execute kinda stuff with back ticks...
+#
+# 8. Wait till this reaches 15 points atleast to start making changes.
+#    So trsh 1.1 will be one tested release! :-)
+
 use strict;
 use warnings;
 use Getopt::Long;
@@ -384,8 +413,7 @@ sub make_history{
 ################# MISL TRASH FUNCTIONS ######################
 
 sub get_size_human_readable{
-	open SZ,"du -sh $trash |";
-	my $sz = <SZ>;
+	my $sz = `du -sh $trash`;
 	close(SZ);
 	chomp($sz);
 	my @temp = split(/\s/, $sz);
@@ -406,9 +434,7 @@ sub get_size{
 sub empty_trash{
 	if(get_response("Are you sure you want to empty the trash?") == 1){
 		system ("rm -rf $history");
-		open LS, "ls -a $trash |";
-		my @contents = <LS>;
-		close(LS);
+		my @contents = split(/\n/, `ls -a $trash`);
 		foreach my $entry (@contents){
 			chomp($entry);
 			if($entry ne "." and $entry ne ".."){
