@@ -56,6 +56,7 @@ use Term::ANSIColor;
 use Cwd;
 $Term::ANSIColor::AUTORESET = 1;
 
+
 my $usage_string = "
 USAGE: rm [OPTIONS]... [FILES]...
 
@@ -146,6 +147,12 @@ if($undo == 1 and $#remaining >= 0){
 }
 
 my @hist_raw = get_history();
+
+# From now on, catch signal because, the history is corrupted.
+# We will HAVE to exit cleanly.
+
+$SIG{'INT'} = 'exit_routine';
+$SIG{'TERM'} = 'exit_routine';
 
 if($size == 1){
 	my $sz;
