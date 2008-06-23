@@ -20,17 +20,17 @@
 #*************************************************************************
 
 # TODO:
-# 1. Get a history in the start as an array, and write on exit.
-#    Currently this is done very badly, by opening and closing history
-#    too many times.... This can create considerable load.
+# DONE 1. Get a history in the start as an array, and write on exit.
+#           Currently this is done very badly, by opening and closing history
+#           too many times.... This can create considerable load.
 #
 # 2. The size of each file must be in the history. This allows quick 
 #    file size display. 
 #
-# 3. Due to '1', I need to create a single exit point with the dump to
-#    file. And also find out a way to catch a term/abort signal to dump 
-#    to history.... Else, a term may cause corruption and incoherence
-#    to the history file. BOTH 1 and 3 must be implemented together...
+# DONE 3. Due to '1', I need to create a single exit point with the dump to
+#         file. And also find out a way to catch a term/abort signal to dump 
+#         to history.... Else, a term may cause corruption and incoherence
+#         to the history file. BOTH 1 and 3 must be implemented together...
 #
 # 4. Along with an array, create a hash. This will definately 
 #    speed up lookups (Linear to O1) when a lot of files are deleted.
@@ -123,13 +123,13 @@ GetOptions( 'e|empty'      => \$empty,
 
 my @remaining = @ARGV;
 
+
 if (not defined $ENV{HOME}) {
     print "The environment variable HOME is not set\n";
-    exit_routine();
+    exit;
 }
 my $trash = "$ENV{HOME}/.Trash";
 my $history = "$trash/.history";
-my @hist_raw = get_history();
 
 
 if( !(-e $trash) ) {
@@ -145,6 +145,7 @@ if($undo == 1 and $#remaining >= 0){
 	$undo = 0;
 }
 
+my @hist_raw = get_history();
 
 if($size == 1){
 	my $sz;
@@ -354,7 +355,6 @@ sub remove_from_trash{
 sub push_to_history{
 	my $item = shift;
 	push(@hist_raw,$item);
-	#make_history(@contents);
 }
 
 sub does_item_exist_in_history{
@@ -385,7 +385,7 @@ sub seek_and_destroy_in_history{
 	my $count = 0;
 	foreach my $i (@hist_raw){
 		if($i eq "$item_name"){
-			my @hist_raw = @hist_raw[0..($count-1),($count+1)..$#hist_raw];
+			@hist_raw = @hist_raw[0..($count-1),($count+1)..$#hist_raw];
 			last;
 		}
 		$count++;
@@ -440,6 +440,7 @@ sub empty_trash{
 			}
 		}
 		system ("touch $history");
+		@hist_raw = ();
 	}
 }
 
