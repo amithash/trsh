@@ -147,6 +147,7 @@ if($undo == 1 and $#remaining >= 0){
 }
 
 my @hist_raw = get_history();
+my $dirty = 0;
 
 # From now on, catch signal because, the history is corrupted.
 # We will HAVE to exit cleanly.
@@ -362,6 +363,7 @@ sub remove_from_trash{
 sub push_to_history{
 	my $item = shift;
 	push(@hist_raw,$item);
+	$dirty = 1;
 }
 
 sub does_item_exist_in_history{
@@ -380,6 +382,7 @@ sub does_item_exist_in_history{
 sub pop_from_history{
 	if($#hist_raw >= 0){
 		my $last = pop(@hist_raw);
+		$dirty = 1;
 		return $last;
 	}
 	else{
@@ -393,6 +396,7 @@ sub seek_and_destroy_in_history{
 	foreach my $i (@hist_raw){
 		if($i eq "$item_name"){
 			@hist_raw = @hist_raw[0..($count-1),($count+1)..$#hist_raw];
+			$dirty = 1;
 			last;
 		}
 		$count++;
@@ -448,6 +452,7 @@ sub empty_trash{
 		}
 		system ("touch $history");
 		@hist_raw = ();
+		$dirty = 1;
 	}
 }
 
@@ -531,7 +536,9 @@ sub exit_routine{
 	if(defined($error)){
 		print STDERR $error;
 	}
-	make_history(@hist_raw);
+	if($dirty == 1){
+		make_history(@hist_raw);
+	}
 	exit;
 }
 
