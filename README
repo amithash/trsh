@@ -45,6 +45,27 @@ Run uninstall.pl if you want to remove trsh completely from your system.
 (If you had performed a system wide install, please, run ./uninstall.pl
 as root).
 
+MANUAL INSTALLATION:
+--
+ok, Here is a manual installation procedure (These are followed by the scripts)
+1. Copy trsh.pl to anywhere you like, 
+2. If you want a manual entry, copy trsh.1.gz to /usr/share/man/man1 (Optional)
+3. Make changes in your bashrc file (Local or global)
+   Local changes affect only the current user and global changes affect ALL 
+   users.
+	a. The local rc file is usually in the home folder and named .bashrc 
+	   (For bash and .cshrc for CSH and TCSH).
+	b. The Global rc file is usually in the /etc folder named either as 
+	   bash.bashrc or bashrc for bash and csh.cshrc or cshrc for CSH or
+	   TCSH
+	alias rm="/path/to/trsh.pl" # BASH
+	alias undo="/path/to/trsh.pl -u" # BASH
+
+	alias rm "/path/to/trsh.pl" # CSH/TCSH
+	alias undo "/path/to/trsh.pl -u" # CSH/TCSH
+If your Shell is not one of these, then refer to your shell's manual on how
+to setup aliases. (If it is possible), or its alternatives. 
+
 TEST
 --
 
