@@ -125,10 +125,12 @@ my @remaining = @ARGV;
 
 if (not defined $ENV{HOME}) {
     print "The environment variable HOME is not set\n";
-    exit;
+    exit_routine();
 }
 my $trash = "$ENV{HOME}/.Trash";
 my $history = "$trash/.history";
+my @hist_raw = get_history();
+
 
 if( !(-e $trash) ) {
 	print "Could not find the trash directory, creating it...\n";
@@ -154,18 +156,18 @@ if($size == 1){
 		$sz = get_size();
 		print "$sz\n";
 	}
-	exit;
+	exit_routine();
 }
 
 if($help == 1){
 	usage();
-	exit;
+	exit_routine();
 }
 
 # Restore the last deleted file
 if($undo > 0){
 	restore_last_file();
-	exit;
+	exit_routine();
 }
 
 # If the force flag is on, then rm instead of moving to trash.
@@ -177,13 +179,13 @@ if($force == 1){
 		print "Removing \"$this\" permanently\n" if($verbose == 1);
 		system("$cmd \"$this\"");
 	}
-	exit;
+	exit_routine();
 }
 
 # If the view flag is on, ls the files
 if($view == 1){
 	display_trash();
-	exit;
+	exit_routine();
 }
 
 if($empty == 1){
@@ -195,7 +197,7 @@ if($empty == 1){
 	else{
 		empty_trash();
 	}
-	exit;
+	exit_routine();
 }
 
 
@@ -222,8 +224,10 @@ if($#remaining >= 0){
 }
 else{
 	print "Gallantly deleted abslutely nothing!\n";
-	exit;
+	exit_routine();
 }
+
+exit_routine();
 
 #####################################################
 # SUBS WHICH MAKE IT SUNNY OUTSIDE
@@ -300,7 +304,7 @@ sub restore_last_file{
 	my $item = pop_from_history();
 	if($item eq "NULL______NULL"){
 		print "Nothing to restore\n";
-		exit;
+		exit_routine();
 	}
 	my $item_cmd = join(" ", split(/\\\s/,$item));
 	if(-e "$trash/$item_cmd"){
@@ -349,16 +353,14 @@ sub remove_from_trash{
 
 sub push_to_history{
 	my $item = shift;
-	my @contents = get_history();
-	push(@contents,$item);
-	make_history(@contents);
+	push(@hist_raw,$item);
+	#make_history(@contents);
 }
 
 sub does_item_exist_in_history{
 	my $item = shift;
 	my $count = 0;
-	my @contents = get_history();
-	foreach my $i (@contents){
+	foreach my $i (@hist_raw){
 		# Now we do exact matching as we know that __0 has to come before __1
 		# and there is no point of a regex match (Screws if a filename has a * in it)
 		if($i eq "${item}______$count"){ 
@@ -369,10 +371,8 @@ sub does_item_exist_in_history{
 }
 
 sub pop_from_history{
-	my @contents = get_history();
-	if($#contents >= 0){
-		my $last = pop(@contents);
-		make_history(@contents);
+	if($#hist_raw >= 0){
+		my $last = pop(@hist_raw);
 		return $last;
 	}
 	else{
@@ -382,12 +382,10 @@ sub pop_from_history{
 
 sub seek_and_destroy_in_history{
 	my $item_name = shift;
-	my @contents = get_history();
 	my $count = 0;
-	foreach my $i (@contents){
+	foreach my $i (@hist_raw){
 		if($i eq "$item_name"){
-			my @new_countents = @contents[0..($count-1),($count+1)..$#contents];
-			make_history(@new_countents);
+			my @hist_raw = @hist_raw[0..($count-1),($count+1)..$#hist_raw];
 			last;
 		}
 		$count++;
@@ -446,13 +444,12 @@ sub empty_trash{
 }
 
 sub display_trash{
-	my @hist = get_history();
 	my %cont;
-	if($#hist >= 0){
+	if($#hist_raw >= 0){
 		my $sz = get_size_human_readable();
 		print color("Yellow"),"Trash Size: $sz";
 		print color("reset"), "\n";
-		foreach my $entry (@hist){
+		foreach my $entry (@hist_raw){
 			if($entry =~ /(.+)______\d+$/){
 				my $name = $1;
 				if(defined($cont{$name})){
@@ -512,13 +509,21 @@ sub convert_regex{
 sub get_matched_files{
 	my $reg = shift;
 	$reg = convert_regex($reg);
-	my @hist = get_history();
 	my %matched;
-	foreach my $entry (@hist){
+	foreach my $entry (@hist_raw){
 		if($entry =~ $reg){
 			$matched{$1} = 1;
 		}
 	}
 	return keys(%matched);
+}
+
+sub exit_routine{
+	my $error = shift;
+	if(defined($error)){
+		print STDERR $error;
+	}
+	make_history(@hist_raw);
+	exit;
 }
 
