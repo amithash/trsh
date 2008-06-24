@@ -554,9 +554,9 @@ sub kb2hr{
 		$multi++;
 		$kb = $kb / 1024;
 	}
-	my $kbf = floor($kb + 0.5);
+	my $kbf = sprintf("%.1f",$kb);
 	my $mstr = exp2str($multi);
-	my $ret = "${kbf}${mstr}";
+	my $ret = "${kbf} ${mstr}";
 	return $ret;
 }
 
