@@ -290,7 +290,7 @@ sub print_colored{
 		if($human == 1){
 			$sz = kb2hr($size_rec);
 		}
-		print color("Red"), " $sz";
+		print color("Yellow"), " $sz";
 	}
 	print color("reset"), "\n";
 }
@@ -307,7 +307,6 @@ sub delete_file{
 	my $count = does_item_exist_in_history($item_name);
 	push_to_history("$item_name\______$count");
 	system("mv \"$item\" \"$trash/$item_name\______$count\"");
-	$file_size{"${item_name}______$count"} = get_file_size("$trash/${item_name}______$count");
 }
 
 sub restore_file{
@@ -398,12 +397,15 @@ sub empty_trash{
 
 sub display_trash{
 	if($#hist_raw >= 0){
-		my $sz = get_size_human_readable();
-		print color("Yellow"),"Trash Size: $sz";
-		print color("reset"), "\n";
+		my $sz;
+		$sz = get_size_human_readable() if($human == 1);
+		$sz = get_size() if($human == 0);
+		print color("Yellow"),"Trash Size: $sz" if($size == 1);
+		print color("reset"), "\n" if($size == 1);
+		my $fsz = 0;
 		foreach my $entry (keys %file_count){
 			my $file = "$trash/${entry}______0";
-			my $fsz = get_accumilated_size($entry);
+			$fsz = get_accumilated_size($entry) if($size == 1);
 			if(-d $file){
 				print_colored($file_count{$entry},$entry,"Blue",$fsz);
 			}
@@ -479,8 +481,7 @@ sub get_history{
 			$file_size{$1} = $2;
 			$name = $1;
 		}
-		else{ # Added to dymanically port old history file to the new format.
-			$file_size{$item} = get_file_size("$trash/$item");
+		else{
 			$name = $item;
 		}
 		push @raw_contents, $name;
@@ -507,7 +508,13 @@ sub make_history{
 	open HIST,"+>$history" or die "Could not create history\n";
 	my @new_contents = ();
 	foreach my $item (@contents){
-		my $line = "$item\::::::$file_size{$item}";
+		my $line;
+		if(defined($file_size{$item})){
+			$line = "$item\::::::$file_size{$item}";
+		}
+		else{
+			$line = "$item";
+		}
 		push @new_contents, $line;
 	}
 	my $h = join("\n",@new_contents);
@@ -525,6 +532,10 @@ sub get_size_human_readable{
 sub get_size{
 	my $sz = 0;
 	foreach my $entry (@hist_raw){
+		if(not defined($file_size{$entry})){
+			$file_size{$entry} = get_file_size("$trash/$entry");
+			$dirty = 1;
+		}
 		$sz += $file_size{$entry};
 	}
 	return $sz;
@@ -541,7 +552,12 @@ sub get_accumilated_size{
 	my $count = $file_count{$file};
 	my $sz = 0;
 	for(my $i=0;$i<$count;$i++){
-		$sz += $file_size{"${file}______$i"};
+		my $entry = "${file}______$i";
+		if(not defined($file_size{$entry})){
+			$file_size{$entry} = get_file_size("$trash/$entry");
+			$dirty = 1;
+		}
+		$sz += $file_size{$entry};
 	}
 	return $sz;
 }
