@@ -54,6 +54,7 @@ use Getopt::Long;
 use File::Find;
 use Term::ANSIColor;
 use Cwd;
+use POSIX 'floor';
 $Term::ANSIColor::AUTORESET = 1;
 
 
@@ -146,6 +147,7 @@ if($undo == 1 and $#remaining >= 0){
 	$undo = 0;
 }
 
+my %file_size;
 my @hist_raw = get_history();
 my $dirty = 0;
 
@@ -154,6 +156,12 @@ my $dirty = 0;
 
 $SIG{'INT'} = 'exit_routine';
 $SIG{'TERM'} = 'exit_routine';
+
+# If the view flag is on, ls the files
+if($view == 1){
+	display_trash();
+	exit_routine();
+}
 
 if($size == 1){
 	my $sz;
@@ -191,11 +199,6 @@ if($force == 1){
 	exit_routine();
 }
 
-# If the view flag is on, ls the files
-if($view == 1){
-	display_trash();
-	exit_routine();
-}
 
 if($empty == 1){
 	if($#remaining >= 0){
@@ -283,6 +286,7 @@ sub delete_file{
 	my $count = does_item_exist_in_history($item_name);
 	push_to_history("$item_name\______$count");
 	system("mv \"$item\" \"$trash/$item_name\______$count\"");
+	$file_size{"${item_name}______$count"} = get_file_size("$trash/${item_name}______$count");
 }
 
 sub restore_file{
@@ -406,15 +410,33 @@ sub seek_and_destroy_in_history{
 sub get_history{
 	open HIST, "$history" or die "Could not open history\n";
 	my @contents = split(/\n/, join("", <HIST>));
+	my @raw_contents = ();
+	foreach my $item (@contents){
+		my $name;
+		if($item =~ /^(.+)::::::(\d+)$/){
+			$file_size{$1} = $2;
+			$name = $1;
+		}
+		else{ # Added to dymanically port old history file to the new format.
+			$file_size{$item} = get_file_size("$trash/$item");
+			$name = $item;
+		}
+		push @raw_contents, $name;
+	}
 	close(HIST);
-	return @contents;
+	return @raw_contents;
 }
 
 sub make_history{
 	my @contents = @_;
 	system("rm $history");
 	open HIST,"+>$history" or die "Could not create history\n";
-	my $h = join("\n",@contents);
+	my @new_contents = ();
+	foreach my $item (@contents){
+		my $line = "$item\::::::$file_size{$item}";
+		push @new_contents, $line;
+	}
+	my $h = join("\n",@new_contents);
 	print HIST "$h";
 	close(HIST);
 }
@@ -460,6 +482,7 @@ sub display_trash{
 	my %cont;
 	if($#hist_raw >= 0){
 		my $sz = get_size_human_readable();
+		my %size;
 		print color("Yellow"),"Trash Size: $sz";
 		print color("reset"), "\n";
 		foreach my $entry (@hist_raw){
@@ -467,25 +490,27 @@ sub display_trash{
 				my $name = $1;
 				if(defined($cont{$name})){
 					$cont{$name} += 1;
+					$size{$name} += $file_size{$entry};
 				}
 				else{
 					$cont{$name} = 1;
+					$size{$name} = $file_size{$entry};
 				}
 			}
 		}
 		foreach my $entry (keys %cont){
 			my $file = "$trash/${entry}______0";
 			if(-d $file){
-				print_colored($cont{$entry},$entry,"Blue");
+				print_colored($cont{$entry},$entry,"Blue",$size{$entry});
 			}
 			elsif(-x $file){
-				print_colored($cont{$entry},$entry,"Green");
+				print_colored($cont{$entry},$entry,"Green",$size{$entry});
 			}
 			elsif(-l $file){
-				print_colored($cont{$entry},$entry,"Cyan");
+				print_colored($cont{$entry},$entry,"Cyan",$size{$entry});
 			}
 			else{
-				print_colored($cont{$entry},$entry,"reset");
+				print_colored($cont{$entry},$entry,"reset",$size{$entry});
 			}
 		}
 	}
@@ -497,8 +522,16 @@ sub print_colored{
 	my $uncolored_text = shift;
 	my $colored_text = shift;
 	my $color = shift;
+	my $size_rec = shift;
 	print "($uncolored_text) ";
 	print color($color), "$colored_text";
+	if($size == 1){
+		my $sz = $size_rec;
+		if($help == 1){
+			$sz = kb2hr($size_rec);
+		}
+		print color("Red"), " $sz";
+	}
 	print color("reset"), "\n";
 }
 
@@ -542,3 +575,42 @@ sub exit_routine{
 	exit;
 }
 
+sub get_file_size{
+	my $file = shift;
+	my @tmp = split /\s/, `du -s $file`;
+	return $tmp[0] + 0;
+}
+
+sub kb2hr{
+	my $kb = shift;
+	$kb = $kb * 1.0;
+	my $multi = 0;
+	while($kb >= 1024){
+		$multi++;
+		$kb = $kb / 1024;
+	}
+	my $kbf = floor($kb + 0.5);
+	my $mstr = exp2str($multi);
+	my $ret = "${kbf}${mstr}";
+	return $ret;
+}
+
+sub exp2str{
+	my $multi = shift;
+	if($multi == 0){
+		return "KB";
+	}
+	elsif($multi == 1){
+		return "MB";
+	}
+	elsif($multi == 2){
+		return "GB";
+	}
+	elsif($multi == 3){
+		return "TB";
+	}
+	else{
+		my $exp = ($multi+1)*3;
+		return "10^${exp}B";
+	}
+}	
