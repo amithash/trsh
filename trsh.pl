@@ -203,7 +203,9 @@ if($force == 1){
 	$cmd = $cmd . "-i " if($warn == 1); # Pass the interactive flag to rm
 	foreach my $this (@remaining){
 		print "Removing \"$this\" permanently\n" if($verbose == 1);
-		system("$cmd \"$this\"");
+		if(system("$cmd \"$this\"") != 0){
+			print "Could not delete $this\n";
+		}
 	}
 	exit_routine();
 }
@@ -299,8 +301,12 @@ sub delete_file{
 	my @temp = split(/\//, $item);
 	my $item_name = pop(@temp);
 	my $count = does_item_exist_in_history($item_name);
-	push_to_history("$item_name\______$count");
-	system("mv \"$item\" \"$trash/$item_name\______$count\"");
+	if(system("mv \"$item\" \"$trash/$item_name\______$count\"") == 0){
+		push_to_history("$item_name\______$count");
+	}
+	else{
+		print "Could not delete $item_name, check its permissions\n";
+	}
 }
 
 sub restore_file{
@@ -320,8 +326,12 @@ sub restore_file{
 		}
 		else{
 			print "Restoring file $entry...\n" if($verbose == 1);
-			seek_and_destroy_in_history("$entry\______$index");
-			system("mv \"$trash/${entry}______$index\" \"$cwd/$entry\"");
+			if(system("mv \"$trash/${entry}______$index\" \"$cwd/$entry\"") == 0){
+				seek_and_destroy_in_history("$entry\______$index");
+			}
+			else{
+				print "Could not restore $entry. Check if you have write permissions in $cwd\n";
+			}
 		}
 	}
 }
@@ -336,8 +346,12 @@ sub restore_last_file{
 	my $item_cmd = join(" ", split(/\\\s/,$item));
 	if(-e "$trash/$item_cmd"){
 		if($item =~ /(.+)______\d+$/){
-			print "Restoring $1...\n";
-			system("mv $trash/$item $cwd/$1");
+			my $entry = $1;
+			print "Restoring $entry...\n";
+			if(system("mv $trash/$item $cwd/$entry") != 0){
+				push @hist_raw, $item;
+				print "Could not restore $entry. Check if you have write permissions in $cwd\n";
+			}
 		}
 		else{
 			print "ERROR! Something wierd happened. This should never happen\n";
@@ -365,8 +379,9 @@ sub remove_from_trash{
 			if(get_response("Are you sure you want to remove $entry from the trash?") == 1){
 				print "Removing $entry from the trash...\n" if($verbose == 1);
 				for(my $i=0;$i<$count;$i++){
-					seek_and_destroy_in_history("$entry\______$i");
-					system("rm -rf \"$trash/$entry\______$i\"");
+					if(system("rm -rf \"$trash/$entry\______$i\"") == 0){
+						seek_and_destroy_in_history("$entry\______$i");
+					}
 				}
 			}
 		}
@@ -375,15 +390,21 @@ sub remove_from_trash{
 
 sub empty_trash{
 	if(get_response("Are you sure you want to empty the trash?") == 1){
-		system ("rm -rf $history");
+		if(system ("rm -rf $history") != 0){
+			exit_routine("ERROR Emptying trash, $history could not be deleted\n");
+		}
 		my @contents = split(/\n/, `ls -a $trash`);
 		foreach my $entry (@contents){
 			chomp($entry);
 			if($entry ne "." and $entry ne ".."){
-				system("rm -rf $trash/$entry");
+				if(system("rm -rf $trash/$entry") != 0){
+					die "Something Horribly went wrong. $trash/$entry could not be removed.\n Your history is corrupted.";
+				}
 			}
 		}
-		system ("touch $history");
+		if(system ("touch $history") != 0){
+			die "Something horribly went wrong. $history could not be created\n";
+		}
 		@hist_raw = ();
 		$dirty = 1;
 	}
