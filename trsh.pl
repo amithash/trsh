@@ -261,7 +261,7 @@ exit_routine();
 #####################################################
 
 #####################################################
-# MISL FUNCTIONS
+# USER FUNCTIONS
 #####################################################
 
 sub usage{
@@ -281,6 +281,24 @@ sub get_response{
 	}
 	return $ret;
 }
+
+sub print_colored{
+	my $uncolored_text = shift;
+	my $colored_text = shift;
+	my $color = shift;
+	my $size_rec = shift;
+	print "($uncolored_text) ";
+	print color($color), "$colored_text";
+	if($size == 1){
+		my $sz = $size_rec;
+		if($human == 1){
+			$sz = kb2hr($size_rec);
+		}
+		print color("Red"), " $sz";
+	}
+	print color("reset"), "\n";
+}
+
 
 #############################################################
 # HIGH LEVEL TRASH FUNCTIONS
@@ -363,6 +381,49 @@ sub remove_from_trash{
 				}
 			}
 		}
+	}
+}
+
+sub empty_trash{
+	if(get_response("Are you sure you want to empty the trash?") == 1){
+		system ("rm -rf $history");
+		my @contents = split(/\n/, `ls -a $trash`);
+		foreach my $entry (@contents){
+			chomp($entry);
+			if($entry ne "." and $entry ne ".."){
+				system("rm -rf $trash/$entry");
+			}
+		}
+		system ("touch $history");
+		@hist_raw = ();
+		$dirty = 1;
+	}
+}
+
+sub display_trash{
+	if($#hist_raw >= 0){
+		my $sz = get_size_human_readable();
+		print color("Yellow"),"Trash Size: $sz";
+		print color("reset"), "\n";
+		foreach my $entry (keys %file_count){
+			my $file = "$trash/${entry}______0";
+			my $fsz = get_accumilated_size($entry);
+			if(-d $file){
+				print_colored($file_count{$entry},$entry,"Blue",$fsz);
+			}
+			elsif(-x $file){
+				print_colored($file_count{$entry},$entry,"Green",$fsz);
+			}
+			elsif(-l $file){
+				print_colored($file_count{$entry},$entry,"Cyan",$fsz);
+			}
+			else{
+				print_colored($file_count{$entry},$entry,"reset",$fsz);
+			}
+		}
+	}
+	else{
+		print "Trash is empty!\n";
 	}
 }
 
@@ -458,7 +519,8 @@ sub make_history{
 	close(HIST);
 }
 
-################# MISL TRASH FUNCTIONS ######################
+
+############### FUNCTIONS RELATED TO SIZE ###################
 
 sub get_size_human_readable{
 	return kb2hr(get_size());
@@ -472,63 +534,10 @@ sub get_size{
 	return $sz;
 }
 
-sub empty_trash{
-	if(get_response("Are you sure you want to empty the trash?") == 1){
-		system ("rm -rf $history");
-		my @contents = split(/\n/, `ls -a $trash`);
-		foreach my $entry (@contents){
-			chomp($entry);
-			if($entry ne "." and $entry ne ".."){
-				system("rm -rf $trash/$entry");
-			}
-		}
-		system ("touch $history");
-		@hist_raw = ();
-		$dirty = 1;
-	}
-}
-
-sub display_trash{
-	if($#hist_raw >= 0){
-		my $sz = get_size_human_readable();
-		print color("Yellow"),"Trash Size: $sz";
-		print color("reset"), "\n";
-		foreach my $entry (keys %file_count){
-			my $file = "$trash/${entry}______0";
-			my $fsz = get_accumilated_size($entry);
-			if(-d $file){
-				print_colored($file_count{$entry},$entry,"Blue",$fsz);
-			}
-			elsif(-x $file){
-				print_colored($file_count{$entry},$entry,"Green",$fsz);
-			}
-			elsif(-l $file){
-				print_colored($file_count{$entry},$entry,"Cyan",$fsz);
-			}
-			else{
-				print_colored($file_count{$entry},$entry,"reset",$fsz);
-			}
-		}
-	}
-	else{
-		print "Trash is empty!\n";
-	}
-}
-sub print_colored{
-	my $uncolored_text = shift;
-	my $colored_text = shift;
-	my $color = shift;
-	my $size_rec = shift;
-	print "($uncolored_text) ";
-	print color($color), "$colored_text";
-	if($size == 1){
-		my $sz = $size_rec;
-		if($human == 1){
-			$sz = kb2hr($size_rec);
-		}
-		print color("Red"), " $sz";
-	}
-	print color("reset"), "\n";
+sub get_file_size{
+	my $file = shift;
+	my @tmp = split /\s/, `du -s $file`;
+	return $tmp[0] + 0;
 }
 
 sub get_accumilated_size{
@@ -539,53 +548,6 @@ sub get_accumilated_size{
 		$sz += $file_size{"${file}______$i"};
 	}
 	return $sz;
-}
-
-
-sub dom{
-	open DATE, "date +%d |";
-	my $dt = <DATE>;
-	close(DATE);
-	$dt += 0;
-	return $dt;
-}
-
-sub convert_regex{
-	my $reg = shift;
-	$reg =~ s/\./\\\./g;
-	$reg =~ s/\*/\.\*/g; # Convert the * usage to perl regex form
-	$reg =~ s/\?/\.\?/g; # Convert the ? usage to perl regex form
-	$reg = qr/^(${reg})______\d+/; # Build the search regex.
-	return $reg;
-}
-
-sub get_matched_files{
-	my $reg = shift;
-	$reg = convert_regex($reg);
-	my %matched;
-	foreach my $entry (@hist_raw){
-		if($entry =~ $reg){
-			$matched{$1} = 1;
-		}
-	}
-	return keys(%matched);
-}
-
-sub exit_routine{
-	my $error = shift;
-	if(defined($error)){
-		print STDERR $error;
-	}
-	if($dirty == 1){
-		make_history(@hist_raw);
-	}
-	exit;
-}
-
-sub get_file_size{
-	my $file = shift;
-	my @tmp = split /\s/, `du -s $file`;
-	return $tmp[0] + 0;
 }
 
 sub kb2hr{
@@ -621,3 +583,41 @@ sub exp2str{
 		return "10^${exp}B";
 	}
 }	
+
+############## USER REGEX FUNCTIONS ######################
+
+sub convert_regex{
+	my $reg = shift;
+	$reg =~ s/\./\\\./g;
+	$reg =~ s/\*/\.\*/g; # Convert the * usage to perl regex form
+	$reg =~ s/\?/\.\?/g; # Convert the ? usage to perl regex form
+	$reg = qr/^(${reg})______\d+/; # Build the search regex.
+	return $reg;
+}
+
+sub get_matched_files{
+	my $reg = shift;
+	$reg = convert_regex($reg);
+	my %matched;
+	foreach my $entry (@hist_raw){
+		if($entry =~ $reg){
+			$matched{$1} = 1;
+		}
+	}
+	return keys(%matched);
+}
+
+############# THE EXIT ROUTINE ############################
+
+sub exit_routine{
+	my $error = shift;
+	if(defined($error)){
+		print STDERR $error;
+	}
+	if($dirty == 1){
+		make_history(@hist_raw);
+	}
+	exit;
+}
+
+
