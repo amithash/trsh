@@ -180,15 +180,8 @@ if($view == 1){
 }
 
 if($size == 1){
-	my $sz;
-	if($human == 1){
-		$sz = get_size_human_readable();
-		print "$sz\n";
-	}
-	else{
-		$sz = get_size();
-		print "$sz\n";
-	}
+	my $sz = get_size($human);
+	print "$sz\n";
 	exit_routine();
 }
 
