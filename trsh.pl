@@ -24,29 +24,27 @@
 #           Currently this is done very badly, by opening and closing history
 #           too many times.... This can create considerable load.
 #
-# 2. The size of each file must be in the history. This allows quick 
-#    file size display. 
+# DONE 2. The size of each file must be in the history. This allows quick 
+#         file size display. 
 #
 # DONE 3. Due to '1', I need to create a single exit point with the dump to
 #         file. And also find out a way to catch a term/abort signal to dump 
 #         to history.... Else, a term may cause corruption and incoherence
 #         to the history file. BOTH 1 and 3 must be implemented together...
 #
-# 4. Along with an array, create a hash. This will definately 
-#    speed up lookups (Linear to O1) when a lot of files are deleted.
-#    And the regex is done only once.
+# DONE 4. Along with an array, create a hash. This will definately 
+#         speed up lookups (Linear to O1) when a lot of files are deleted.
+#         And the regex is done only once.
 #
-# 5. With '2', I can then display the cumilative ( 3 * 4KB) kinda display
-#    on a trsh.pl -l.
+# DONE 5. With '2', I can then display the cumilative ( 3 * 4KB) kinda display
+#         on a trsh.pl -l.
 #
-# 6. Usage should not display a man page!!! Now that the usage has setteled
-#    down, remove them... Creates confusion. And hence remove that install
-#    change thing. And a user install will not get a man page! :-)
+# DONE 6. Usage should not display a man page!!! Now that the usage has setteled
+#         down, remove them... Creates confusion. And hence remove that install
+#         change thing. And a user install will not get a man page! :-)
 #
 # 7. Optimize: Replace all open to execute kinda stuff with back ticks...
 #
-# 8. Wait till this reaches 15 points atleast to start making changes.
-#    So trsh 1.1 will be one tested release! :-)
 
 use strict;
 use warnings;
@@ -65,12 +63,15 @@ FILES:
 This is a list of files to recover or delete.
 
 OPTIONS:
--u|--undo [FILES]
-This option instructs trsh to recover FILES from the trash and place them into the current working directory.
-If FILES is not provided, the last deleted file is recovered and placed into the current working directory.
+
+-u|--undo [FILES | REGEX]
+If this option is provided without any other arguments, the latest deleted file will be restored.
+If FILE/FILES are provided, the latest copy of these (If they exist in the trash) is recovered
+If instead a regex is provided, then all files in the trash matching with the regex is recovered. 
+(For regex usage, refer the subsection on regex below)
 
 -f|--force
-This option instructs trsh to permanently delete FILES and completely bybass the trash
+This option instructs trsh to permanently delete FILES and completely bypass the trash
 
 -i|--interactively
 This option will instruct trsh to prompt the user before deleting each and every file.
@@ -79,7 +80,10 @@ This option will instruct trsh to prompt the user before deleting each and every
 This option will instruct trsh to talk about whatever it is doing.
 
 -e|--empty
-This empties the trash.
+If this option is provided without any other arguments, Trash is emptied.
+If FILE/FILES are provided, All copies of FILE is removed permanently from the trash
+If instead a regex is provided, then all files in the trash matching with the regex is permanently removed.
+(For regex usage, refer the subsection on regex below)
 
 -r|--recursive
 This option if provided will allow directories to be deleted.
@@ -89,11 +93,19 @@ This will display the contents of the trash.
 
 -s|--size
 This displays the size of the Trash directory. 
+If provided with the -l option, The size of each trash entry will also be displayed.
 
--h|--help
+-h|--human-readable
+If provided with the -s option, the size will be printed in a human readable form.
+
+--help
 Displays this help and exits.
 
+-x|--force-regex
+This forces trsh to assume that the provided arguments are regex's. (Not needed most of the time, Read the REGEX Section)
+
 rm FILES just moves FILES to the trash. By default, directories are not deleted.
+
 \n";
 
 
@@ -108,19 +120,21 @@ my $warn = 0;
 my $verbose = 0;
 my $recursive = 0;
 my $regex_force = 0;
+my $human = 0;
 
 Getopt::Long::Configure('bundling');
 
-GetOptions( 'e|empty'      => \$empty, 
-            'l|list'       => \$view,
-	    'f|force'	   => \$force,
-	    'u|undo'	   => \$undo,
-	    's|size'	   => \$size,
-	    'h|help'       => \$help,
-	    'i|interactive'=> \$warn,
-	    'v|verbose'    => \$verbose,
-	    'x|force-regex'=> \$regex_force,
-    	    'r|recursive'  => \$recursive);
+GetOptions( 'e|empty'          => \$empty, 
+            'l|list'           => \$view,
+	    'f|force'	       => \$force,
+	    'u|undo'	       => \$undo,
+	    's|size'	       => \$size,
+	    'help'             => \$help,
+	    'h|human-readable' => \$human,
+	    'i|interactive'    => \$warn,
+	    'v|verbose'        => \$verbose,
+	    'x|force-regex'    => \$regex_force,
+    	    'r|recursive'      => \$recursive);
 
 
 my @remaining = @ARGV;
@@ -148,6 +162,7 @@ if($undo == 1 and $#remaining >= 0){
 }
 
 my %file_size;
+my %file_count;
 my @hist_raw = get_history();
 my $dirty = 0;
 
@@ -165,9 +180,9 @@ if($view == 1){
 
 if($size == 1){
 	my $sz;
-	if($help == 1){
+	if($human == 1){
 		$sz = get_size_human_readable();
-		print "$sz" . "B\n";
+		print "$sz\n";
 	}
 	else{
 		$sz = get_size();
@@ -250,15 +265,7 @@ exit_routine();
 #####################################################
 
 sub usage{
-	if(-e "/usr/share/man/man1/trsh.1.gz"){
-		system("man trsh");
-	}
-	elsif(-e "$ENV{HOME}/.trsh.1.gz"){
-		system("man $ENV{HOME}/.trsh.1.gz");
-	}
-	else{
-		print $usage_string;
-	}
+	print $usage_string;
 }
 
 sub get_response{
@@ -373,12 +380,8 @@ sub push_to_history{
 sub does_item_exist_in_history{
 	my $item = shift;
 	my $count = 0;
-	foreach my $i (@hist_raw){
-		# Now we do exact matching as we know that __0 has to come before __1
-		# and there is no point of a regex match (Screws if a filename has a * in it)
-		if($i eq "${item}______$count"){ 
-			$count++;
-		}
+	if(defined($file_count{$item})){
+		$count = $file_count{$item};
 	}
 	return $count;
 }
@@ -407,12 +410,14 @@ sub seek_and_destroy_in_history{
 	}
 }
 
+# SIDE EFFECTS: file_size and file_count hashes are populated
 sub get_history{
 	open HIST, "$history" or die "Could not open history\n";
 	my @contents = split(/\n/, join("", <HIST>));
 	my @raw_contents = ();
 	foreach my $item (@contents){
 		my $name;
+		# Populate the file name, and the size hash
 		if($item =~ /^(.+)::::::(\d+)$/){
 			$file_size{$1} = $2;
 			$name = $1;
@@ -422,6 +427,18 @@ sub get_history{
 			$name = $item;
 		}
 		push @raw_contents, $name;
+		# populate the count hash.
+		if($name =~ /^(.+)______(\d+)$/){
+			if(not defined($file_count{$1})){
+				$file_count{$1} = 1;
+			}
+			else{
+				$file_count{$1} += 1;
+			}
+		}
+		else{
+			print "Something Bad happened in get_history... Raise a bug\n";
+		}
 	}
 	close(HIST);
 	return @raw_contents;
@@ -444,21 +461,14 @@ sub make_history{
 ################# MISL TRASH FUNCTIONS ######################
 
 sub get_size_human_readable{
-	my $sz = `du -sh $trash`;
-	close(SZ);
-	chomp($sz);
-	my @temp = split(/\s/, $sz);
-	$sz = $temp[0];
-	return $sz;
+	return kb2hr(get_size());
 }
 
 sub get_size{
-	open SZ,"du -s $trash |";
-	my $sz = <SZ>;
-	close(SZ);
-	chomp($sz);
-	my @temp = split(/\s/, $sz);
-	$sz = $temp[0] + 0;
+	my $sz = 0;
+	foreach my $entry (@hist_raw){
+		my $sz += $file_size{$entry};
+	}
 	return $sz;
 }
 
@@ -479,38 +489,24 @@ sub empty_trash{
 }
 
 sub display_trash{
-	my %cont;
 	if($#hist_raw >= 0){
 		my $sz = get_size_human_readable();
-		my %size;
 		print color("Yellow"),"Trash Size: $sz";
 		print color("reset"), "\n";
-		foreach my $entry (@hist_raw){
-			if($entry =~ /(.+)______\d+$/){
-				my $name = $1;
-				if(defined($cont{$name})){
-					$cont{$name} += 1;
-					$size{$name} += $file_size{$entry};
-				}
-				else{
-					$cont{$name} = 1;
-					$size{$name} = $file_size{$entry};
-				}
-			}
-		}
-		foreach my $entry (keys %cont){
+		foreach my $entry (keys %file_count){
 			my $file = "$trash/${entry}______0";
+			my $fsz = get_accumilated_size($entry);
 			if(-d $file){
-				print_colored($cont{$entry},$entry,"Blue",$size{$entry});
+				print_colored($file_count{$entry},$entry,"Blue",$fsz);
 			}
 			elsif(-x $file){
-				print_colored($cont{$entry},$entry,"Green",$size{$entry});
+				print_colored($file_count{$entry},$entry,"Green",$fsz);
 			}
 			elsif(-l $file){
-				print_colored($cont{$entry},$entry,"Cyan",$size{$entry});
+				print_colored($file_count{$entry},$entry,"Cyan",$fsz);
 			}
 			else{
-				print_colored($cont{$entry},$entry,"reset",$size{$entry});
+				print_colored($file_count{$entry},$entry,"reset",$fsz);
 			}
 		}
 	}
@@ -527,13 +523,24 @@ sub print_colored{
 	print color($color), "$colored_text";
 	if($size == 1){
 		my $sz = $size_rec;
-		if($help == 1){
+		if($human == 1){
 			$sz = kb2hr($size_rec);
 		}
 		print color("Red"), " $sz";
 	}
 	print color("reset"), "\n";
 }
+
+sub get_accumilated_size{
+	my $file = shift;
+	my $count = $file_count{$file};
+	my $sz = 0;
+	for(my $i=0;$i<$count;$i++){
+		$sz += $file_size{"${file}______$i"};
+	}
+	return $sz;
+}
+
 
 sub dom{
 	open DATE, "date +%d |";

@@ -119,8 +119,12 @@ This will display the contents of the trash.
 
 -s|--size
 This displays the size of the Trash directory. 
+If provided with the -l option, The size of each trash entry will also be displayed.
 
--h|--help
+-h|--human-readable
+If provided with the -s option, the size will be printed in a human readable form.
+
+--help
 Displays this help and exits.
 
 -x|--force-regex

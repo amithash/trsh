@@ -95,9 +95,6 @@ if($user_or_system eq "user"){
 	get_from_user("Where do you trsh to be installed?", \$dest);
 	$man_dest = "$home/.trsh.1.gz";
 	get_from_user("Where do you want the man pages to be installed? ", \$man_dest);
-	if($man_dest ne "$home/.trsh.1.gz"){
-		search_and_replace(\@trsh_contents, qr/\$ENV{HOME}\/.trsh.1.gz/, $man_dest);
-	}
 }
 else{
 	$dest = "/usr/bin/trsh.pl";
