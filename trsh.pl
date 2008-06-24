@@ -151,6 +151,7 @@ my $history = "$trash/.history";
 if( !(-e $trash) ) {
 	print "Could not find the trash directory, creating it...\n";
         system("mkdir $trash");
+	system("chmod 0700 $trash");
 }
 if( !(-e $history)){
 	print "Could not find the history file. Creating it... \n";
