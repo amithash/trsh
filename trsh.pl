@@ -166,7 +166,7 @@ my %file_count;
 my @hist_raw = get_history();
 my $dirty = 0;
 
-# From now on, catch signal because, the history is corrupted.
+# From now on, we catch signals because, the history is corrupted.
 # We will HAVE to exit cleanly.
 
 $SIG{'INT'} = 'exit_routine';
@@ -192,7 +192,7 @@ if($size == 1){
 }
 
 if($help == 1){
-	usage();
+	print $usage_string;
 	exit_routine();
 }
 
@@ -263,10 +263,6 @@ exit_routine();
 #####################################################
 # USER FUNCTIONS
 #####################################################
-
-sub usage{
-	print $usage_string;
-}
 
 sub get_response{
 	my $message = shift;
