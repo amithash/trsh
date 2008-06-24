@@ -467,7 +467,8 @@ sub get_size_human_readable{
 sub get_size{
 	my $sz = 0;
 	foreach my $entry (@hist_raw){
-		my $sz += $file_size{$entry};
+		print "entry = $entry\n";
+		$sz += $file_size{$entry};
 	}
 	return $sz;
 }
