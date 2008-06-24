@@ -397,11 +397,12 @@ sub empty_trash{
 
 sub display_trash{
 	if($#hist_raw >= 0){
-		my $sz;
-		$sz = get_size_human_readable() if($human == 1);
-		$sz = get_size() if($human == 0);
-		print color("Yellow"),"Trash Size: $sz" if($size == 1);
-		print color("reset"), "\n" if($size == 1);
+		if($size == 1){
+			my $sz;
+			$sz = get_size($human);
+			print color("Yellow"),"Total Trash Size: $sz";
+			print color("reset"), "\n";
+		}
 		my $fsz = 0;
 		foreach my $entry (keys %file_count){
 			my $file = "$trash/${entry}______0";
@@ -469,7 +470,8 @@ sub seek_and_destroy_in_history{
 	}
 }
 
-# SIDE EFFECTS: file_size and file_count hashes are populated
+# SIDE EFFECTS: file_count hash is populated
+# 		if the file size exists in history, %file_size is also populated.
 sub get_history{
 	open HIST, "$history" or die "Could not open history\n";
 	my @contents = split(/\n/, join("", <HIST>));
@@ -525,11 +527,8 @@ sub make_history{
 
 ############### FUNCTIONS RELATED TO SIZE ###################
 
-sub get_size_human_readable{
-	return kb2hr(get_size());
-}
-
 sub get_size{
+	my $h = shift;
 	my $sz = 0;
 	foreach my $entry (@hist_raw){
 		if(not defined($file_size{$entry})){
@@ -538,7 +537,9 @@ sub get_size{
 		}
 		$sz += $file_size{$entry};
 	}
+	$sz = kb2hr($sz) if($h == 1);
 	return $sz;
+
 }
 
 sub get_file_size{
