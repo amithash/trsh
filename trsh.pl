@@ -431,6 +431,9 @@ sub display_trash{
 			elsif(-l $file){
 				print_colored($file_count{$entry},$entry,"Cyan",$fsz);
 			}
+			elsif($entry =~ /\.tar$/ or $entry =~ /\.gz$/){
+				print_colored($file_count{$entry},$entry,"Red",$fsz);
+			}
 			else{
 				print_colored($file_count{$entry},$entry,"reset",$fsz);
 			}
