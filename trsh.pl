@@ -325,8 +325,28 @@ sub restore_file{
 			print "$entry does not exist in the trash.\n";
 		}
 		else{
+			my $out = "$cwd/$entry";
 			print "Restoring file $entry...\n" if($verbose == 1);
-			if(system("mv \"$trash/${entry}______$index\" \"$cwd/$entry\"") == 0){
+			while(-e "$out"){
+				print "$out already exists. Here are your options:\n";
+				print "(1) Overwrite the file\n";
+				print "(2) Rename new file\n";
+				print "Your choice: (1/2) [1]:";
+				my $inp = <STDIN>;
+				$inp = 1 if($inp eq "");
+				$inp += 0;
+				if($inp == 1){
+					system("rm -rf \"$out\"");
+				}
+				else{
+					print "Enter the new name of the file: ";
+					my $name = <STDIN>;
+					chomp($name);
+					$out = "$cwd/$name";
+				}
+			}
+
+			if(system("mv \"$trash/${entry}______$index\" \"$out\"") == 0){
 				seek_and_destroy_in_history("$entry\______$index");
 			}
 			else{
@@ -337,28 +357,20 @@ sub restore_file{
 }
 
 sub restore_last_file{
-	my $cwd = cwd();
 	my $item = pop_from_history();
+	my $name;
 	if($item eq "NULL______NULL"){
-		print "Nothing to restore\n";
-		exit_routine();
+		print "Nothing to restore!\n";
+		exit;
 	}
-	if(-e "$trash/$item"){
-		if($item =~ /(.+)______\d+$/){
-			my $entry = $1;
-			print "Restoring $entry...\n";
-			if(system("mv \"$trash/$item\" \"$cwd/$entry\"") != 0){
-				push @hist_raw, $item;
-				print "Could not restore $entry. Check if you have write permissions in $cwd\n";
-			}
-		}
-		else{
-			print "ERROR! Something wierd happened. This should never happen\n";
-		}
+	push_to_history($item);
+	if($item =~ /(.+)______\d+/){
+		$name = $1;
 	}
 	else{
-		print "Something is wrong... $item was in the history, but not in the trash... Raise a bug\n";
+		die "This should never happen\n";
 	}
+	restore_file($name);
 }
 
 sub remove_from_trash{
