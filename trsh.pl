@@ -343,12 +343,11 @@ sub restore_last_file{
 		print "Nothing to restore\n";
 		exit_routine();
 	}
-	my $item_cmd = join(" ", split(/\\\s/,$item));
-	if(-e "$trash/$item_cmd"){
+	if(-e "$trash/$item"){
 		if($item =~ /(.+)______\d+$/){
 			my $entry = $1;
 			print "Restoring $entry...\n";
-			if(system("mv $trash/$item $cwd/$entry") != 0){
+			if(system("mv \"$trash/$item\" \"$cwd/$entry\"") != 0){
 				push @hist_raw, $item;
 				print "Could not restore $entry. Check if you have write permissions in $cwd\n";
 			}
@@ -390,23 +389,37 @@ sub remove_from_trash{
 
 sub empty_trash{
 	if(get_response("Are you sure you want to empty the trash?") == 1){
-		if(system ("rm -rf $history") != 0){
-			exit_routine("ERROR Emptying trash, $history could not be deleted\n");
-		}
-		my @contents = split(/\n/, `ls -a $trash`);
-		foreach my $entry (@contents){
+		foreach my $entry (@hist_raw){
 			chomp($entry);
 			if($entry ne "." and $entry ne ".."){
-				if(system("rm -rf $trash/$entry") != 0){
-					die "Something Horribly went wrong. $trash/$entry could not be removed.\n Your history is corrupted.";
+				if(system("rm -rf \"$trash/$entry\"") != 0){
+					exit_routine("Something Horribly went wrong. $trash/$entry could not be removed.\n");
+				}
+				else{
+					$dirty = 1;
+					seek_and_destroy_in_history($entry);
 				}
 			}
 		}
-		if(system ("touch $history") != 0){
-			die "Something horribly went wrong. $history could not be created\n";
+		my $list = `ls -a $trash`;
+		my @tmp = split(/\n/,$list);
+		my @ls;
+		foreach my $ent (@tmp){
+			if($ent ne "." and $ent ne ".." and $ent ne ".history"){
+				push @ls, $ent;
+			}
 		}
-		@hist_raw = ();
-		$dirty = 1;
+		$list = join("\n",@ls);
+		if($list ne ""){	
+			print "Stray files still exist in trash. Here is its listing:\n$list\n";
+			if(get_response("Are you sure you want to permanently delete them?") == 1){
+				foreach my $entry (@ls){
+					if(system("rm -rf \"$trash/$entry\"") != 0){
+						print "Could not remove $trash/$entry. You need to remove it yourself.\n";
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -562,7 +575,7 @@ sub get_size{
 
 sub get_file_size{
 	my $file = shift;
-	my @tmp = split /\s/, `du -s $file`;
+	my @tmp = split /\s/, `du -s "$file"`;
 	return $tmp[0] + 0;
 }
 
