@@ -121,6 +121,9 @@ my $verbose = 0;
 my $recursive = 0;
 my $regex_force = 0;
 my $human = 0;
+my $ver = 0;
+my $VERSION = "2.0.10"; 
+# MAINVERSION.SUBVERSION.REVISION
 
 Getopt::Long::Configure('bundling');
 
@@ -134,11 +137,15 @@ GetOptions( 'e|empty'          => \$empty,
 	    'i|interactive'    => \$warn,
 	    'v|verbose'        => \$verbose,
 	    'x|force-regex'    => \$regex_force,
+	    'version'	       => \$ver,
     	    'r|recursive'      => \$recursive);
-
 
 my @remaining = @ARGV;
 
+if($ver == 1){
+	print "trsh - $VERSION\n";
+	exit;
+}
 
 if (not defined $ENV{HOME}) {
     print "The environment variable HOME is not set\n";
@@ -668,5 +675,174 @@ sub exit_routine{
 	}
 	exit;
 }
+
+
+========================================================================================
+                                    TRSH
+	 		Copyright 2008 Amithash Prasad                                         
+			        Version 2.0.10
+
+	 Seeker is free software: you can redistribute it and/or modify         
+	 it under the terms of the GNU General Public License as published by   
+	 the Free Software Foundation, either version 3 of the License, or      
+	 (at your option) any later version.                                    
+	                                                                        
+	 This program is distributed in the hope that it will be useful,        
+	 but WITHOUT ANY WARRANTY; without even the implied warranty of         
+	 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          
+	 GNU General Public License for more details.                           
+	                                                                        
+	 You should have received a copy of the GNU General Public License      
+	 along with this program.  If not, see <http://www.gnu.org/licenses/>.  
+
+========================================================================================
+
+A safe rm.
+
+MOTIVATION
+--
+
+I wrote this script when I accidentally deleted my homework. Enough Said...
+
+SETUP
+--
+./install.pl
+
+Answer all the quick questions, and you are done. install.pl will try the level
+best to get the system parameters and hence most of the time it is best to use
+the default options. Note the contents in the square brackets [] are the defaults
+if you press enter without entering anything. These defaults are not the ones which
+I choose, it is the ones which install.pl determines from your system.
+
+If you use an unsupported shell (like the z shell). You need to find out all the 
+parameters for that shell like: does aliases work like bash or c-shell?, where
+is the user rc file? where is the system wide rc file? etc and try your luck.
+If things fail, you need to make a manual install: copy trsh.pl to wherever you 
+want, put that in the path, create aliases for rm and undo to point where you
+have installed trsh. and finally copy the man page (trsh.1.gz).
+
+Run uninstall.pl if you want to remove trsh completely from your system. 
+(If you had performed a system wide install, please, run ./uninstall.pl
+as root).
+
+MANUAL INSTALLATION:
+--
+ok, Here is a manual installation procedure (These are followed by the scripts)
+1. Copy trsh.pl to anywhere you like, 
+2. If you want a manual entry, copy trsh.1.gz to /usr/share/man/man1 (Optional)
+3. Make changes in your bashrc file (Local or global)
+   Local changes affect only the current user and global changes affect ALL 
+   users.
+	a. The local rc file is usually in the home folder and named .bashrc 
+	   (For bash and .cshrc for CSH and TCSH).
+	b. The Global rc file is usually in the /etc folder named either as 
+	   bash.bashrc or bashrc for bash and csh.cshrc or cshrc for CSH or
+	   TCSH
+	alias rm="/path/to/trsh.pl" # BASH
+	alias undo="/path/to/trsh.pl -u" # BASH
+
+	alias rm "/path/to/trsh.pl" # CSH/TCSH
+	alias undo "/path/to/trsh.pl -u" # CSH/TCSH
+If your Shell is not one of these, then refer to your shell's manual on how
+to setup aliases. (If it is possible), or its alternatives. 
+
+TEST
+--
+
+BASH: test-trsh.bash
+CSH/TCSH: test-trsh.csh
+Run it, and if anything fails, raise a bug (See below) and do not install. :-)
+
+You can redirect stdout to /dev/null to not see so much output for the bash script by:
+./test-trsh.bash > /dev/null
+
+Sorry, csh folks, no such thing for the csh equivalent script! You will have
+to live with the screen dump! :-)
+
+
+USAGE
+--
+rm [OPTIONS]... [FILES]...
+
+FILES:
+This is a list of files to recover or delete.
+
+OPTIONS:
+
+-u|--undo [FILES | REGEX]
+If this option is provided without any other arguments, the latest deleted file will be restored.
+If FILE/FILES are provided, the latest copy of these (If they exist in the trash) is recovered
+If instead a regex is provided, then all files in the trash matching with the regex is recovered. 
+(For regex usage, refer the subsection on regex below)
+
+-f|--force
+This option instructs trsh to permanently delete FILES and completely bypass the trash
+
+-i|--interactively
+This option will instruct trsh to prompt the user before deleting each and every file.
+
+-v|--verbose
+This option will instruct trsh to talk about whatever it is doing.
+
+-e|--empty
+If this option is provided without any other arguments, Trash is emptied.
+If FILE/FILES are provided, All copies of FILE is removed permanently from the trash
+If instead a regex is provided, then all files in the trash matching with the regex is permanently removed.
+(For regex usage, refer the subsection on regex below)
+
+-r|--recursive
+This option if provided will allow directories to be deleted.
+
+-l|--list
+This will display the contents of the trash.
+
+-s|--size
+This displays the size of the Trash directory. 
+If provided with the -l option, The size of each trash entry will also be displayed.
+
+-h|--human-readable
+If provided with the -s option, the size will be printed in a human readable form.
+
+--help
+Displays this help and exits.
+
+-x|--force-regex
+This forces trsh to assume that the provided arguments are regex's. (Not needed most of the time, Read the REGEX Section)
+
+rm FILES just moves FILES to the trash. By default, directories are not deleted.
+
+REGEX
+--
+A regex is accepted for restoration and emptying the trash (refer -e and -u options above).
+Currently only the * operator is accpeted. But as the shell tries to expand these, you will have
+to escape the * by either putting the entire regex in quotes or escaping every instance of the *.
+rm -u "some*"  # Correct
+rm -r "some\*  # Correct
+rm -u some*    # Wrong
+
+The -x option is probably going to be the least used. Here is one of the scenarios where it might be useful:
+touch test1 te\*t1
+rm test1 te\*t1
+rm -u "te\*t1"    # This will restore only te\*t1.
+rm -ux "te\*t1"   # This will restore both test1 and te\*t1.
+But rm -u "te*" will still restore both.
+
+
+NOTES
+--
+
+If multiple files of the same name are deleted, they are stored in the trash as if it were a stack.
+Thus any recover will be like popping the files from the trash stack! 
+
+REPORTING BUGS
+--
+
+Report all bugs to:
+http://code.google.com/p/trsh/issues
+
+AUTHOR
+--
+
+Amithash Prasad {amithash@gmail.com}
 
 
