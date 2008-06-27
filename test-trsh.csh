@@ -35,7 +35,6 @@ trsh.pl
 
 # TEST 1
 @ TOTAL_COUNT = $TOTAL_COUNT + 1
-echo "KAKKA"
 echo "TEST 1: Tests .Trash creation"
 if ( -d $HOME/.Trash ) then
 	echo "TEST 1 PASSED: Trash exists" 
@@ -317,6 +316,7 @@ echo ""
 /bin/rm yy
 
 if ( -d $HOME/.Trash_backup ) then
+	rm -rf $HOME/.Trash
 	mv $HOME/.Trash_backup $HOME/.Trash
 endif
 

@@ -339,6 +339,7 @@ echo "" >&2
 
 if [ -d $HOME/.Trash_backup ]
 then
+	rm -rf $HOME/.Trash
 	mv $HOME/.Trash_backup $HOME/.Trash
 fi
 
