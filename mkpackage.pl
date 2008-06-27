@@ -13,6 +13,7 @@ if($rev =~ /^(\d+)/){
 print "version = $main.$sub.$rev\n";
 my $name = "trsh-$main.$sub.$rev";
 system("rm -rf ../$name") if(-d "../$name");
+system("rm -rf ../$name.tar.gz") if(-e "../$name.tar.gz");
 system("svn export . ../$name");
 
 # Remove checkin.pl and mkpackage.pl from it.
