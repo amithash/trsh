@@ -7,7 +7,7 @@ my $main = 2;
 my $sub  = 0;
 my $rev  = `svnversion`;
 
-if($rev =~ /(\d)+M/){
+if($rev =~ /(\d+)M/){
 	# modification has occured.
 	$rev = $1 + 1;
 }
@@ -15,7 +15,6 @@ else{
 	print "No modifications, checkin not required.\n";
 	exit;
 }
-
 open TRSH,"trsh.pl" or die "Could not find trsh.pl";
 my @trsh = <TRSH>;
 close(TRSH);
