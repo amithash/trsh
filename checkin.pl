@@ -7,8 +7,12 @@ my $main = 2;
 my $sub  = 0;
 my $rev  = `svnversion`;
 
-if($rev =~ /(\d+)M/){
+if($rev =~ /^(\d+)M/){
 	# modification has occured.
+	$rev = $1 + 1;
+}
+elsif($rev =~ /^\d+\:(\d+)M/){
+	print "WARNING: You need to do a svn update.\n";
 	$rev = $1 + 1;
 }
 else{
