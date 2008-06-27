@@ -375,6 +375,8 @@ sub restore_last_file{
 
 sub remove_from_trash{
 	my $item = shift;
+	my $f = shift;
+	$f = $force unless(defined($f));
 	my @matched;
 	if((! -e "$trash/${item}______0") or $regex_force == 1){ # Only match if file does not exist.
 		@matched = get_matched_files($item);
@@ -387,7 +389,7 @@ sub remove_from_trash{
 			print "$entry does not exist in the trash.\n";
 		}
 		else{
-			if(get_response("Are you sure you want to remove $entry from the trash?") == 1){
+			if($f == 1 or get_response("Are you sure you want to remove $entry from the trash?") == 1){
 				print "Removing $entry from the trash...\n" if($verbose == 1);
 				for(my $i=0;$i<$count;$i++){
 					if(system("rm -rf \"$trash/$entry\______$i\"") == 0){
@@ -401,17 +403,8 @@ sub remove_from_trash{
 
 sub empty_trash{
 	if(get_response("Are you sure you want to empty the trash?") == 1){
-		foreach my $entry (@hist_raw){
-			chomp($entry);
-			if($entry ne "." and $entry ne ".."){
-				if(system("rm -rf \"$trash/$entry\"") != 0){
-					exit_routine("Something Horribly went wrong. $trash/$entry could not be removed.\n");
-				}
-				else{
-					$dirty = 1;
-					seek_and_destroy_in_history($entry);
-				}
-			}
+		foreach my $entry (keys %file_count){
+			remove_from_trash($entry,1);
 		}
 		my $list = `ls -a $trash`;
 		my @tmp = split(/\n/,$list);
