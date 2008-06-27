@@ -196,6 +196,19 @@ if($undo > 0){
 	exit_routine();
 }
 
+
+if($empty == 1){
+	if($#remaining >= 0){
+		foreach my $entry (@remaining){
+			remove_from_trash($entry);
+		}
+	}
+	else{
+		empty_trash();
+	}
+	exit_routine();
+}
+
 # If the force flag is on, then rm instead of moving to trash.
 if($force == 1){
 	my $cmd = "rm ";
@@ -210,20 +223,7 @@ if($force == 1){
 	exit_routine();
 }
 
-
-if($empty == 1){
-	if($#remaining >= 0){
-		foreach my $entry (@remaining){
-			remove_from_trash($entry);
-		}
-	}
-	else{
-		empty_trash();
-	}
-	exit_routine();
-}
-
-
+# Nothing else, try normal delete! :-) Speak of the common use case in the last.
 if($#remaining >= 0){
 	foreach my $item_index (@remaining){
 		if($recover == 1){
