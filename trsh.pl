@@ -122,7 +122,7 @@ my $recursive = 0;
 my $regex_force = 0;
 my $human = 0;
 my $ver = 0;
-my $VERSION = "2.0.113"; 
+my $VERSION = "2.0.114"; 
 # MAINVERSION.SUBVERSION.REVISION
 
 Getopt::Long::Configure('bundling');
