@@ -10,11 +10,20 @@ $rev = `svnversion`;
 if($rev =~ /^(\d+)/){
 	$rev = $1 + 0;
 }
+# RUN THE BASH TESTS
 if(system("./test-trsh.bash") != 0){
-	print "Hey, your changes failed tests.\n";
+	print "Hey, your changes failed tests on bash.\n";
 	print "NO PACKAGE FOR YOU\n";
 	exit;
 }
+# RUN THE CSH TESTS
+if(system("./test-trsh.csh") != 0){
+	print "Hey, your changes failed tests on csh.\n";
+	print "NO PACKAGE FOR YOU\n";
+	exit;
+}
+
+# Only if these tests pass, allow the person to create the package.
 
 print "version = $main.$sub.$rev\n";
 my $name = "trsh-$main.$sub.$rev";
@@ -24,8 +33,11 @@ system("svn export . ../$name");
 
 # Remove checkin.pl and mkpackage.pl from it.
 
+# These scripts are not required for the user.
 system("rm ../$name/checkin.pl");
 system("rm ../$name/mkpackage.pl");
+system("rm ../$name/test-trsh.bash");
+system("rm ../$name/test-trsh.csh");
 
 chdir("..");
 

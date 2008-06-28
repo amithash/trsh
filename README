@@ -1,7 +1,7 @@
 ========================================================================================
                                     TRSH
 	 		Copyright 2008 Amithash Prasad                                         
-			       Version 2.0.119
+			       Version 2.0.120
 
 	 Seeker is free software: you can redistribute it and/or modify         
 	 it under the terms of the GNU General Public License as published by   
@@ -66,20 +66,6 @@ ok, Here is a manual installation procedure (These are followed by the scripts)
 	alias undo "/path/to/trsh.pl -u" # CSH/TCSH
 If your Shell is not one of these, then refer to your shell's manual on how
 to setup aliases. (If it is possible), or its alternatives. 
-
-TEST
---
-
-BASH: test-trsh.bash
-CSH/TCSH: test-trsh.csh
-Run it, and if anything fails, raise a bug (See below) and do not install. :-)
-
-You can redirect stdout to /dev/null to not see so much output for the bash script by:
-./test-trsh.bash > /dev/null
-
-Sorry, csh folks, no such thing for the csh equivalent script! You will have
-to live with the screen dump! :-)
-
 
 USAGE
 --
@@ -155,6 +141,20 @@ NOTES
 If multiple files of the same name are deleted, they are stored in the trash as if it were a stack.
 Thus any recover will be like popping the files from the trash stack! 
 
+TEST
+--
+
+Note, these scripts are only present in the svn version (If you do an svn checkout).
+But I have removed them from the downloadable version. Now a days  I make sure to run these
+tests before creating a downloadable tar on both csh and bash and hence is not necessary
+for the user to run them.
+
+BASH: test-trsh.bash
+CSH/TCSH: test-trsh.csh
+
+NOTE: If you really want to use the svn snapshot, then please stick to the revision 
+I have made avaliable for download! 
+
 REPORTING BUGS
 --
 
@@ -165,5 +165,4 @@ AUTHOR
 --
 
 Amithash Prasad {amithash@gmail.com}
-
 
