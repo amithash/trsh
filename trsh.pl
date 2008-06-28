@@ -19,33 +19,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
 #*************************************************************************
 
-# TODO:
-# DONE 1. Get a history in the start as an array, and write on exit.
-#           Currently this is done very badly, by opening and closing history
-#           too many times.... This can create considerable load.
-#
-# DONE 2. The size of each file must be in the history. This allows quick 
-#         file size display. 
-#
-# DONE 3. Due to '1', I need to create a single exit point with the dump to
-#         file. And also find out a way to catch a term/abort signal to dump 
-#         to history.... Else, a term may cause corruption and incoherence
-#         to the history file. BOTH 1 and 3 must be implemented together...
-#
-# DONE 4. Along with an array, create a hash. This will definately 
-#         speed up lookups (Linear to O1) when a lot of files are deleted.
-#         And the regex is done only once.
-#
-# DONE 5. With '2', I can then display the cumilative ( 3 * 4KB) kinda display
-#         on a trsh.pl -l.
-#
-# DONE 6. Usage should not display a man page!!! Now that the usage has setteled
-#         down, remove them... Creates confusion. And hence remove that install
-#         change thing. And a user install will not get a man page! :-)
-#
-# 7. Optimize: Replace all open to execute kinda stuff with back ticks...
-#
-
 use strict;
 use warnings;
 use Getopt::Long;
@@ -57,45 +30,40 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.0.122
+TRSH VERSION 2.0.123
 
 USAGE: rm [OPTIONS]... [FILES]...
 
-FILES:
-This is a list of files to recover or delete.
+FILES: A list of files to recover or delete.
 
 OPTIONS:
 
 -u|--undo [FILES | REGEX]
-If this option is provided without any other arguments, the latest deleted file will be restored.
-If FILE/FILES are provided, the latest copy of these (If they exist in the trash) is recovered
-If instead a regex is provided, then all files in the trash matching with the regex is recovered. 
-(For regex usage, refer the subsection on regex below)
+Undo's a delete (Restores FILES or files matching REGEX from trash). 
+Without arguments, the latest deleted file is restored.
 
--f|--force
-This option instructs trsh to permanently delete FILES and completely bypass the trash
+-f|--force FILES
+Instructs trsh to permanently delete FILES and completely bypass the trash
 
 -i|--interactively
-This option will instruct trsh to prompt the user before deleting each and every file.
-
--v|--verbose
-This option will instruct trsh to talk about whatever it is doing.
-
--e|--empty
-If this option is provided without any other arguments, Trash is emptied.
-If FILE/FILES are provided, All copies of FILE is removed permanently from the trash
-If instead a regex is provided, then all files in the trash matching with the regex is permanently removed.
-(For regex usage, refer the subsection on regex below)
+Prompt the user before any operation.
 
 -r|--recursive
-This option if provided will allow directories to be deleted.
+Allows directories to be deleted.
+
+-v|--verbose
+Provide verbose output.
+
+-e|--empty [FILES | REGEX]
+Removed FILES or files matching REGEX from the trash (Permanently).
+Without arguments, the trash is emptied.
 
 -l|--list
-This will display the contents of the trash.
+Display the contents of the trash.
 
 -s|--size
-This displays the size of the Trash directory. 
-If provided with the -l option, The size of each trash entry will also be displayed.
+This displays the size of the Trash directory. (-s with -l makes the listing contain 
+sizes of individual entries in the trash)
 
 -h|--human-readable
 If provided with the -s option, the size will be printed in a human readable form.
@@ -104,7 +72,7 @@ If provided with the -s option, the size will be printed in a human readable for
 Displays this help and exits.
 
 -x|--force-regex
-This forces trsh to assume that the provided arguments are regex's. (Not needed most of the time, Read the REGEX Section)
+This forces trsh to assume that the provided arguments are regex's. (Not needed, refer the README for more)
 
 rm FILES just moves FILES to the trash. By default, directories are not deleted.
 
