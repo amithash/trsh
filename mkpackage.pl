@@ -10,6 +10,10 @@ $rev = `svnversion`;
 if($rev =~ /^(\d+)/){
 	$rev = $1 + 0;
 }
+my $ret = system("./test-trsh.bash");
+print "ret = $ret\n";
+exit;
+
 print "version = $main.$sub.$rev\n";
 my $name = "trsh-$main.$sub.$rev";
 system("rm -rf ../$name") if(-d "../$name");

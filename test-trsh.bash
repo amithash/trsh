@@ -270,11 +270,12 @@ fi
 /bin/rm -f test_trsh\ 9
 echo "END OF REQUIRED TESTS" >&2
 echo "" >&2
-
+ALL_PASSED=0
 echo "$PASSED_COUNT OF $TOTAL_COUNT TESTS PASSED." >&2
 if [ $PASSED_COUNT -eq $TOTAL_COUNT ] 
 then
 	echo "ALL TESTS PASSED. BASIC FEATURES WORKING" >&2
+	ALL_PASSED=1
 fi
 echo "" >&2
 PASSED_COUNT=0
@@ -332,7 +333,14 @@ echo "$PASSED_COUNT OF $TOTAL_COUNT TESTS PASSED." >&2
 if [ $PASSED_COUNT -eq $TOTAL_COUNT ] 
 then
 	echo "ALL RECOMMENDED TESTS PASSED. EXTENDED FEATURES WORKING" >&2
+	if [ $ALL_PASSED -eq 1 ]
+	then
+		ALL_PASSED=1
+	fi
+else
+	ALL_PASSED=0
 fi
+
 echo "" >&2
 
 /bin/rm yy
@@ -342,4 +350,9 @@ then
 	rm -rf $HOME/.Trash
 	mv $HOME/.Trash_backup $HOME/.Trash
 fi
-
+if [ $ALL_PASSED -eq 1 ]
+then
+	exit 0
+else
+	exit 127
+fi
