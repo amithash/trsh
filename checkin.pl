@@ -38,6 +38,7 @@ foreach my $entry (@readme){
 	$entry =~ s/Version \d+\.\d+\.\d+/Version $main\.$sub\.$rev/;
 	print README $entry;
 }
+close(README);
 system("rm -f README.orig trsh.pl.orig");
 
 print "Checking Message (Single line):\n";
