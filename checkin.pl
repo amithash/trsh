@@ -25,7 +25,7 @@ close(TRSH);
 system("mv trsh.pl trsh.pl.orig");
 open TRSH, "+>trsh.pl" or die "Could not create trsh.pl\n";
 foreach my $entry (@trsh){
-	$entry =~ s/my \$VERSION = "\d+\.\d+\.\d+";/my \$VERSION = "$main\.$sub\.$rev";/;
+	$entry =~ s/TRSH VERSION \d+\.\d+\.\d+/TRSH VERSION $main\.$sub\.$rev/;
 	print TRSH $entry;
 }
 

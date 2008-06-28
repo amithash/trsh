@@ -57,6 +57,8 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
+TRSH VERSION 2.0.122
+
 USAGE: rm [OPTIONS]... [FILES]...
 
 FILES:
@@ -121,9 +123,6 @@ my $verbose = 0;
 my $recursive = 0;
 my $regex_force = 0;
 my $human = 0;
-my $ver = 0;
-my $VERSION = "2.0.121"; 
-# MAINVERSION.SUBVERSION.REVISION
 
 Getopt::Long::Configure('bundling');
 
@@ -137,15 +136,9 @@ GetOptions( 'e|empty'          => \$empty,
 	    'i|interactive'    => \$warn,
 	    'v|verbose'        => \$verbose,
 	    'x|force-regex'    => \$regex_force,
-	    'version'	       => \$ver,
     	    'r|recursive'      => \$recursive);
 
 my @remaining = @ARGV;
-
-if($ver == 1){
-	print "trsh - $VERSION\n";
-	exit;
-}
 
 if (not defined $ENV{HOME}) {
     print "The environment variable HOME is not set\n";
