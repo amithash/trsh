@@ -10,9 +10,11 @@ $rev = `svnversion`;
 if($rev =~ /^(\d+)/){
 	$rev = $1 + 0;
 }
-my $ret = system("./test-trsh.bash");
-print "ret = $ret\n";
-exit;
+if(system("./test-trsh.bash") != 0){
+	print "Hey, your changes failed tests.\n";
+	print "NO PACKAGE FOR YOU\n";
+	exit;
+}
 
 print "version = $main.$sub.$rev\n";
 my $name = "trsh-$main.$sub.$rev";

@@ -352,7 +352,7 @@ then
 fi
 if [ $ALL_PASSED -eq 1 ]
 then
-	exit 127
+	exit 0
 else
 	exit 127
 fi
