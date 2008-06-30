@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.0.123
+TRSH VERSION 2.0.134
 
 USAGE: rm [OPTIONS]... [FILES]...
 
@@ -184,9 +184,7 @@ if($force == 1){
 	$cmd = $cmd . "-i " if($warn == 1); # Pass the interactive flag to rm
 	foreach my $this (@remaining){
 		print "Removing \"$this\" permanently\n" if($verbose == 1);
-		if(system("$cmd \"$this\"") != 0){
-			print "Could not delete $this\n";
-		}
+		system("$cmd \"$this\"") == 0 or print "Could not delete $this\n";
 	}
 	exit_routine();
 }
@@ -360,9 +358,7 @@ sub remove_from_trash{
 			if($f == 1 or get_response("Are you sure you want to remove $entry from the trash?") == 1){
 				print "Removing $entry from the trash...\n" if($verbose == 1);
 				for(my $i=0;$i<$count;$i++){
-					if(system("rm -rf \"$trash/$entry\______$i\"") == 0){
-						seek_and_destroy_in_history("$entry\______$i");
-					}
+					system("rm -rf \"$trash/$entry\______$i\"") != 0 or seek_and_destroy_in_history("$entry\______$i");
 				}
 			}
 		}
@@ -387,9 +383,7 @@ sub empty_trash{
 			print "Stray files still exist in trash. Here is its listing:\n$list\n";
 			if(get_response("Are you sure you want to permanently delete them?") == 1){
 				foreach my $entry (@ls){
-					if(system("rm -rf \"$trash/$entry\"") != 0){
-						print "Could not remove $trash/$entry. You need to remove it yourself.\n";
-					}
+					system("rm -rf \"$trash/$entry\"") == 0 or print "Could not remove $trash/$entry. You need to remove it yourself.\n";
 				}
 			}
 		}
