@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.0.134
+TRSH VERSION 2.0.135
 
 USAGE: rm [OPTIONS]... [FILES]...
 
@@ -330,13 +330,8 @@ sub restore_last_file{
 		exit;
 	}
 	push_to_history($item);
-	if($item =~ /(.+)______\d+/){
-		$name = $1;
-	}
-	else{
-		die "This should never happen\n";
-	}
-	restore_file($name);
+	$item =~ /(.+)______\d+/;
+	restore_file($1);
 }
 
 sub remove_from_trash{
