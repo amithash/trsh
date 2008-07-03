@@ -46,11 +46,4 @@ system("rm -rf $name");
 
 my $pwd = `pwd`;
 print "PACKAGE IS: $pwd/$name.tar.gz\n";
-print "Do you want to upload the package now? (y/n)[y]: ";
-my $reply = <STDIN>;
-$reply = "y" if($reply eq "\n");
-chomp($reply);
-exit unless($reply eq "y" or $reply eq "Y");
-
-system("./trsh/googlecode_upload.py -s \"$main.$sub.$rev\" -p trsh -u amithash -l FEATURED $name.tar.gz");
 
