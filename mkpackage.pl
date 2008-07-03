@@ -52,5 +52,5 @@ $reply = "y" if($reply eq "\n");
 chomp($reply);
 exit unless($reply eq "y" or $reply eq "Y");
 
-system("googlecode_upload.py -s \"$main.$sub.$rev\" -p trsh -u amithash -l FEATURED $name.tar.gz");
+system("./googlecode_upload.py -s \"$main.$sub.$rev\" -p trsh -u amithash -l FEATURED $name.tar.gz");
 
