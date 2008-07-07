@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.0.143
+TRSH VERSION 2.0.144
 
 USAGE: rm [OPTIONS]... [FILES]...
 
@@ -112,7 +112,7 @@ if (not defined $ENV{HOME}) {
     print "The environment variable HOME is not set\n";
     exit;
 }
-my $trash = "$ENV{HOME}/.Trash";
+my $trash = "$ENV{HOME}/" . trash();
 my $history = "$trash/.history";
 
 
@@ -625,4 +625,7 @@ sub exit_routine{
 	}
 	exit;
 }
+
+# Configure script creates the sub to the trash path here...
+
 

@@ -15,9 +15,9 @@ foreach my $opt (@ARGV){
 }
 
 $opts{"USER"} = 0 unless($opts{"USER"});
-$opts{"RCLOC"} = "" unless($opts{"RCLOC"});
-$opts{"TRASHREL"} = ".Trash" unless($opts{"TRASHREL"});
-$opts{"INSTPATH"} = "" unless($opts{"INSTPATH"});
+$opts{"RPATH"} = "" unless($opts{"RPATH"});
+$opts{"TPATH"} = ".Trash" unless($opts{"TPATH"});
+$opts{"IPATH"} = "" unless($opts{"IPATH"});
 
 # Configuring shell
 print "Looking for shell.... ";
@@ -61,12 +61,12 @@ print "[$rc_file]\n";
 
 print "Choosing path of installation.... ";
 my $path;
-if($opts{INSTPATH} eq ""){
+if($opts{IPATH} eq ""){
 	$path = "/usr/bin/trsh.pl" if($opts{USER} == 0);
 	$path = "$home/.trsh.pl" if($opts{USER} == 1);
 }
 else{
-	$path = $opts{INSTPATH};
+	$path = $opts{IPATH};
 }
 
 print "[$path]\n";
@@ -80,9 +80,32 @@ if($opts{USER} == 0){
 }
 print "[$man_path]\n";
 
-
-
 # $path = Place to copy trsh.pl
 # $rc_file = rc to modify
 # $man_path = place to copy trsh.1
+
+# Create MAKEFILE
+system("rm makefile") if(-e "makefile");
+open MK, "+>makefile" or die "Could not create makefile\n";
+
+# Start writing makefile default
+print MK "default:\n";
+print MK "\tcat trsh.pl > trsh.pl.o\n";
+print MK "\techo \"sub trash{ return \\\".KAKKA\\\"; }\" >> trsh.pl.o\n\n";
+
+# Start writing install path
+print MK "install:\n";
+print MK "\tmv trsh.pl.o $path\n";
+print MK "\tcp trsh.1.gz $man_path\n" if($opts{USER} == 0);
+print MK "\tchmod +x $path\n";
+# ADD RC CONTENT
+
+print MK "\n";
+# start writing uninstall path
+print MK "uninstall:\n";
+print MK "\trm $path\n";
+print MK "\trm $man_path/trsh.1.gz\n" if($opts{USER} == 0);
+# REMOVE RC CONTENT
+
+close(MK);
 
