@@ -1,7 +1,7 @@
 ========================================================================================
                                     TRSH
 	 		Copyright 2008 Amithash Prasad                                         
-			       Version 2.0.146
+			       Version 2.0.147
 
 	 Seeker is free software: you can redistribute it and/or modify         
 	 it under the terms of the GNU General Public License as published by   
@@ -27,45 +27,43 @@ I wrote this script when I accidentally deleted my homework. Enough Said...
 
 SETUP
 --
-./install.pl
+./configure.pl [OPTIONS]
+make 
+make install
 
-Answer all the quick questions, and you are done. install.pl will try the level
-best to get the system parameters and hence most of the time it is best to use
-the default options. Note the contents in the square brackets [] are the defaults
-if you press enter without entering anything. These defaults are not the ones which
-I choose, it is the ones which install.pl determines from your system.
+Configure options:
+USER=1 performs a user installation, USER=0 (default) Performs a system wide install
+
+SHELL=/path/to/shell (default: $SHELL env variable)
+You can provide an option about what shell you want to trsh to be used in.
+
+IPATH="/path/to/trsh.pl" -- specify the path with the name of trsh.pl where you want
+to install trsh.pl. default: /usr/bin/trsh.pl for USER=0 and $home/.trsh.pl for USER=1
+
+RPATH="/path/to/*rc" -- specify the path to the *rc file. If not specified, the configure
+script will look for a suitable rc file (based on the detected shell) in /etc for USER=0
+or in $home for USER=1
+
+MPATH="/path/to/man/files" -- specify the path to the commands man page (default - 
+/usr/share/man/man1). This option is ignored for USER=1.
+
+TPATH="RelPath/to/Trash" -- Specify the relative path from the home directory. 
+Default: .Trash (Making the trash to be located in $HOME/.Trash)
+
+Keep a lookout at the output of configure. It is right most of the time. But if you
+feel it is not, try to configure it with your own options. I have tried it on fedora,
+suse and ubuntu and you will not need any other options (USER is nice if you do not
+have root access).
+
+'make uninstall' To uninstall trsh from your system. 
+
+'make clean' to clean your current directory of temporary files.
 
 If you use an unsupported shell (like the z shell). You need to find out all the 
-parameters for that shell like: does aliases work like bash or c-shell?, where
-is the user rc file? where is the system wide rc file? etc and try your luck.
-If things fail, you need to make a manual install: copy trsh.pl to wherever you 
-want, put that in the path, create aliases for rm and undo to point where you
-have installed trsh. and finally copy the man page (trsh.1.gz).
+parameters for that shell like: How does aliases work?, where is the user rc file? 
+where is the system wide rc file? etc and try your luck with the manual install 
+described in the second point in the NOTES Section.
 
-Run uninstall.pl if you want to remove trsh completely from your system. 
-(If you had performed a system wide install, please, run ./uninstall.pl
-as root).
-
-MANUAL INSTALLATION:
---
-ok, Here is a manual installation procedure (These are followed by the scripts)
-1. Copy trsh.pl to anywhere you like, 
-2. If you want a manual entry, copy trsh.1.gz to /usr/share/man/man1 (Optional)
-3. Make changes in your bashrc file (Local or global)
-   Local changes affect only the current user and global changes affect ALL 
-   users.
-	a. The local rc file is usually in the home folder and named .bashrc 
-	   (For bash and .cshrc for CSH and TCSH).
-	b. The Global rc file is usually in the /etc folder named either as 
-	   bash.bashrc or bashrc for bash and csh.cshrc or cshrc for CSH or
-	   TCSH
-	alias rm="/path/to/trsh.pl" # BASH
-	alias undo="/path/to/trsh.pl -u" # BASH
-
-	alias rm "/path/to/trsh.pl" # CSH/TCSH
-	alias undo "/path/to/trsh.pl -u" # CSH/TCSH
-If your Shell is not one of these, then refer to your shell's manual on how
-to setup aliases. (If it is possible), or its alternatives. 
 
 USAGE
 --
@@ -120,6 +118,7 @@ rm FILES just moves FILES to the trash. By default, directories are not deleted.
 
 REGEX
 --
+
 A regex is accepted for restoration and emptying the trash (refer -e and -u options above).
 Currently only the * operator is accpeted. But as the shell tries to expand these, you will have
 to escape the * by either putting the entire regex in quotes or escaping every instance of the *.
@@ -144,16 +143,56 @@ Thus any recover will be like popping the files from the trash stack!
 TEST
 --
 
-Note, these scripts are only present in the svn version (If you do an svn checkout).
-But I have removed them from the downloadable version. Now a days  I make sure to run these
-tests before creating a downloadable tar on both csh and bash and hence is not necessary
-for the user to run them.
 
-BASH: test-trsh.bash
-CSH/TCSH: test-trsh.csh
+NOTES: 
 
-NOTE: If you really want to use the svn snapshot, then please stick to the revision 
-I have made avaliable for download! 
+1. If you really want to use the svn snapshot, then please stick to the revision 
+   I have made avaliable for download! 
+
+2. MANUAL INSTALLATION: (These are steps which are followed by the configure and makefile scripts)
+   i. Copy trsh.pl to anywhere you like, 
+   ii. If you want a manual entry, copy trsh.1.gz to /usr/share/man/man1 (Optional)
+   iii. Make changes in your bashrc file (Local or global)
+   Local changes affect only the current user and global changes affect ALL 
+   users.
+      a. The local rc file is usually in the home folder and named .bashrc 
+         (For bash and .cshrc for CSH and TCSH).
+      b. The Global rc file is usually in the /etc folder named either as 
+         bash.bashrc or bashrc for bash and csh.cshrc or cshrc for CSH or TCSH
+	 Add the following lines for BASH:
+         alias rm="/path/to/trsh.pl" 
+         alias undo="/path/to/trsh.pl -u"
+
+         Add the following lines for CSH/TCSH:
+         alias rm "/path/to/trsh.pl" # CSH/TCSH
+         alias undo "/path/to/trsh.pl -u" # CSH/TCSH
+
+	 If your shell is not one of these, figure out from your shell's manual on how
+	 to make aliases.
+
+3. The installation will not allow you to use a Trash directory which is not 
+   in the user home directory. This is due to:
+   a. Privacy. It is easier to secure things in your home directory 
+   b. Avoid complications with permissions in directories outside the user directory.
+   If you really want trash to be in another directory, (Reasons might be a seperate scratch
+   mount avaliable to users with a higher quota and no backups) After installation, do the following:
+   
+   /bin/rm -r /path/to/trash/dir 
+   mkdir /path/to/new/trash
+   ln -s /path/to/new/trash /path/to/trash/dir
+
+   example:
+   /bin/rm ~/.Trash
+   mkdir -p /scratch/users/prasad/.Trash
+   ln -s /scratch/users/prasad/.Trash ~/.Trash
+
+4. The svn snapshot contains some extra scripts mostly to do with making my life easier in packaging and checkins. 
+   (You will not need them unless you want to contrubute in the development, for which you will need to ask me first!)
+   Along with those, there are some test scripts. these scripts are only present in the svn version (If you do an 
+   svn checkout instead of downloading the tarballs). These test the functionality of trsh so that I do not package 
+   a faulty trsh! test-trsh.bash tests trsh on bash and test-trsh.csh tests trsh on csh. And both are run before a
+   package is created.
+
 
 REPORTING BUGS
 --

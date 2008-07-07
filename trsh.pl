@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.0.146
+TRSH VERSION 2.0.147
 
 USAGE: rm [OPTIONS]... [FILES]...
 
@@ -118,7 +118,7 @@ my $history = "$trash/.history";
 
 if( !(-e $trash) ) {
 	print "Could not find the trash directory, creating it...\n";
-        system("mkdir $trash");
+        system("mkdir -p $trash");
 	system("chmod 0700 $trash");
 }
 if( !(-e $history)){
