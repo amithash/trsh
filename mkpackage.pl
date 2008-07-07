@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-my ($main,$sub,$rev) = (2,0,`svnversion`);
+my ($main,$sub,$rev) = (2,1,`svnversion`);
 if($rev =~ /M/){
 	print "There are modifications made. Please checkin and then create a package.\n";
 	exit;

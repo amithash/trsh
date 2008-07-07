@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 my $main = 2;
-my $sub  = 0;
+my $sub  = 1;
 my $rev  = `svnversion`;
 
 if($rev =~ /^(\d+)M/){
