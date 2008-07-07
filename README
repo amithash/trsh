@@ -1,7 +1,7 @@
 ========================================================================================
                                     TRSH
 	 		Copyright 2008 Amithash Prasad                                         
-			       Version 2.1.148
+			       Version 2.1.149
 
 	 Seeker is free software: you can redistribute it and/or modify         
 	 it under the terms of the GNU General Public License as published by   
@@ -136,15 +136,6 @@ But rm -u "te*" will still restore both.
 
 NOTES
 --
-
-If multiple files of the same name are deleted, they are stored in the trash as if it were a stack.
-Thus any recover will be like popping the files from the trash stack! 
-
-TEST
---
-
-
-NOTES: 
 
 1. If you really want to use the svn snapshot, then please stick to the revision 
    I have made avaliable for download! 
