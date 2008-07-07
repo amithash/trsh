@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.0.144
+TRSH VERSION 2.0.145
 
 USAGE: rm [OPTIONS]... [FILES]...
 
@@ -627,5 +627,5 @@ sub exit_routine{
 }
 
 # Configure script creates the sub to the trash path here...
-
+sub trash{ return ".Trash"; }
 
