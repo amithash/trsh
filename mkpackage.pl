@@ -45,5 +45,6 @@ system("tar -zcf $name.tar.gz $name");
 system("rm -rf $name");
 
 my $pwd = `pwd`;
+chomp($pwd);
 print "PACKAGE IS: $pwd/$name.tar.gz\n";
 
