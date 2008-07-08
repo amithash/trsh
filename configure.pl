@@ -106,6 +106,12 @@ if($opts{USER} == 0){
 }
 print "[$man_path]\n";
 
+# Perl
+print "Checking if perl is installed... ";
+my $perl_path = $opts{PPATH} || "/usr/bin/perl";
+die "Perl executable not found\n" unless(-e $perl_path);
+print "[$perl_path]\n";
+
 print "TRASH will be located in.... ";
 while($opts{TPATH} =~ /^\/(.+)/){
 	$opts{TPATH} = $1;
@@ -134,7 +140,9 @@ open MK, "+>makefile" or die "Could not create makefile\n";
 # DEFAULT
 print MK "default:\n";
 $opts{TPATH} =~ s/\//\\\//g;
-print MK "\tsed -e 's/sub trash{ return \".Trash\"; }/sub trash{ return \"$opts{TPATH}\"; }/g' trsh.pl > trsh.pl.o\n";
+print MK "\tsed -e 's/sub trash{ return \".Trash\"; }/sub trash{ return \"$opts{TPATH}\"; }/g' trsh.pl > trsh.pl.o1\n";
+$perl_path =~ s/\//\\\//g;
+print MK "\tsed -e 's/#!\\/usr\\/bin\\/perl/#!$perl_path/g' trsh.pl.o1 > trsh.pl.o\n";
 print MK "\n";
 
 # INSTALL
@@ -159,7 +167,7 @@ print MK "\n";
 
 # CLEAN
 print MK "clean:\n";
-print MK "\trm trsh.pl.o\n";
+print MK "\trm trsh.pl.o trsh.pl.o1\n";
 print MK "\n";
 close(MK);
 print "Configuring done....\n";
@@ -171,6 +179,7 @@ sub usage{
 	print "USAGE:\n";
 	print "./configure.pl [OPTIONS]\n\n";
 	print "OPTIONS:\n";
+	print "PPATH=/path/to/perl Default: /usr/bin/perl\n";
 	print "USER=1 -- User install, USER=0 (Default) -- System Install\n";
 	print "SHELL=/path/to/shell. Default: Determined from \$SHELL env variable\n";
 	print "IPATH=/path/to/place/trsh.pl. Default /usr/bin/trsh.pl (USER=0) \$HOME/.trsh.pl (USER=1)\n";

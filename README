@@ -1,7 +1,7 @@
 ========================================================================================
                                     TRSH
 	 		Copyright 2008 Amithash Prasad                                         
-			       Version 2.1.149
+			       Version 2.1.150
 
 	 Seeker is free software: you can redistribute it and/or modify         
 	 it under the terms of the GNU General Public License as published by   
@@ -49,6 +49,10 @@ MPATH="/path/to/man/files" -- specify the path to the commands man page (default
 
 TPATH="RelPath/to/Trash" -- Specify the relative path from the home directory. 
 Default: .Trash (Making the trash to be located in $HOME/.Trash)
+
+PPATH="/path/to/perl" -- specify the path to perl.
+Default: /usr/bin/perl
+This is necessary when your distribution installs perl somewhere other than /usr/bin.
 
 Keep a lookout at the output of configure. It is right most of the time. But if you
 feel it is not, try to configure it with your own options. I have tried it on fedora,
