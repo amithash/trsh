@@ -155,19 +155,11 @@ else{
 system("rm makefile") if(-e "makefile");
 open MK, "+>makefile" or die "Could not create makefile\n";
 
-# Write defs
-print MK "bindir=/usr/bin\n";
-print MK "libdir=/usr/local/lib\n";
-print MK "sysconfdir=/etc\n" if($opts{USER} == 0);
-print MK "sysconfdir=$home\n" if($opts{USER} == 1);
-print MK "mandir=/usr/local/man\n";
-
 # DEFAULT
 print MK "default:\n";
 $opts{TPATH} =~ s/\//\\\//g;
-print MK "\t\@sed -e 's/sub trash{ return \".Trash\"; }/sub trash{ return \"$opts{TPATH}\"; }/g' trsh.pl > trsh.pl.o1\n";
 $perl_path =~ s/\//\\\//g;
-print MK "\t\@sed -e 's/#!\\/usr\\/bin\\/perl/#!$perl_path/g' trsh.pl.o1 > trsh.pl.o\n";
+print MK "\t\@sed -e 's/sub trash{ return \".Trash\"; }/sub trash{ return \"$opts{TPATH}\"; }/g' -e 's/#!\\/usr\\/bin\\/perl/#!$perl_path/g' trsh.pl > trsh.pl.o\n";
 print MK "\t\@exit 0\n";
 print MK "\n";
 
@@ -195,7 +187,7 @@ print MK "\n";
 
 # CLEAN
 print MK "clean:\n";
-print MK "\t\@rm trsh.pl.o trsh.pl.o1\n";
+print MK "\t\@rm trsh.pl.o\n";
 print MK "\t\@exit 0\n";
 print MK "\n";
 close(MK);
