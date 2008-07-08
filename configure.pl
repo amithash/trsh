@@ -42,6 +42,7 @@ $opts{"IPATH"} = "" unless($opts{"IPATH"});
 $opts{"RPATH"} = "" unless($opts{"RPATH"});
 $opts{"TPATH"} = ".Trash" unless($opts{"TPATH"});
 $opts{"SHELL"} = $ENV{SHELL} unless($opts{SHELL});
+my $no_man = $opts{"USER"};
 
 # Configuring shell
 print "Looking for shell.... ";
@@ -99,7 +100,18 @@ print "[$path]\n";
 
 # Man path...
 print "Choosing location for man pages... ";
-my $man_path = "";
+my $man_path = `manpath`;
+chomp($man_path);
+#if($man_path =~ /\:*\/usr\/share\/man\:*/){
+#	$man_path = "/usr/share/man/man1";
+#}
+#else{
+	my @temp = split(/:/,$man_path);
+	$man_path = pop(@temp);
+	$man_path = "$man_path/man1";
+#}
+print "Could not find the path to the man pages. Man pages will not be installed\n" unless(-d $man_path);
+$no_man = 1 unless(-d $man_path);
 $man_path = "/usr/share/man/man1" if($opts{USER} == 0);
 if($opts{USER} == 0){
 	die "Cannot find Man location $man_path\n" unless(-d $man_path);
@@ -108,7 +120,13 @@ print "[$man_path]\n";
 
 # Perl
 print "Checking if perl is installed... ";
-my $perl_path = $opts{PPATH} || "/usr/bin/perl";
+my $perl_path = `which perl`;
+chomp($perl_path);
+if($perl_path =~ /no perl/){
+	undef $perl_path;
+}
+
+$perl_path = $opts{PPATH} if($opts{PPATH});
 die "Perl executable not found\n" unless(-e $perl_path);
 print "[$perl_path]\n";
 
@@ -140,34 +158,38 @@ open MK, "+>makefile" or die "Could not create makefile\n";
 # DEFAULT
 print MK "default:\n";
 $opts{TPATH} =~ s/\//\\\//g;
-print MK "\tsed -e 's/sub trash{ return \".Trash\"; }/sub trash{ return \"$opts{TPATH}\"; }/g' trsh.pl > trsh.pl.o1\n";
+print MK "\t\@sed -e 's/sub trash{ return \".Trash\"; }/sub trash{ return \"$opts{TPATH}\"; }/g' trsh.pl > trsh.pl.o1\n";
 $perl_path =~ s/\//\\\//g;
-print MK "\tsed -e 's/#!\\/usr\\/bin\\/perl/#!$perl_path/g' trsh.pl.o1 > trsh.pl.o\n";
+print MK "\t\@sed -e 's/#!\\/usr\\/bin\\/perl/#!$perl_path/g' trsh.pl.o1 > trsh.pl.o\n";
+print MK "\t\@exit 0\n";
 print MK "\n";
 
 # INSTALL
 print MK "install:\n";
-print MK "\tsed -e 's/.* # TRSH//g' $rc_file > $rc_file.new\n";
-print MK "\techo \"$alias_rm # TRSH\" >> $rc_file.new\n";
-print MK "\techo \"$alias_undo # TRSH\" >> $rc_file.new\n";
-print MK "\tcp $rc_file $rc_file.bac\n";
-print MK "\tmv $rc_file.new $rc_file\n";
-print MK "\tcp trsh.pl.o $path\n";
-print MK "\tcp trsh.1.gz $man_path\n" if($opts{USER} == 0);
-print MK "\tchmod +x $path\n";
+print MK "\t\@sed -e 's/.* # TRSH//g' $rc_file > $rc_file.new\n";
+print MK "\t\@echo \"$alias_rm # TRSH\" >> $rc_file.new\n";
+print MK "\t\@echo \"$alias_undo # TRSH\" >> $rc_file.new\n";
+print MK "\t\@cp $rc_file $rc_file.bac\n";
+print MK "\t\@mv $rc_file.new $rc_file\n";
+print MK "\t\@cp trsh.pl.o $path\n";
+print MK "\t\@cp trsh.1.gz $man_path\n" if($no_man == 0);
+print MK "\t\@chmod +x $path\n";
+print MK "\t\@exit 0\n";
 print MK "\n";
 
 # UNINSTALL
 print MK "uninstall:\n";
-print MK "\trm $path\n";
-print MK "\trm $man_path/trsh.1.gz\n" if($opts{USER} == 0);
-print MK "\tsed -e 's/.* # TRSH//g' $rc_file > $rc_file.new\n";
-print MK "\tmv $rc_file.new $rc_file\n";
+print MK "\t\@rm $path\n";
+print MK "\t\@rm $man_path/trsh.1.gz\n" if($no_man == 0);
+print MK "\t\@sed -e 's/.* # TRSH//g' $rc_file > $rc_file.new\n";
+print MK "\t\@mv $rc_file.new $rc_file\n";
+print MK "\t\@exit 0\n";
 print MK "\n";
 
 # CLEAN
 print MK "clean:\n";
-print MK "\trm trsh.pl.o trsh.pl.o1\n";
+print MK "\t\@rm trsh.pl.o trsh.pl.o1\n";
+print MK "\t\@exit 0\n";
 print MK "\n";
 close(MK);
 print "Configuring done....\n";

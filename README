@@ -1,7 +1,7 @@
 ========================================================================================
                                     TRSH
 	 		Copyright 2008 Amithash Prasad                                         
-			       Version 2.1.157
+			       Version 2.1.158
 
 	 Seeker is free software: you can redistribute it and/or modify         
 	 it under the terms of the GNU General Public License as published by   
@@ -45,14 +45,17 @@ script will look for a suitable rc file (based on the detected shell) in /etc fo
 or in $home for USER=1
 
 MPATH="/path/to/man/files" -- specify the path to the commands man page (default - 
-/usr/share/man/man1). This option is ignored for USER=1.
+got from `manpath` and a preference is given to /usr/share/man/man1). This option 
+is ignored for USER=1, as no man pages are installed for a user installation.
 
 TPATH="RelPath/to/Trash" -- Specify the relative path from the home directory. 
-Default: .Trash (Making the trash to be located in $HOME/.Trash)
+Default: .Trash (Making the trash to be located in $HOME/.Trash). Necessary only
+when you want Trash to be present elsewhere, or have a different name.
 
 PPATH="/path/to/perl" -- specify the path to perl.
-Default: /usr/bin/perl
-This is necessary when your distribution installs perl somewhere other than /usr/bin.
+Default: got from the output of `which perl`
+This is necessary when your distribution names perl as something else, or perl is 
+not installed in a location present in $PATH.
 
 Keep a lookout at the output of configure. It is right most of the time. But if you
 feel it is not, try to configure it with your own options. I have tried it on fedora,
