@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.1.152
+TRSH VERSION 2.1.157
 
 USAGE: rm [OPTIONS]... [FILES]...
 
@@ -336,6 +336,7 @@ sub restore_last_file{
 
 sub remove_from_trash{
 	my $item = shift;
+	my $f = shift || $force;
 	my @matched;
 	if((! -e "$trash/${item}______0") or $regex_force == 1){ # Only match if file does not exist.
 		@matched = get_matched_files($item);
@@ -348,7 +349,7 @@ sub remove_from_trash{
 			print "$entry does not exist in the trash.\n";
 		}
 		else{
-			if($force == 1 or get_response("Are you sure you want to remove $entry from the trash?") == 1){
+			if($f == 1 or get_response("Are you sure you want to remove $entry from the trash?") == 1){
 				print "Removing $entry from the trash...\n" if($verbose == 1);
 				for(my $i=0;$i<$count;$i++){
 					system("rm -rf \"$trash/$entry\______$i\"") != 0 or seek_and_destroy_in_history("$entry\______$i");
