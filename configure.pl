@@ -155,6 +155,13 @@ else{
 system("rm makefile") if(-e "makefile");
 open MK, "+>makefile" or die "Could not create makefile\n";
 
+# Write defs
+print MK "bindir=/usr/bin\n";
+print MK "libdir=/usr/local/lib\n";
+print MK "sysconfdir=/etc\n" if($opts{USER} == 0);
+print MK "sysconfdir=$home\n" if($opts{USER} == 1);
+print MK "mandir=/usr/local/man\n";
+
 # DEFAULT
 print MK "default:\n";
 $opts{TPATH} =~ s/\//\\\//g;
