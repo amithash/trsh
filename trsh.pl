@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.1.161
+TRSH VERSION 2.1.162
 
 USAGE: rm [OPTIONS]... [FILES]...
 
@@ -96,7 +96,7 @@ Getopt::Long::Configure('bundling');
 
 GetOptions( 'e|empty'          => \$empty, 
             'l|list'           => \$view,
-	    'f|force'	       => \$force,
+	    'f|force+'	       => \$force,
 	    'u|undo'	       => \$undo,
 	    's|size'	       => \$size,
 	    'help'             => \$help,
@@ -114,7 +114,6 @@ if (not defined $ENV{HOME}) {
 }
 my $trash = "$ENV{HOME}/" . trash();
 my $history = "$trash/.history";
-
 
 if( !(-e $trash) ) {
 	print "Could not find the trash directory, creating it...\n";
@@ -178,10 +177,12 @@ if($empty == 1){
 }
 
 # If the force flag is on, then rm instead of moving to trash.
-if($force == 1){
-	my $cmd = "rm -f ";
+if($force > 0){
+	my $cmd = "rm ";
+	$cmd = $cmd . "-f " if($force > 1); # A double -f means pass -f on to rm.
 	$cmd = $cmd . "-r " if($recursive == 1); # Pass the recursive flag to rm
 	$cmd = $cmd . "-i " if($warn == 1); # Pass the interactive flag to rm
+	$cmd = $cmd . "-v " if($verbose == 1); # Pass the verbose flag onto rm
 	foreach my $this (@remaining){
 		print "Removing \"$this\" permanently\n" if($verbose == 1);
 		system("$cmd \"$this\"") == 0 or print "Could not delete $this\n";
@@ -360,7 +361,7 @@ sub remove_from_trash{
 }
 
 sub empty_trash{
-	if($force == 1 or get_response("Are you sure you want to empty the trash?") == 1){
+	if($force > 0 or get_response("Are you sure you want to empty the trash?") == 1){
 		foreach my $entry (keys %file_count){
 			remove_from_trash($entry,1);
 		}
