@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.1.160
+TRSH VERSION 2.1.161
 
 USAGE: rm [OPTIONS]... [FILES]...
 
@@ -179,7 +179,7 @@ if($empty == 1){
 
 # If the force flag is on, then rm instead of moving to trash.
 if($force == 1){
-	my $cmd = "rm ";
+	my $cmd = "rm -f ";
 	$cmd = $cmd . "-r " if($recursive == 1); # Pass the recursive flag to rm
 	$cmd = $cmd . "-i " if($warn == 1); # Pass the interactive flag to rm
 	foreach my $this (@remaining){
