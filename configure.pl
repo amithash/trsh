@@ -25,17 +25,21 @@ use Getopt::Long;
 # Finding the home
 my $home = $ENV{"HOME"} || "NULL";
 die "HOME Env variable is not declared\n" if($home eq "NULL");
-if($#ARGV >= 0){
-	if($ARGV[0] eq "--help" or $ARGV[0] eq "-help" or $ARGV[0] eq "-h"){
-		usage();
-	}
-}
 
 my %opts;
-foreach my $opt (@ARGV){
-	$opt =~ /(.+)=(.+)/;
-	$opts{$1} = $2;
-}
+my $help = 0;
+GetOptions( 
+	'user!'         => \$opts{USER},
+	'install-path=s'=> \$opts{IPATH},
+	'man-path=s'    => \$opts{IPATH},
+	'perl-path=s'   => \$opts{PPATH},
+	'shell-path=s'  => \$opts{SHELL},
+	'trash-path=s'  => \$opts{TPATH},
+	'rcfile-path=s' => \$opts{RPATH},
+	'help'          => \$help
+) or exit 1;
+
+$help == 0 || usage();
 
 $opts{"USER"} = 0 unless($opts{"USER"});
 $opts{"IPATH"} = "" unless($opts{"IPATH"});
@@ -52,35 +56,42 @@ die "$shell does not seem to exist on your system... Check your SHELL option. Ex
 
 # Finding RC File
 print "Looking for RC file... ";
-my $temp1;
-if($opts{USER} == 0){
-	$temp1 = `ls /etc/*rc*`;
-}else{
-	$temp1 = `ls $home/.*rc`;
-}
+my $rc_file = "NULL";
+if($opts{RPATH} eq ""){
+	my $temp1;
+	if($opts{USER} == 0){
+		$temp1 = `ls /etc/*rc*`;
+	}else{
+		$temp1 = `ls $home/.*rc`;
+	}
 
-my @rc = split(/\n/, $temp1);
-my $possible = "";
-if($shell =~ /bash/){
-	$possible = "bash";
-}
-elsif($shell =~ /csh/){
-	$possible = "csh";
+	my @rc = split(/\n/, $temp1);
+	my $possible = "";
+	if($shell =~ /bash/){
+		$possible = "bash";
+	}
+	elsif($shell =~ /csh/){
+		$possible = "csh";
+	}
+	else{
+		die "Unsupported shell. Refer wiki pages or README on manual installation\n";
+	}
+
+	foreach my $entry (@rc){
+		next if($entry =~ /\.bac$/);
+		if($entry =~ /$possible/){
+			$rc_file = "$entry";
+			last;
+		}
+	}
+	
+	die "Could not find suitable rc file\n" if($rc_file eq "NULL");
 }
 else{
-	die "Unsupported shell. Refer wiki pages or README on manual installation\n";
+	$rc_file = $opts{RPATH};
 }
+die "$rc_file is not valid\n" unless(-e $rc_file);
 
-my $rc_file = "NULL";
-foreach my $entry (@rc){
-	next if($entry =~ /\.bac$/);
-	if($entry =~ /$possible/){
-		$rc_file = "$entry";
-		last;
-	}
-}
-
-die "Could not find suitable rc file\n" if($rc_file eq "NULL");
 print "[$rc_file]\n";
 
 print "Choosing path of installation.... ";
@@ -102,14 +113,14 @@ print "[$path]\n";
 print "Choosing location for man pages... ";
 my $man_path = `manpath`;
 chomp($man_path);
-#if($man_path =~ /\:*\/usr\/share\/man\:*/){
-#	$man_path = "/usr/share/man/man1";
-#}
-#else{
+if($man_path =~ /\:*\/usr\/share\/man\:*/){
+	$man_path = "/usr/share/man/man1";
+}
+else{
 	my @temp = split(/:/,$man_path);
 	$man_path = pop(@temp);
 	$man_path = "$man_path/man1";
-#}
+}
 print "Could not find the path to the man pages. Man pages will not be installed\n" unless(-d $man_path);
 $no_man = 1 unless(-d $man_path);
 $man_path = "/usr/share/man/man1" if($opts{USER} == 0);
@@ -127,7 +138,7 @@ if($perl_path =~ /no perl/){
 }
 
 $perl_path = $opts{PPATH} if($opts{PPATH});
-die "Perl executable not found\n" unless(-e $perl_path);
+die "Perl executable not found [$perl_path]\n" unless(-e $perl_path);
 print "[$perl_path]\n";
 
 print "TRASH will be located in.... ";
@@ -191,7 +202,7 @@ print MK "\t\@rm trsh.pl.o\n";
 print MK "\t\@exit 0\n";
 print MK "\n";
 close(MK);
-print "Configuring done....\n";
+print "Configuring completed successfully....\n";
 print "\nperform a 'make' followed by a 'make install'\n";
 print "If you did not like trsh, you can uninstall it by 'make uninstall'\n";
 print "\n";
@@ -200,14 +211,14 @@ sub usage{
 	print "USAGE:\n";
 	print "./configure.pl [OPTIONS]\n\n";
 	print "OPTIONS:\n";
-	print "PPATH=/path/to/perl Default: /usr/bin/perl\n";
-	print "USER=1 -- User install, USER=0 (Default) -- System Install\n";
-	print "SHELL=/path/to/shell. Default: Determined from \$SHELL env variable\n";
-	print "IPATH=/path/to/place/trsh.pl. Default /usr/bin/trsh.pl (USER=0) \$HOME/.trsh.pl (USER=1)\n";
-	print "RPATH=/path/to/rcOfShell. Default: Determined from SHELL and naming scheme of files on system\n";
-	print "\tConfigure looks in /etc/ (USER=0) or \$HOME/ (USER=1)\n";
-	print "MPATH=/path/to/place/manpage. Default: /usr/share/man/man1 (USER=0) Not performed for USER=1\n";
-	print "TPATH=RelativePath/of/trash/in/home. (Trash = \$HOME/TPATH) Default: .Trash\n";
+	print "--perl-path=/path/to/perl Default: got from 'which perl'\n";
+	print "--user => User install (or --nouser => System Install) Default: --nouser\n";
+	print "--shell-path=/path/to/shell. Default: Determined from \$SHELL env variable (Shell currently used)\n";
+	print "--install-path=/path/to/place/trsh.pl. Default /usr/bin/trsh.pl (--nouser) \$HOME/.trsh.pl (--nouser)\n";
+	print "--rcfile-path=/path/to/rcOfShell. Default: Determined from SHELL and naming scheme of files on system\n";
+	print "\tConfigure looks in /etc/ (--nouser) or \$HOME/ (--user)\n";
+	print "--man-path=/path/to/place/manpage. Default: got from 'manpath' and preference given to /usr/share/man Not performed for --user\n";
+	print "--trash-path=RelativePath/of/trash/in/home. (Trash = \$HOME/TrashPath) Default: .Trash\n";
 	print "\n";
 	exit;
 }

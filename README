@@ -1,7 +1,7 @@
 ========================================================================================
                                     TRSH
 	 		Copyright 2008 Amithash Prasad                                         
-			       Version 2.1.163
+			       Version 2.1.164
 
 	 Seeker is free software: you can redistribute it and/or modify         
 	 it under the terms of the GNU General Public License as published by   
@@ -146,7 +146,8 @@ NOTES
 --
 
 1. If you really want to use the svn snapshot, then please stick to the revision 
-   I have made avaliable for download! 
+   I have made avaliable for download! Revisions are dime a dozen, and they mean nothing!
+   I run the tests only for the revision I want to upload to the downloads page.
 
 2. MANUAL INSTALLATION: (These are steps which are followed by the configure and makefile scripts)
    i. Copy trsh.pl to anywhere you like, 
