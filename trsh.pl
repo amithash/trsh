@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.2.165
+TRSH VERSION 2.2.166
 
 USAGE: rm [OPTIONS]... [FILES]...
 
@@ -44,6 +44,8 @@ Without arguments, the latest deleted file is restored.
 
 -f|--force FILES
 Instructs trsh to permanently delete FILES and completely bypass the trash
+-ff or --force --force causes trsh to permanently delete files, and also pass
+the force option on to rm.
 
 -i|--interactively
 Prompt the user before any operation.
@@ -56,7 +58,8 @@ Provide verbose output.
 
 -e|--empty [FILES | REGEX]
 Removed FILES or files matching REGEX from the trash (Permanently).
-Without arguments, the trash is emptied.
+Without arguments, the trash is emptied. --force option causes trsh
+to empty the trash without prompting the user.
 
 -l|--list
 Display the contents of the trash.

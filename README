@@ -1,7 +1,7 @@
 ========================================================================================
                                     TRSH
 	 		Copyright 2008 Amithash Prasad                                         
-			       Version 2.2.165
+			       Version 2.2.166
 
 	 Seeker is free software: you can redistribute it and/or modify         
 	 it under the terms of the GNU General Public License as published by   
@@ -89,7 +89,8 @@ If instead a regex is provided, then all files in the trash matching with the re
 
 -f|--force
 This option instructs trsh to permanently delete FILES and completely bypass the trash
-If provided twice, (-ff) The force option is also passed onto rm. You will not need this option.
+If provided twice, (-ff) The force option is passed onto rm. This is not needed for 99%
+of the use cases.
 
 -i|--interactively
 This option will instruct trsh to prompt the user before deleting each and every file.
