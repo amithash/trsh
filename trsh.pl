@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.2.167
+TRSH VERSION 2.2.168
 
 USAGE: rm [OPTIONS]... [FILES]...
 
@@ -81,6 +81,13 @@ rm FILES just moves FILES to the trash. By default, directories are not deleted.
 
 \n";
 
+# Pre-compiled regex's to improve performance...
+my $regex_file_count = qr/^(.+)______(\d+)$/;
+my $regex_file_size  = qr/^(.+)::::::(\d+)$/;
+my $regex_tar        = qr/\.tar$/;
+my $regex_gz         = qr/\.gz$/;
+my $regex_rpm        = qr/\.rpm$/;
+my $regex_deb        = qr/\.deb$/;
 
 my $recover = 0;
 my $empty = 0;
@@ -111,6 +118,13 @@ GetOptions( 'e|empty'          => \$empty,
 
 my @remaining = @ARGV;
 
+# -h will be used as help if -s is not provided.
+# That is -h option has two faces based on context.
+if($size == 0 and $human == 1){
+	$help = 1;
+	$human = 0;
+}
+
 if (not defined $ENV{HOME}) {
     print "The environment variable HOME is not set\n";
     exit;
@@ -127,14 +141,29 @@ if( !(-e $history)){
 	print "Could not find the history file. Creating it... \n";
 	system("touch $history");
 }
+
+# If undo option is set and there are extra parameters,
+# go into recover mode, else stay in undo mode.
 if($undo == 1 and $#remaining >= 0){
 	$recover = 1;
 	$undo = 0;
 }
 
-my %file_size;
+# Hash associating size to files (Internal file names). 
+# Read from the history file, if undefined, created 
+# when needed (-s option is provided) and saved to the 
+# history file on exit if defined.
+my %file_size; 
+
+# Hash associating the count of files to its non internal name.
 my %file_count;
+
+# Array of files in the history (Internal file names).
 my @hist_raw = get_history();
+
+# Flag indicating that the history is changed. If set, the @hist_raw
+# along with the %file_size is written to the history file. This avoids
+# unnecessay writes to history when not needed.
 my $dirty = 0;
 
 # From now on, we catch signals because, the history is corrupted.
@@ -149,12 +178,15 @@ if($view == 1){
 	exit_routine();
 }
 
+# If size flag is on print size.
 if($size == 1){
 	my $sz = get_size($human);
-	print "$sz\n";
+	print color('YELLOW'), "$sz";
+	print color('reset'), "\n";
 	exit_routine();
 }
 
+# The help catcher.
 if($help == 1){
 	print $usage_string;
 	exit_routine();
@@ -166,7 +198,7 @@ if($undo > 0){
 	exit_routine();
 }
 
-
+# Empty or remove files from trash.
 if($empty == 1){
 	if($#remaining >= 0){
 		foreach my $entry (@remaining){
@@ -217,7 +249,6 @@ if($#remaining >= 0){
 }
 else{
 	print "Gallantly deleted abslutely nothing!\n";
-	exit_routine();
 }
 
 exit_routine();
@@ -334,7 +365,7 @@ sub restore_last_file{
 		exit;
 	}
 	push_to_history($item);
-	$item =~ /(.+)______\d+/;
+	$item =~ $regex_file_count;
 	restore_file($1);
 }
 
@@ -409,7 +440,7 @@ sub display_trash{
 			elsif(-l $file){
 				print_colored($file_count{$entry},$entry,"Cyan",$fsz);
 			}
-			elsif($entry =~ /\.tar$/ or $entry =~ /\.gz$/){
+			elsif($entry =~ $regex_tar or $entry =~ $regex_gz or $entry =~ $regex_rpm or $entry =~ $regex_deb){
 				print_colored($file_count{$entry},$entry,"Red",$fsz);
 			}
 			else{
@@ -475,7 +506,7 @@ sub get_history{
 	foreach my $item (@contents){
 		my $name;
 		# Populate the file name, and the size hash
-		if($item =~ /^(.+)::::::(\d+)$/){
+		if($item =~ $regex_file_size){
 			$file_size{$1} = $2;
 			$name = $1;
 		}
@@ -484,7 +515,7 @@ sub get_history{
 		}
 		push @raw_contents, $name;
 		# populate the count hash.
-		if($name =~ /^(.+)______(\d+)$/){
+		if($name =~ $regex_file_count){
 			if(not defined($file_count{$1})){
 				$file_count{$1} = 1;
 			}
@@ -629,6 +660,6 @@ sub exit_routine{
 	exit;
 }
 
-# Configure script creates the sub to the trash path here...
+# Configure script changes the sub to the trash path here...
 sub trash{ return ".Trash"; }
 
