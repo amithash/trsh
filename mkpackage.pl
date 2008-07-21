@@ -25,8 +25,8 @@ if(system("./test-trsh.csh") != 0){
 
 # Only if these tests pass, allow the person to create the package.
 
-print "version = $main.$sub.$rev\n";
-my $name = "trsh-$main.$sub.$rev";
+print "version = $main.$sub-$rev\n";
+my $name = "trsh-$main.$sub-$rev";
 system("rm -rf ../$name") if(-d "../$name");
 system("rm -rf ../$name.tar.gz") if(-e "../$name.tar.gz");
 system("svn export . ../$name");
