@@ -25,7 +25,7 @@ close(TRSH);
 system("mv trsh.pl trsh.pl.orig");
 open TRSH, "+>trsh.pl" or die "Could not create trsh.pl\n";
 foreach my $entry (@trsh){
-	$entry =~ s/TRSH VERSION \d+\.\d+\.\d+/TRSH VERSION $main\.$sub\.$rev/;
+	$entry =~ s/TRSH VERSION \d+\.\d+\-\d+/TRSH VERSION $main\.$sub-$rev/;
 	print TRSH $entry;
 }
 
@@ -35,7 +35,7 @@ close(README);
 system("mv README README.orig");
 open README, "+>README" or die "Could not create README\n";
 foreach my $entry (@readme){
-	$entry =~ s/Version \d+\.\d+\.\d+/Version $main\.$sub\.$rev/;
+	$entry =~ s/Version \d+\.\d+-\d+/Version $main\.$sub-$rev/;
 	print README $entry;
 }
 close(README);
