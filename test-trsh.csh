@@ -307,14 +307,19 @@ endif
 
 ##################################################################################\
 # SET A B C D
-touch '~!@#$%^&*()_+'
-touch \`1234567890-= 
-touch '[]\{}|' 
-touch ";':\"<>?"
+set PATTERNA='~!\@#$%^&*()_+'
+set PATTERNB='`1234567890-='
+set PATTERNC='[]\{}|' 
+set PATTERND=';:"<>?' 
 
-trsh.pl '~!@#$%^&*()_+'
+touch "$PATTERNA"
+touch "$PATTERNB"
+touch "$PATTERNC"
+touch "$PATTERND"
+
+trsh.pl "$PATTERNA"
 @ TOTAL_COUNT = $TOTAL_COUNT + 1
-if ( -e "$HOME/.Trash/~!@#$%^&*()_+______0" ) then
+if ( -e "$HOME/.Trash/${PATTERNA}______0" ) then
 	echo "TEST 15A PASSED: Delete Special Character Pattern A"
 	@ PASSED_COUNT = $PASSED_COUNT + 1
 else
@@ -322,8 +327,8 @@ else
 endif
 
 @ TOTAL_COUNT = $TOTAL_COUNT + 1
-trsh.pl \`1234567890-= 
-if ( -e $HOME/.Trash/\`1234567890-=______0 ) then
+trsh.pl "$PATTERNB"
+if ( -e "$HOME/.Trash/${PATTERNB}______0" ) then
 	echo "TEST 15B PASSED: Delete Special Character Pattern B"
 	@ PASSED_COUNT = $PASSED_COUNT + 1
 else
@@ -331,8 +336,8 @@ else
 endif
 
 @ TOTAL_COUNT = $TOTAL_COUNT + 1
-trsh.pl '[]\{}|'
-if ( -e "$HOME/.Trash/[]\{}|______0" ) then
+trsh.pl "$PATTERNC"
+if ( -e "$HOME/.Trash/${PATTERNC}______0" ) then
 	echo "TEST 15C PASSED: Delete Special Character Pattern C"
 	@ PASSED_COUNT = $PASSED_COUNT + 1
 else
@@ -340,15 +345,56 @@ else
 endif
 
 @ TOTAL_COUNT = $TOTAL_COUNT + 1
-trsh.pl ";':\"<>?"
-if ( -e "$HOME/.Trash/;':\"<>?______0" ) then
+trsh.pl "$PATTERND"
+if ( -e "$HOME/.Trash/${PATTERND}______0" ) then
 	echo "TEST 15D PASSED: Delete Special Character Pattern D"
 	@ PASSED_COUNT = $PASSED_COUNT + 1
 else
 	echo "TEST 15D FAILED: Delete Special Character Pattern D"
 endif
 
+##################################################################################\
 
+trsh.pl -ef "$PATTERNA"
+@ TOTAL_COUNT = $TOTAL_COUNT + 1
+if ( -e "$HOME/.Trash/${PATTERNA}______0" ) then
+	echo "TEST 16A FAILED: Remove Special Character Pattern A"
+	ls $HOME/.Trash
+else
+	echo "TEST 16A PASSED: Remove Special Character Pattern A"
+	@ PASSED_COUNT = $PASSED_COUNT + 1
+endif
+
+@ TOTAL_COUNT = $TOTAL_COUNT + 1
+trsh.pl -ef "$PATTERNB"
+if ( -e "$HOME/.Trash/${PATTERNB}______0" ) then
+	echo "TEST 16B FAILED: Remove Special Character Pattern B"
+	ls $HOME/.Trash
+else
+	echo "TEST 16B PASSED: remove Special Character Pattern B"
+	@ PASSED_COUNT = $PASSED_COUNT + 1
+endif
+
+@ TOTAL_COUNT = $TOTAL_COUNT + 1
+trsh.pl -ef "$PATTERNC"
+if ( -e "$HOME/.Trash/${PATTERNC}______0" ) then
+	echo "TEST 16C FAILED: Remove Special Character Pattern C"
+	ls $HOME/.Trash
+else
+	echo "TEST 16C PASSED: Remove Special Character Pattern C"
+	@ PASSED_COUNT = $PASSED_COUNT + 1
+endif
+
+@ TOTAL_COUNT = $TOTAL_COUNT + 1
+trsh.pl -ef "$PATTERND"
+if ( -e "$HOME/.Trash/${PATTERND}______0" ) then
+	echo "TEST 16D FAILED: Remove Special Character Pattern D"
+	ls $HOME/.Trash
+else
+	echo "TEST 16D PASSED: Remove Special Character Pattern D"
+	@ PASSED_COUNT = $PASSED_COUNT + 1
+endif
+##################################################################################\
 
 echo "END OF RECOMMENDED TESTS" 
 echo "" 

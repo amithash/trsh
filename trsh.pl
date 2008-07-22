@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.2-177
+TRSH VERSION 2.2-178
 
 USAGE: rm [OPTIONS]... [FILES]...
 
@@ -299,13 +299,12 @@ sub print_colored{
 
 sub delete_file{
 	my $item = shift;
-	$item =~ s/\\/\\\\/g; # back slash in file names cause problems.
-	$item =~ s/\`/\\\`/g; # Back ticks in file names cause problems.
-	$item =~ s/"/\\"/g; # Double quites in file names cause problems.
+	my $escaped = add_escapes($item);
 	my @temp = split(/\//, $item);
 	my $item_name = pop(@temp);
+	my $escaped_name = add_escapes($item_name);
 	my $count = does_item_exist_in_history($item_name);
-	if(system("mv \"$item\" \"$trash/$item_name\______$count\"") == 0){
+	if(system("mv \"$escaped\" \"$trash/${escaped_name}______$count\"") == 0){
 		push_to_history("$item_name\______$count");
 	}
 	else{
@@ -349,8 +348,9 @@ sub restore_file{
 					$out = "$cwd/$name";
 				}
 			}
-
-			if(system("mv \"$trash/${entry}______$index\" \"$out\"") == 0){
+			my $escaped_out = add_escapes($out);
+			my $escaped_entry = add_escapes($entry);
+			if(system("mv \"$trash/${escaped_entry}______$index\" \"$escaped_out\"") == 0){
 				seek_and_destroy_in_history("$entry\______$index");
 			}
 			else{
@@ -390,7 +390,8 @@ sub remove_from_trash{
 			if($f == 1 or get_response("Are you sure you want to remove $entry from the trash?") == 1){
 				print "Removing $entry from the trash...\n" if($verbose == 1);
 				for(my $i=0;$i<$count;$i++){
-					system("rm -rf \"$trash/$entry\______$i\"") != 0 or seek_and_destroy_in_history("$entry\______$i");
+					my $escape = add_escapes($entry);
+					system("rm -rf \"$trash/${escape}______$i\"") != 0 or seek_and_destroy_in_history("$entry\______$i");
 				}
 			}
 		}
@@ -649,6 +650,16 @@ sub get_matched_files{
 	}
 	return keys(%matched);
 }
+
+sub add_escapes{
+	my $in = shift;
+	$in =~ s/\\/\\\\/g; # back slash in file names cause problems.
+	$in =~ s/\`/\\\`/g; # Back ticks in file names cause problems.
+	$in =~ s/"/\\"/g; # Double quites in file names cause problems.
+	$in =~ s/'/\\'/g; # Double quites in file names cause problems.
+	return $in;
+}
+
 
 ############# THE EXIT ROUTINE ############################
 
