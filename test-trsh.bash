@@ -325,6 +325,52 @@ else
 	echo "TEST 14 PASSED: Erase specific file" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 fi
+##################################################################################\
+# SET A B C D
+touch '~!@#$%^&*()_+' 
+touch \`1234567890-= 
+touch '[]\{}|' 
+touch ";':\"<>?"
+
+trsh.pl '~!@#$%^&*()_+'
+TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
+if [ -e "$HOME/.Trash/~!@#$%^&*()_+______0" ]
+then
+	echo "TEST 15A PASSED: Delete Special Character Pattern A" >&2
+	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
+else
+	echo "TEST 15A FAILED: Delete Special Character Pattern A" >&2
+fi
+
+TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
+trsh.pl \`1234567890-= 
+if [ -e $HOME/.Trash/\`1234567890-=______0 ]
+then
+	echo "TEST 15B PASSED: Delete Special Character Pattern B" >&2
+	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
+else
+	echo "TEST 15B FAILED: Delete Special Character Pattern B" >&2
+fi
+
+TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
+trsh.pl '[]\{}|'
+if [ -e "$HOME/.Trash/[]\{}|______0" ]
+then
+	echo "TEST 15C PASSED: Delete Special Character Pattern C" >&2
+	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
+else
+	echo "TEST 15C FAILED: Delete Special Character Pattern C" >&2
+fi
+
+TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
+trsh.pl ";':\"<>?"
+if [ -e "$HOME/.Trash/;':\"<>?______0" ]
+then
+	echo "TEST 15D PASSED: Delete Special Character Pattern D" >&2
+	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
+else
+	echo "TEST 15D FAILED: Delete Special Character Pattern D" >&2
+fi
 
 
 echo "END OF RECOMMENDED TESTS" >&2

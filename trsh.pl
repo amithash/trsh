@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.2-176
+TRSH VERSION 2.2-177
 
 USAGE: rm [OPTIONS]... [FILES]...
 
@@ -299,6 +299,7 @@ sub print_colored{
 
 sub delete_file{
 	my $item = shift;
+	$item =~ s/\\/\\\\/g; # back slash in file names cause problems.
 	$item =~ s/\`/\\\`/g; # Back ticks in file names cause problems.
 	$item =~ s/"/\\"/g; # Double quites in file names cause problems.
 	my @temp = split(/\//, $item);
