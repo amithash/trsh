@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.2-178
+TRSH VERSION 2.2-179
 
 USAGE: rm [OPTIONS]... [FILES]...
 
@@ -656,7 +656,7 @@ sub add_escapes{
 	$in =~ s/\\/\\\\/g; # back slash in file names cause problems.
 	$in =~ s/\`/\\\`/g; # Back ticks in file names cause problems.
 	$in =~ s/"/\\"/g; # Double quites in file names cause problems.
-	$in =~ s/'/\\'/g; # Double quites in file names cause problems.
+	#$in =~ s/'/\\'/g; # Double quites in file names cause problems.
 	return $in;
 }
 

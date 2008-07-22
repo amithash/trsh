@@ -311,11 +311,13 @@ set PATTERNA='~!\@#$%^&*()_+'
 set PATTERNB='`1234567890-='
 set PATTERNC='[]\{}|' 
 set PATTERND=';:"<>?' 
+set PATTERNE="trsh's" 
 
 touch "$PATTERNA"
 touch "$PATTERNB"
 touch "$PATTERNC"
 touch "$PATTERND"
+touch "$PATTERNE"
 
 trsh.pl "$PATTERNA"
 @ TOTAL_COUNT = $TOTAL_COUNT + 1
@@ -351,6 +353,15 @@ if ( -e "$HOME/.Trash/${PATTERND}______0" ) then
 	@ PASSED_COUNT = $PASSED_COUNT + 1
 else
 	echo "TEST 15D FAILED: Delete Special Character Pattern D"
+endif
+
+@ TOTAL_COUNT = $TOTAL_COUNT + 1
+trsh.pl "$PATTERNE"
+if ( -e "$HOME/.Trash/${PATTERNE}______0" ) then
+	echo "TEST 15E PASSED: Delete Special Character Pattern E"
+	@ PASSED_COUNT = $PASSED_COUNT + 1
+else
+	echo "TEST 15E FAILED: Delete Special Character Pattern E"
 endif
 
 ##################################################################################\
@@ -394,6 +405,17 @@ else
 	echo "TEST 16D PASSED: Remove Special Character Pattern D"
 	@ PASSED_COUNT = $PASSED_COUNT + 1
 endif
+
+@ TOTAL_COUNT = $TOTAL_COUNT + 1
+trsh.pl -ef "$PATTERNE"
+if ( -e "$HOME/.Trash/${PATTERNE}______0" ) then
+	echo "TEST 16E FAILED: Remove Special Character Pattern E"
+	ls $HOME/.Trash
+else
+	echo "TEST 16E PASSED: Remove Special Character Pattern E"
+	@ PASSED_COUNT = $PASSED_COUNT + 1
+endif
+
 ##################################################################################\
 
 echo "END OF RECOMMENDED TESTS" 
