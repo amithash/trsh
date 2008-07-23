@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.2-179
+TRSH VERSION 2.2-180
 
 USAGE: rm [OPTIONS]... [FILES]...
 
@@ -632,9 +632,19 @@ sub exp2str{
 
 sub convert_regex{
 	my $reg = shift;
+	$reg =~ s/\\/\\\\/g; # First of all escape the escape char!
 	$reg =~ s/\./\\\./g; # . has a different meaning in perl regexes..
 	$reg =~ s/\*/\.\*/g; # Convert the * usage to perl regex form
 	$reg =~ s/\?/\.\?/g; # Convert the ? usage to perl regex form
+	$reg =~ s/\[/\\\[/g; # [] has a different meaning in perl regex.
+	$reg =~ s/\]/\\\]/g; 
+	$reg =~ s/\(/\\\(/g; # () has a different meaning in perl regex
+	$reg =~ s/\)/\\\)/g;
+	$reg =~ s/\{/\\\{/g; # {} has a different meaning in perl regex
+	$reg =~ s/\}/\\\}/g;
+	$reg =~ s/\^/\\\^/g; # escape ^
+	$reg =~ s/\$/\\\$/g; # escape $
+	$reg =~ s/\|/\\\|/g; # escape |
 	$reg = qr/^(${reg})______\d+/; # Build the search regex.
 	return $reg;
 }
