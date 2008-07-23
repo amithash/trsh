@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.2-190
+TRSH VERSION 2.2-192
 
 USAGE: rm [OPTIONS]... [FILES]...
 
