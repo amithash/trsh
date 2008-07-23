@@ -1,7 +1,7 @@
 ========================================================================================
                                     TRSH
 	 		Copyright 2008 Amithash Prasad                                         
-			       Version 2.2-189
+			       Version 2.2-190
 
 	 trsh is free software: you can redistribute it and/or modify         
 	 it under the terms of the GNU General Public License as published by   
@@ -125,7 +125,7 @@ This forces trsh to assume that the provided arguments are regex's. (Not needed 
 
 -p|--perl-regex
 This assumes that the passed regex is a perl-regex, and also turns on force-regex. If you do not
-know what a perl-regex is, you do not need this.
+know what a perl-regex is, you do not need this. 
 
 rm FILES just moves FILES to the trash. By default, directories are not deleted.
 
@@ -146,6 +146,15 @@ rm -u "te\*t1"    # This will restore only te\*t1.
 rm -ux "te\*t1"   # This will restore both test1 and te\*t1.
 But rm -u "te*" will still restore both.
 
+PERL REGEX
+--
+With the -p option, you are no longer restricted with the bash regex completion. Now, trsh accepts perl regex's
+to delete files.
+
+So you can do the following
+
+rm -p "test\.\d+\.out"
+and test.1.out, test.2.out is deleted but test.A.out is left alone.
 
 NOTES
 --
