@@ -1,7 +1,7 @@
 ========================================================================================
                                     TRSH
 	 		Copyright 2008 Amithash Prasad                                         
-			       Version 2.2-183
+			       Version 2.2-184
 
 	 trsh is free software: you can redistribute it and/or modify         
 	 it under the terms of the GNU General Public License as published by   
@@ -122,6 +122,10 @@ Displays this help and exits.
 
 -x|--force-regex
 This forces trsh to assume that the provided arguments are regex's. (Not needed most of the time, Read the REGEX Section)
+
+-p|--perl-regex
+This assumes that the passed regex is a perl-regex, and also turns on force-regex. If you do not
+know what a perl-regex is, you do not need this.
 
 rm FILES just moves FILES to the trash. By default, directories are not deleted.
 

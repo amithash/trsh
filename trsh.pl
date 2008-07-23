@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.2-183
+TRSH VERSION 2.2-184
 
 USAGE: rm [OPTIONS]... [FILES]...
 
@@ -76,6 +76,10 @@ Displays this help and exits.
 
 -x|--force-regex
 This forces trsh to assume that the provided arguments are regex's. (Not needed, refer the README for more)
+
+-p|--perl-regex
+This assumes that the passed regex is a perl-regex, and also turns on force-regex. If you do not
+know what a perl-regex is, you do not need this.
 
 rm FILES just moves FILES to the trash. By default, directories are not deleted.
 
