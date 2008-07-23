@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.2-184
+TRSH VERSION 2.2-186
 
 USAGE: rm [OPTIONS]... [FILES]...
 
@@ -663,7 +663,7 @@ sub convert_regex{
 	}
 	else{		
 		my $regex = eval { qr/^($reg)______\d+/ };
-		exit_routine("Your regex doesn't seem valid : $@") if $@;
+		exit_routine("ERROR: Your regex doesn't seem valid : \n$@") if $@;
 		return $regex;
 	}
 }
