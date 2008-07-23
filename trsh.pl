@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.2-180
+TRSH VERSION 2.2-183
 
 USAGE: rm [OPTIONS]... [FILES]...
 
@@ -101,6 +101,7 @@ my $verbose = 0;
 my $recursive = 0;
 my $regex_force = 0;
 my $human = 0;
+my $perl_regex = 0;
 
 Getopt::Long::Configure('bundling');
 
@@ -114,6 +115,7 @@ GetOptions( 'e|empty'          => \$empty,
 	    'i|interactive'    => \$warn,
 	    'v|verbose'        => \$verbose,
 	    'x|force-regex'    => \$regex_force,
+	    'p|perl-regex'     => \$perl_regex,
     	    'r|recursive'      => \$recursive);
 
 my @remaining = @ARGV;
@@ -123,6 +125,10 @@ my @remaining = @ARGV;
 if($size == 0 and $human == 1){
 	$help = 1;
 	$human = 0;
+}
+
+if($perl_regex == 1){
+	$regex_force = 1;
 }
 
 if (not defined $ENV{HOME}) {
@@ -632,21 +638,30 @@ sub exp2str{
 
 sub convert_regex{
 	my $reg = shift;
-	$reg =~ s/\\/\\\\/g; # First of all escape the escape char!
-	$reg =~ s/\./\\\./g; # . has a different meaning in perl regexes..
-	$reg =~ s/\*/\.\*/g; # Convert the * usage to perl regex form
-	$reg =~ s/\?/\.\?/g; # Convert the ? usage to perl regex form
-	$reg =~ s/\[/\\\[/g; # [] has a different meaning in perl regex.
-	$reg =~ s/\]/\\\]/g; 
-	$reg =~ s/\(/\\\(/g; # () has a different meaning in perl regex
-	$reg =~ s/\)/\\\)/g;
-	$reg =~ s/\{/\\\{/g; # {} has a different meaning in perl regex
-	$reg =~ s/\}/\\\}/g;
-	$reg =~ s/\^/\\\^/g; # escape ^
-	$reg =~ s/\$/\\\$/g; # escape $
-	$reg =~ s/\|/\\\|/g; # escape |
-	$reg = qr/^(${reg})______\d+/; # Build the search regex.
-	return $reg;
+	# Only do the conversion if using regular regex's, if the user wants 
+	# regular perl regex's, then just build the regex and pass on.
+	if($perl_regex == 0){
+		$reg =~ s/\\/\\\\/g; # First of all escape the escape char!
+		$reg =~ s/\./\\\./g; # . has a different meaning in perl regexes..
+		$reg =~ s/\*/\.\*/g; # Convert the * usage to perl regex form
+		$reg =~ s/\?/\.\?/g; # Convert the ? usage to perl regex form
+		$reg =~ s/\[/\\\[/g; # [] has a different meaning in perl regex.
+		$reg =~ s/\]/\\\]/g; 
+		$reg =~ s/\(/\\\(/g; # () has a different meaning in perl regex
+		$reg =~ s/\)/\\\)/g;
+		$reg =~ s/\{/\\\{/g; # {} has a different meaning in perl regex
+		$reg =~ s/\}/\\\}/g;
+		$reg =~ s/\^/\\\^/g; # escape ^
+		$reg =~ s/\$/\\\$/g; # escape $
+		$reg =~ s/\|/\\\|/g; # escape |
+		$reg = qr/^(${reg})______\d+/; # Build the search regex.
+		return $reg;
+	}
+	else{		
+		my $regex = eval { qr/^($reg)______\d+/ };
+		exit_routine("Your regex doesn't seem valid : $@") if $@;
+		return $regex;
+	}
 }
 
 sub get_matched_files{
