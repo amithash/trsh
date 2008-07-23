@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.2-186
+TRSH VERSION 2.2-189
 
 USAGE: rm [OPTIONS]... [FILES]...
 
@@ -237,6 +237,25 @@ if($force > 0){
 
 # Nothing else, try normal delete! :-) Speak of the common use case in the last.
 if($#remaining >= 0){
+	# Before continuing, check if the user wants a perl regex. if so get the 
+	# file names matching the format.
+	if($perl_regex == 1 and $recover == 0){
+		print "WARNING: Deleting files:\n";
+		my @files = ();
+		foreach my $entry (@remaining){
+			my ($path,$reg) = parentDir($entry);
+			$reg = eval { qr/$reg/ };
+			exit_routine("ERROR WITH REGEX:\n $@") if($@);
+			my @AllFiles = split(/\n/,`ls $path`);
+			foreach my $file (@AllFiles){
+				if($file =~ $reg){
+					push @files,"$path/$file";
+					print "$path/$file\n";
+				}
+			}
+		}
+		@remaining = @files
+	}
 	foreach my $item_index (@remaining){
 		if($recover == 1){
 			restore_file("$item_index");
@@ -687,6 +706,28 @@ sub add_escapes{
 	$in =~ s/"/\\"/g; # Double quites in file names cause problems.
 	#$in =~ s/'/\\'/g; # Double quites in file names cause problems.
 	return $in;
+}
+
+sub parentDir{
+	my $path = shift;
+	my $reg;
+	if($path =~ /^\//){
+		my @p = split(/\//,$path);
+		$reg = pop @p;
+		my $par = join("/",@p);
+		return ($par,$reg);
+	}
+	elsif($path =~ /\//){
+		my @p = split(/\//,$path);
+		$reg = pop @p;
+		my $par = join("/",@p);
+		my $cwd = cwd();
+		return ("$cwd/$par",$reg);
+	}
+	else{
+		my $cwd = cwd();
+		return ($cwd,$path);
+	}
 }
 
 
