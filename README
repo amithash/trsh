@@ -1,7 +1,7 @@
 ========================================================================================
                                     TRSH
 	 		Copyright 2008 Amithash Prasad                                         
-			       Version 2.2-201
+			       Version 2.2-203
 
 	 trsh is free software: you can redistribute it and/or modify         
 	 it under the terms of the GNU General Public License as published by   
@@ -156,9 +156,8 @@ So you can do the following
 rm -p "/some/random/path/test\.\d+\.out"
 and test.1.out, test.2.out is deleted but test.A.out is left alone.
 
-But please note, do not use ^ and $, as they are anyway used internally, I cannot predict what will happen 
-if you pass one on. As trsh is written in perl (If you did not know that already) it just modifies the regex
-passed and then uses that to find files.
+Trsh is written in perl (If you did not know that already), so trsh just modifies the regex
+passed and then uses that to find files or entries.
 
 NOTES
 --
