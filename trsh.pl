@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.2-200
+TRSH VERSION 2.2-201
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
@@ -151,7 +151,7 @@ my $history = "$trash/.history";
 # Create Trash dir if it does not exist.
 if( !(-e $trash) ) {
 	print "Could not find the trash directory, creating it...\n";
-        system("mkdir -p $trash") == 0 or print "Could not create Trash directory: $trash, aborting.\n":
+        system("mkdir -p $trash") == 0 or print "Could not create Trash directory: $trash, aborting.\n";
 	system("chmod 0700 $trash") == 0 or print "Could not change permissions for $trash, your trash is not secure.\n";
 }
 
