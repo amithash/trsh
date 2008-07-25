@@ -30,11 +30,12 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.2-194
+TRSH VERSION 2.2-200
+AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
-
 FILES: A list of files to recover or delete.
+rm FILES just moves FILES to the trash. By default, directories are not deleted.
 
 OPTIONS:
 
@@ -80,12 +81,9 @@ This forces trsh to assume that the provided arguments are regex's. (Not needed,
 -p|--perl-regex
 This assumes that the passed regex is a perl-regex, and also turns on force-regex. If you do not
 know what a perl-regex is, you do not need this.
-
-rm FILES just moves FILES to the trash. By default, directories are not deleted.
-
 \n";
 
-# Pre-compiled regex's to improve performance...
+# Pre-compiled regex's to improve performance and managability.
 my $regex_file_count = qr/^(.+)______(\d+)$/;
 my $regex_file_size  = qr/^(.+)::::::(\d+)$/;
 my $regex_tar        = qr/\.tar$/;
@@ -93,6 +91,7 @@ my $regex_gz         = qr/\.gz$/;
 my $regex_rpm        = qr/\.rpm$/;
 my $regex_deb        = qr/\.deb$/;
 
+# Global option varaibles.
 my $recover = 0;
 my $empty = 0;
 my $view = 0;
@@ -122,6 +121,7 @@ GetOptions( 'e|empty'          => \$empty,
 	    'p|perl-regex'     => \$perl_regex,
     	    'r|recursive'      => \$recursive);
 
+# Remaining args go into @remaining.
 my @remaining = @ARGV;
 
 # -h will be used as help if -s is not provided.
@@ -131,22 +131,31 @@ if($size == 0 and $human == 1){
 	$human = 0;
 }
 
+# If using perl_regex, force regex, as the user 
+# has already communicated that he/she wants to
+# use regular expressions.
 if($perl_regex == 1){
 	$regex_force = 1;
 }
 
+# If HOME is not set, die!
 if (not defined $ENV{HOME}) {
     print "The environment variable HOME is not set\n";
     exit;
 }
+
+# trash is always in Home. and history is in trash.
 my $trash = "$ENV{HOME}/" . trash();
 my $history = "$trash/.history";
 
+# Create Trash dir if it does not exist.
 if( !(-e $trash) ) {
 	print "Could not find the trash directory, creating it...\n";
-        system("mkdir -p $trash");
-	system("chmod 0700 $trash");
+        system("mkdir -p $trash") == 0 or print "Could not create Trash directory: $trash, aborting.\n":
+	system("chmod 0700 $trash") == 0 or print "Could not change permissions for $trash, your trash is not secure.\n";
 }
+
+# Create history if it does not exist.
 if( !(-e $history)){
 	print "Could not find the history file. Creating it... \n";
 	system("touch $history");
@@ -165,7 +174,7 @@ if($undo == 1 and $#remaining >= 0){
 # history file on exit if defined.
 my %file_size; 
 
-# Hash associating the count of files to its non internal name.
+# Hash associating the count of files to its actual name.
 my %file_count;
 
 # Array of files in the history (Internal file names).
@@ -176,9 +185,8 @@ my @hist_raw = get_history();
 # unnecessay writes to history when not needed.
 my $dirty = 0;
 
-# From now on, we catch signals because, the history is corrupted.
+# From now on, we catch signals because, the history is possibly corrupted.
 # We will HAVE to exit cleanly.
-
 $SIG{'INT'} = 'exit_routine';
 $SIG{'TERM'} = 'exit_routine';
 
@@ -210,11 +218,14 @@ if($undo > 0){
 
 # Empty or remove files from trash.
 if($empty == 1){
+	# If file names/regex's are provided, just
+	# remove those from trash
 	if($#remaining >= 0){
 		foreach my $entry (@remaining){
 			remove_from_trash($entry);
 		}
 	}
+	# Else empty the whole trash.
 	else{
 		empty_trash();
 	}
@@ -229,13 +240,13 @@ if($force > 0){
 	$cmd = $cmd . "-i " if($warn == 1); # Pass the interactive flag to rm
 	$cmd = $cmd . "-v " if($verbose == 1); # Pass the verbose flag onto rm
 	foreach my $this (@remaining){
-		print "Removing \"$this\" permanently\n" if($verbose == 1);
+		print "$cmd \"$this\"\n" if($verbose == 1);
 		system("$cmd \"$this\"") == 0 or print "Could not delete $this\n";
 	}
 	exit_routine();
 }
 
-# Nothing else, try normal delete! :-) Speak of the common use case in the last.
+# Nothing else, try normal delete! Speak of the common use case in the last. :-)
 if($#remaining >= 0){
 	# Before continuing, check if the user wants a perl regex. if so get the 
 	# file names matching the format.
@@ -256,23 +267,24 @@ if($#remaining >= 0){
 		}
 		@remaining = @files
 	}
-	foreach my $item_index (@remaining){
+
+	foreach my $item (@remaining){
 		if($recover == 1){
-			restore_file("$item_index");
+			restore_file("$item");
 		}
-		elsif(-e $item_index){  
-			print "Deleting \"$item_index\"\n" if($verbose == 1);
-			if(-d $item_index and $recursive == 0){
-				print STDERR "Cannot remove directory \"$item_index\"\n";
+		elsif(-e $item){  
+			print "Deleting \"$item\"\n" if($verbose == 1);
+			if(-d $item and $recursive == 0){
+				print STDERR "Cannot remove directory \"$item\"\n";
 				next;
 			}
 			elsif($warn == 1){
-				next unless(get_response("Are you sure you want to delete file: \"$item_index\"") == 1);
+				next unless(get_response("Are you sure you want to delete file: \"$item\"") == 1);
 			}
-			delete_file("$item_index");
+			delete_file("$item");
 		}
 		else{
-			print "Cowardly refused to delete an imaginary file \"$item_index\"\n";
+			print "Cowardly refused to delete an imaginary file \"$item\"\n";
 		}	
 	}
 }
@@ -419,8 +431,9 @@ sub remove_from_trash{
 			if($f == 1 or get_response("Are you sure you want to remove $entry from the trash?") == 1){
 				print "Removing $entry from the trash...\n" if($verbose == 1);
 				for(my $i=0;$i<$count;$i++){
-					my $escape = add_escapes($entry);
-					system("rm -rf \"$trash/${escape}______$i\"") != 0 or seek_and_destroy_in_history("$entry\______$i");
+					my $escaped_entry = add_escapes($entry);
+					# Remove entry from history only when system() was successful.
+					system("rm -rf \"$trash/${escaped_entry}______$i\"") != 0 or seek_and_destroy_in_history("$entry\______$i");
 				}
 			}
 		}
@@ -428,18 +441,26 @@ sub remove_from_trash{
 }
 
 sub empty_trash{
+	# Do not nag user if -f is set. 
 	if($force > 0 or get_response("Are you sure you want to empty the trash?") == 1){
 		foreach my $entry (keys %file_count){
+			# Remove entries one by one, and send force (Parm 2 = 1), as the user has already
+			# given us his balls. :-)
 			remove_from_trash($entry,1);
 		}
+
+		# Once complete, check for stray files.
 		my $list = `ls -a $trash`;
 		my @tmp = split(/\n/,$list);
 		my @ls;
+		# Add everything to the listing except ., .. and .history.
 		foreach my $ent (@tmp){
 			if($ent ne "." and $ent ne ".." and $ent ne ".history"){
 				push @ls, $ent;
 			}
 		}
+
+		# Nag user if stray files exist.
 		$list = join("\n",@ls);
 		if($list ne ""){	
 			print "Stray files still exist in trash. Here is its listing:\n$list\n";
@@ -530,8 +551,8 @@ sub seek_and_destroy_in_history{
 	}
 }
 
-# SIDE EFFECTS: file_count hash is populated
-# 		if the file size exists in history, %file_size is also populated.
+# SIDE EFFECTS: %file_count is populated
+# 		%file_size  is populated for elements with size specified in history.
 sub get_history{
 	open HIST, "$history" or die "Could not open history\n";
 	my @contents = split(/\n/, join("", <HIST>));
@@ -677,11 +698,14 @@ sub convert_regex{
 		$reg =~ s/\^/\\\^/g; # escape ^
 		$reg =~ s/\$/\\\$/g; # escape $
 		$reg =~ s/\|/\\\|/g; # escape |
-		$reg = qr/^(${reg})______\d+/; # Build the search regex.
+		$reg = qr/^(${reg})______\d+$/; # Build the search regex.
 		return $reg;
 	}
 	else{		
-		my $regex = eval { qr/^($reg)______\d+/ };
+		# $ causes a problem as we use it here, so we just remove
+		# a $ from the end if it exists.
+		$reg =~ s/\$$//;
+		my $regex = eval { qr/($reg)______\d+$/ };
 		exit_routine("ERROR: Your regex doesn't seem valid : \n$@") if $@;
 		return $regex;
 	}
@@ -703,20 +727,22 @@ sub add_escapes{
 	my $in = shift;
 	$in =~ s/\\/\\\\/g; # back slash in file names cause problems.
 	$in =~ s/\`/\\\`/g; # Back ticks in file names cause problems.
-	$in =~ s/"/\\"/g; # Double quites in file names cause problems.
-	#$in =~ s/'/\\'/g; # Double quites in file names cause problems.
+	$in =~ s/"/\\"/g;   # Double quites in file names cause problems.
 	return $in;
 }
 
 sub parentDir{
 	my $path = shift;
 	my $reg;
+	# If $path starts with /, it is an absolute path.
 	if($path =~ /^\//){
 		my @p = split(/\//,$path);
 		$reg = pop @p;
 		my $par = join("/",@p);
 		return ($par,$reg);
 	}
+	# Else, if it still contains /, it is some path from the
+	# current directory.
 	elsif($path =~ /\//){
 		my @p = split(/\//,$path);
 		$reg = pop @p;
@@ -724,6 +750,7 @@ sub parentDir{
 		my $cwd = cwd();
 		return ("$cwd/$par",$reg);
 	}
+	# Else it is a file in the current directory.
 	else{
 		my $cwd = cwd();
 		return ($cwd,$path);
@@ -733,6 +760,10 @@ sub parentDir{
 
 ############# THE EXIT ROUTINE ############################
 
+# This is called whenever we want to exit, and also called
+# when we are interrupted. If the dirty flag is set, history
+# is written. If a parameter is passed, it prints it on stderr.
+# and finally quits.
 sub exit_routine{
 	my $error = shift;
 	if(defined($error)){
