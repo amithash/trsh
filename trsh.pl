@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.2-203
+TRSH VERSION 2.2-205
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
@@ -356,7 +356,7 @@ sub delete_file{
 sub restore_file{
 	my $item = shift;
 	my @matched;
-	if((! -e "$trash/${item}______0") or $regex_force == 1){ # Only match of file is not there.
+	if((not defined $file_count{$item}) or $regex_force == 1){ # Only match of file is not there.
 		@matched = get_matched_files($item);
 	}
 	$matched[0] = $item if($#matched < 0); # Deffer error reporting if there are no matches.
@@ -417,7 +417,7 @@ sub remove_from_trash{
 	my $item = shift;
 	my $f = shift || $force;
 	my @matched;
-	if((! -e "$trash/${item}______0") or $regex_force == 1){ # Only match if file does not exist.
+	if((not defined($item)) or $regex_force == 1){ # Only match if file does not exist.
 		@matched = get_matched_files($item);
 	}
 	$matched[0] = $item if($#matched < 0); # Deffer error reporting if there are no matches.
@@ -433,7 +433,7 @@ sub remove_from_trash{
 				for(my $i=0;$i<$count;$i++){
 					my $escaped_entry = add_escapes($entry);
 					# Remove entry from history only when system() was successful.
-					system("rm -rf \"$trash/${escaped_entry}______$i\"") != 0 or seek_and_destroy_in_history("$entry\______$i");
+					system("rm -rf \"$trash/$escaped_entry\______$i\"") != 0 or seek_and_destroy_in_history("$entry\______$i");
 				}
 			}
 		}
@@ -466,7 +466,8 @@ sub empty_trash{
 			print "Stray files still exist in trash. Here is its listing:\n$list\n";
 			if(get_response("Are you sure you want to permanently delete them?") == 1){
 				foreach my $entry (@ls){
-					system("rm -rf \"$trash/$entry\"") == 0 or print "Could not remove $trash/$entry. You need to remove it yourself.\n";
+					my $escaped_entry = add_escapes($entry);
+					system("rm -rf \"$trash/$escaped_entry\"") == 0 or print "Could not remove $trash/$entry. You need to remove it yourself.\n";
 				}
 			}
 		}
