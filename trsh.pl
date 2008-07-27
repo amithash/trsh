@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.2-205
+TRSH VERSION 2.2-206
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
@@ -377,6 +377,7 @@ sub restore_file{
 				print "(2) Rename new file\n";
 				print "Your choice: (1/2) [1]:";
 				my $inp = <STDIN>;
+				chomp($inp);
 				$inp = 1 if($inp eq "");
 				$inp += 0;
 				if($inp == 1){
@@ -417,7 +418,8 @@ sub remove_from_trash{
 	my $item = shift;
 	my $f = shift || $force;
 	my @matched;
-	if((not defined($item)) or $regex_force == 1){ # Only match if file does not exist.
+	if((not defined($file_count{item})) or $regex_force == 1){ # Only match if file does not exist.
+		print "HELLO";
 		@matched = get_matched_files($item);
 	}
 	$matched[0] = $item if($#matched < 0); # Deffer error reporting if there are no matches.
@@ -433,7 +435,8 @@ sub remove_from_trash{
 				for(my $i=0;$i<$count;$i++){
 					my $escaped_entry = add_escapes($entry);
 					# Remove entry from history only when system() was successful.
-					system("rm -rf \"$trash/$escaped_entry\______$i\"") != 0 or seek_and_destroy_in_history("$entry\______$i");
+					system("rm -rf \"$trash/$escaped_entry\______$i\"") != 0 or 
+					seek_and_destroy_in_history("$entry\______$i");
 				}
 			}
 		}
@@ -442,36 +445,42 @@ sub remove_from_trash{
 
 sub empty_trash{
 	# Do not nag user if -f is set. 
-	if($force > 0 or get_response("Are you sure you want to empty the trash?") == 1){
+	if($force > 0 or get_response("	Are you sure you want to empty the trash?") == 1){
 		foreach my $entry (keys %file_count){
-			# Remove entries one by one, and send force (Parm 2 = 1), as the user has already
-			# given us his balls. :-)
+			# Remove entries one by one, and send force (Parm 2 = 1), 
+			# as the user has already given us his balls. :-)
 			remove_from_trash($entry,1);
 		}
 
 		# Once complete, check for stray files.
-		my $list = `ls -a $trash`;
-		my @tmp = split(/\n/,$list);
-		my @ls;
-		# Add everything to the listing except ., .. and .history.
-		foreach my $ent (@tmp){
-			if($ent ne "." and $ent ne ".." and $ent ne ".history"){
-				push @ls, $ent;
-			}
-		}
+		my @ls = stray_trash_files();
+		my $list = join("\n",@ls);
 
 		# Nag user if stray files exist.
-		$list = join("\n",@ls);
 		if($list ne ""){	
 			print "Stray files still exist in trash. Here is its listing:\n$list\n";
 			if(get_response("Are you sure you want to permanently delete them?") == 1){
 				foreach my $entry (@ls){
 					my $escaped_entry = add_escapes($entry);
-					system("rm -rf \"$trash/$escaped_entry\"") == 0 or print "Could not remove $trash/$entry. You need to remove it yourself.\n";
+					system("rm -rf \"$trash/$escaped_entry\"") == 0 or 
+					print "Could not remove $trash/$entry. You need to remove it yourself.\n";
 				}
 			}
 		}
 	}
+}
+
+sub stray_trash_files{
+	my $list = `ls -a $trash`;
+	my @tmp = split(/\n/,$list);
+	my @lst = ();
+	# Add everything to the listing except ., .. and .history.
+	foreach my $ent (@tmp){
+		if($ent ne "." and $ent ne ".." and $ent ne ".history"){
+			push @lst, $ent;
+		}
+	}
+	return @lst;
 }
 
 sub display_trash{
