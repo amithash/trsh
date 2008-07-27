@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.2-208
+TRSH VERSION 2.2-209
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
@@ -444,7 +444,7 @@ sub remove_from_trash{
 
 sub empty_trash{
 	# Do not nag user if -f is set. 
-	if($force > 0 or get_response("	Are you sure you want to empty the trash?") == 1){
+	if($force > 0 or get_response("Are you sure you want to empty the trash?") == 1){
 		foreach my $entry (keys %file_count){
 			# Remove entries one by one, and send force (Parm 2 = 1), 
 			# as the user has already given us his balls. :-)
