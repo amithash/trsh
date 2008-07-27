@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.2-207
+TRSH VERSION 2.2-208
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
@@ -418,7 +418,7 @@ sub remove_from_trash{
 	my $item = shift;
 	my $f = shift || $force;
 	my @matched;
-	if((not defined($file_count{item})) or $regex_force == 1){ # Only match if file does not exist.
+	if((not defined($file_count{$item})) or $regex_force == 1){ # Only match if file does not exist.
 		@matched = get_matched_files($item);
 	}
 	$matched[0] = $item if($#matched < 0); # Deffer error reporting if there are no matches.
