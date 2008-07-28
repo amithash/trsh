@@ -1,7 +1,11 @@
 ========================================================================================
                                     TRSH
 	 		Copyright 2008 Amithash Prasad                                         
-			       Version 2.2-209
+<<<<<<< .mine
+			       Version 2.2-210
+=======
+			       Version 2.2-210
+>>>>>>> .r209
 
 	 trsh is free software: you can redistribute it and/or modify         
 	 it under the terms of the GNU General Public License as published by   

@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.2-209
+TRSH VERSION 2.2-210
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
@@ -484,16 +484,28 @@ sub stray_trash_files{
 
 sub display_trash{
 	if($#hist_raw >= 0){
+		my @sorted_files;
+		my %fsz_dict;
 		if($size == 1){
 			my $sz;
 			$sz = get_size($human);
 			print color("Yellow"),"Total Trash Size: $sz";
 			print color("reset"), "\n";
+
+			# Generate a hash for each entry and its size.
+			foreach my $entry (keys %file_count){
+				$fsz_dict{$entry} = get_accumilated_size($entry) + 0;
+			}
+			# generate a sorted list based on descending order of size.
+			@sorted_files = sort { $fsz_dict{$b} <=> $fsz_dict{$a};} keys(%fsz_dict);
+		}
+		else{
+			@sorted_files = keys %file_count;
 		}
 		my $fsz = 0;
-		foreach my $entry (keys %file_count){
+		foreach my $entry (@sorted_files){
 			my $file = "$trash/${entry}______0";
-			$fsz = get_accumilated_size($entry) if($size == 1);
+			$fsz = $fsz_dict{$entry} if($size == 1);
 			if(-d $file){
 				print_colored($file_count{$entry},$entry,"Blue",$fsz);
 			}
