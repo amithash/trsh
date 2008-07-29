@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.2-210
+TRSH VERSION 2.2-212
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
@@ -500,7 +500,7 @@ sub display_trash{
 			@sorted_files = sort { $fsz_dict{$b} <=> $fsz_dict{$a};} keys(%fsz_dict);
 		}
 		else{
-			@sorted_files = keys %file_count;
+			@sorted_files = sort {lc($a) cmp lc($b)} (keys %file_count);
 		}
 		my $fsz = 0;
 		foreach my $entry (@sorted_files){
