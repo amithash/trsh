@@ -68,7 +68,7 @@ system("mv $name/trsh.spec .");
 system("tar -zcf $name.tar.gz $name");
 system("rm -r $name");
 if(`id -u` eq "0\n"){
-	system("mv $name.tar.gz /usr/src/redhat/SOURCE");
+	system("mv $name.tar.gz /usr/src/redhat/SOURCE") == 0 or die "could not move source to SOURCE dir\n";
 	system("rpmbuild -bb trsh.spec") == 0 or die "rpmbuild failed\n";
 	system("mv /usr/src/redhat/RPMS/noarch/$name.rpm trsh-build");
 } else {
