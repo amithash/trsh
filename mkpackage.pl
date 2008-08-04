@@ -21,11 +21,13 @@ if(system("./test-trsh.bash") != 0){
 	print "NO PACKAGE FOR YOU\n";
 	exit;
 }
+if(defined($ARGV[0]) and $ARGV[0] ne "-nocsh"){
 # RUN THE CSH TESTS
-if(system("./test-trsh.csh") != 0){
-	print "Hey, your changes failed tests on csh.\n";
-	print "NO PACKAGE FOR YOU\n";
-	exit;
+	if(system("./test-trsh.csh") != 0){
+		print "Hey, your changes failed tests on csh.\n";
+		print "NO PACKAGE FOR YOU\n";
+		exit;
+	}
 }
 
 # Only if these tests pass, allow the person to create the package.
@@ -43,13 +45,23 @@ system("rm ../$name/checkin.pl");
 system("rm ../$name/mkpackage.pl");
 system("rm ../$name/test-trsh.bash");
 system("rm ../$name/test-trsh.csh");
-
+system("rm ../$name/VERSION");
 chdir("..");
-
+system("cp -r $name $name.src");
+system("rm $name/trsh.sh");
+system("rm $name/trsh.csh");
+system("rm $name/trsh.spec");
 system("tar -zcf $name.tar.gz $name");
 system("rm -rf $name");
-
+system("mkdir trsh-build");
+system("mv $name.tar.gz trsh-build");
+system("mv $name.src $name");
+system("mv $name/trsh.spec .");
+system("tar -zcf $name.tar.gz $name");
+system("mv $name /usr/src/redhat/SOURCE");
+system("rpmbuild -bb trsh.spec");
+system("mv /usr/src/redhat/RPMS/noarch/$name.rpm trsh-build");
 my $pwd = `pwd`;
 chomp($pwd);
-print "PACKAGE IS: $pwd/$name.tar.gz\n";
+print "PACKAGES ARE IN: $pwd/trsh-build\n";
 
