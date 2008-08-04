@@ -38,7 +38,6 @@ if(-e "/bin/csh" or -e "/bin/tcsh"){
 
 # Only if these tests pass, allow the person to create the package.
 
-system("su root");
 print "version = $main.$sub-$rev\n";
 my $name = "trsh-$main.$sub-$rev";
 my $home = $ENV{HOME};
@@ -66,10 +65,15 @@ system("mv $name.tar.gz trsh-build");
 system("mv $name.src $name");
 system("mv $name/trsh.spec .");
 system("tar -zcf $name.tar.gz $name");
-system("rm -r $name");
-system("mv $name /usr/src/redhat/SOURCE");
-system("rpmbuild -bb trsh.spec");
-system("mv /usr/src/redhat/RPMS/noarch/$name.rpm trsh-build");
+if(`id -u` eq "0\n"){
+	system("rm -r $name");
+	system("mv $name /usr/src/redhat/SOURCE");
+	system("rpmbuild -bb trsh.spec");
+	system("mv /usr/src/redhat/RPMS/noarch/$name.rpm trsh-build");
+} else {
+	print "Not a root user, no rpm for you\n";
+}
+system("rm -r $name trsh.spec");
 
 my $pwd = `pwd`;
 chomp($pwd);
