@@ -66,7 +66,7 @@ system("mv $name.src $name");
 system("mv $name/trsh.spec .");
 system("tar -zcf $name.tar.gz $name");
 system("rm -r $name");
-if(`id -u` ne "0"){
+if(`id -u` ne "0\n"){
 	print "Could not generate rpms. Run as root.\n";
 	system("rm -r $name.tar.gz");
 } else {
