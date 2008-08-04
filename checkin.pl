@@ -2,9 +2,10 @@
 
 use strict;
 use warnings;
-
-my $main = 2;
-my $sub  = 2;
+my $verstr = `cat VERSION`;
+$verstr =~ /(\d+)\.(\d+)/;
+my $main = $1;
+my $sub  = $2;
 my $rev  = `svnversion`;
 
 if($rev =~ /^(\d+)M/){
