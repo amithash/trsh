@@ -60,20 +60,21 @@ system("rm $name/trsh.csh");
 system("rm $name/trsh.spec");
 system("tar -zcf $name.tar.gz $name");
 system("rm -rf $name");
+system("rm -rf trsh-build") if(-d "trsh-build");
 system("mkdir trsh-build");
 system("mv $name.tar.gz trsh-build");
 system("mv $name.src $name");
 system("mv $name/trsh.spec .");
 system("tar -zcf $name.tar.gz $name");
+system("rm -r $name");
 if(`id -u` eq "0\n"){
-	system("rm -r $name");
-	system("mv $name /usr/src/redhat/SOURCE");
-	system("rpmbuild -bb trsh.spec");
+	system("mv $name.tar.gz /usr/src/redhat/SOURCE");
+	system("rpmbuild -bb trsh.spec") == 0 or die "rpmbuild failed\n";
 	system("mv /usr/src/redhat/RPMS/noarch/$name.rpm trsh-build");
 } else {
 	print "Not a root user, no rpm for you\n";
 }
-system("rm -r $name trsh.spec");
+system("rm -r trsh.spec");
 
 my $pwd = `pwd`;
 chomp($pwd);
