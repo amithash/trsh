@@ -21,7 +21,7 @@ if(system("./test-trsh.bash") != 0){
 	print "NO PACKAGE FOR YOU\n";
 	exit;
 }
-if(defined($ARGV[0]) and $ARGV[0] ne "-nocsh"){
+if(not defined($ARGV[0]) or $ARGV[0] ne "-nocsh"){
 # RUN THE CSH TESTS
 	if(system("./test-trsh.csh") != 0){
 		print "Hey, your changes failed tests on csh.\n";
