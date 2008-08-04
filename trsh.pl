@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.3-222
+TRSH VERSION 2.3-223
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...

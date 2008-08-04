@@ -16,18 +16,24 @@ if($rev =~ /^(\d+)/){
 	$rev = $1 + 0;
 }
 # RUN THE BASH TESTS
-if(system("./test-trsh.bash") != 0){
-	print "Hey, your changes failed tests on bash.\n";
-	print "NO PACKAGE FOR YOU\n";
-	exit;
+if(-e "/bin/bash"){
+	if(system("./test-trsh.bash") != 0){
+		print "Hey, your changes failed tests on bash.\n";
+		print "NO PACKAGE FOR YOU\n";
+		exit;
+	}
+} else {
+	print "Tests are not performed for bash as the shell was not found on your system. Please install it for a better package.\n";
 }
-if(not defined($ARGV[0]) or $ARGV[0] ne "-nocsh"){
 # RUN THE CSH TESTS
+if(-e "/bin/csh" or -e "/bin/tcsh"){
 	if(system("./test-trsh.csh") != 0){
 		print "Hey, your changes failed tests on csh.\n";
 		print "NO PACKAGE FOR YOU\n";
 		exit;
 	}
+} else {
+	print "Tests are not performed for csh/tcsh as the shell was not found on your system. Please install it for a better package.\n";
 }
 
 # Only if these tests pass, allow the person to create the package.
@@ -58,6 +64,11 @@ system("mv $name.tar.gz trsh-build");
 system("mv $name.src $name");
 system("mv $name/trsh.spec .");
 system("tar -zcf $name.tar.gz $name");
+system("rm -r $name");
+if(`id -u` ne "0"){
+	print "Could not generate rpms. Run as root.\n";
+	system("rm -r $name.tar.gz");
+}
 system("mv $name /usr/src/redhat/SOURCE");
 system("rpmbuild -bb trsh.spec");
 system("mv /usr/src/redhat/RPMS/noarch/$name.rpm trsh-build");
