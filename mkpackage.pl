@@ -68,10 +68,12 @@ system("rm -r $name");
 if(`id -u` ne "0"){
 	print "Could not generate rpms. Run as root.\n";
 	system("rm -r $name.tar.gz");
+} else {
+	system("mv $name /usr/src/redhat/SOURCE");
+	system("rpmbuild -bb trsh.spec");
+	system("mv /usr/src/redhat/RPMS/noarch/$name.rpm trsh-build");
 }
-system("mv $name /usr/src/redhat/SOURCE");
-system("rpmbuild -bb trsh.spec");
-system("mv /usr/src/redhat/RPMS/noarch/$name.rpm trsh-build");
+
 my $pwd = `pwd`;
 chomp($pwd);
 print "PACKAGES ARE IN: $pwd/trsh-build\n";
