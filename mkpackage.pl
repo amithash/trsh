@@ -40,19 +40,20 @@ if(-e "/bin/csh" or -e "/bin/tcsh"){
 
 print "version = $main.$sub-$rev\n";
 my $name = "trsh-$main.$sub-$rev";
-system("rm -rf ../$name") if(-d "../$name");
-system("rm -rf ../$name.tar.gz") if(-e "../$name.tar.gz");
-system("svn export . ../$name");
+my $home = $ENV{HOME};
+system("rm -rf $home/$name") if(-d "$home/$name");
+system("rm -rf $home/$name.tar.gz") if(-e "$home/$name.tar.gz");
+system("svn export . $home/$name");
 
 # Remove checkin.pl and mkpackage.pl from it.
 
 # These scripts are not required for the user.
-system("rm ../$name/checkin.pl");
-system("rm ../$name/mkpackage.pl");
-system("rm ../$name/test-trsh.bash");
-system("rm ../$name/test-trsh.csh");
-system("rm ../$name/VERSION");
-chdir("..");
+system("rm $home/$name/checkin.pl");
+system("rm $home/$name/mkpackage.pl");
+system("rm $home/$name/test-trsh.bash");
+system("rm $home/$name/test-trsh.csh");
+system("rm $home/$name/VERSION");
+chdir("$home");
 system("cp -r $name $name.src");
 system("rm $name/trsh.sh");
 system("rm $name/trsh.csh");
