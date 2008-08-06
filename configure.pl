@@ -176,7 +176,7 @@ print MK "\n";
 
 # INSTALL
 print MK "install:\n";
-print MK "\t\@sed -e 's/.* # TRSH//g' $rc_file > $rc_file.new\n";
+print MK "\t\@sed -e '/.* # TRSH/d' $rc_file > $rc_file.new\n";
 print MK "\t\@echo \"$alias_rm # TRSH\" >> $rc_file.new\n";
 print MK "\t\@echo \"$alias_undo # TRSH\" >> $rc_file.new\n";
 print MK "\t\@cp $rc_file $rc_file.bac\n";
@@ -191,7 +191,7 @@ print MK "\n";
 print MK "uninstall:\n";
 print MK "\t\@rm $path\n";
 print MK "\t\@rm $man_path/trsh.1.gz\n" if($no_man == 0);
-print MK "\t\@sed -e 's/.* # TRSH//g' $rc_file > $rc_file.new\n";
+print MK "\t\@sed -e '/.* # TRSH/d' $rc_file > $rc_file.new\n";
 print MK "\t\@mv $rc_file.new $rc_file\n";
 print MK "\t\@exit 0\n";
 print MK "\n";
