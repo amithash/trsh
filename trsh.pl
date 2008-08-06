@@ -31,9 +31,9 @@ $Term::ANSIColor::AUTORESET = 1;
 
 my $usage_string = "
 <<<<<<< .mine
-TRSH VERSION 2.3-235
+TRSH VERSION 2.3-236
 =======
-TRSH VERSION 2.3-235
+TRSH VERSION 2.3-236
 >>>>>>> .r234
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
