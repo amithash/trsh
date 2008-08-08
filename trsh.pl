@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.3-237
+TRSH VERSION 2.3-238
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
@@ -274,7 +274,9 @@ if($#remaining >= 0){
 		}
 		elsif(-e $item){  
 			print "Deleting \"$item\"\n" if($verbose == 1);
-			if(-d $item and $recursive == 0){
+			# Do not delete if item is a dir and rec is not enabled and 
+			# is not a link.
+			if((-d $item and $recursive == 0) and not(-l $item)){
 				print STDERR "Cannot remove directory \"$item\"\n";
 				next;
 			}
@@ -506,14 +508,14 @@ sub display_trash{
 		foreach my $entry (@sorted_files){
 			my $file = "$trash/${entry}______0";
 			$fsz = $fsz_dict{$entry} if($size == 1);
-			if(-d $file){
+			if(-l $file){
+				print_colored($file_count{$entry},$entry,"Cyan",$fsz);
+			}
+			elsif(-d $file){
 				print_colored($file_count{$entry},$entry,"Blue",$fsz);
 			}
 			elsif(-x $file){
 				print_colored($file_count{$entry},$entry,"Green",$fsz);
-			}
-			elsif(-l $file){
-				print_colored($file_count{$entry},$entry,"Cyan",$fsz);
 			}
 			elsif($entry =~ $regex_tar or $entry =~ $regex_gz or $entry =~ $regex_rpm or $entry =~ $regex_deb){
 				print_colored($file_count{$entry},$entry,"Red",$fsz);
