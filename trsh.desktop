@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Service
+ServiceTypes=KonqPopupMenu/Plugin,all/all
+X-KDE-Priority=TopLevel
+Actions=Delete;Undo
+
+[Desktop Action Delete]
+Name=Delete File
+Icon=user-trash
+Exec=/usr/bin/trsh.pl %U
+
+[Desktop Action Undo]
+Name=Undo Delete
+Icon=edit-undo
+Exec=/usr/bin/trsh.pl -u
+
