@@ -30,7 +30,7 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 my $usage_string = "
-TRSH VERSION 2.3-239
+TRSH VERSION 2.3-240
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
@@ -119,7 +119,7 @@ GetOptions( 'e|empty'          => \$empty,
 	    'v|verbose'        => \$verbose,
 	    'x|force-regex'    => \$regex_force,
 	    'p|perl-regex'     => \$perl_regex,
-    	    'r|recursive'      => \$recursive);
+    	    'r|recursive'      => \$recursive) == 1 or die "$usage_string";
 
 # Remaining args go into @remaining.
 my @remaining = @ARGV;
