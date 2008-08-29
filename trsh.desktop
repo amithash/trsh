@@ -9,8 +9,4 @@ Name=Delete File
 Icon=user-trash
 Exec=/usr/bin/trsh.pl %U
 
-[Desktop Action Undo]
-Name=Undo Delete
-Icon=edit-undo
-Exec=/usr/bin/trsh.pl -u
 
