@@ -65,6 +65,9 @@ to empty the trash without prompting the user.
 -l|--list
 Display the contents of the trash.
 
+--no-color
+An option for listing which turns of term colors.
+
 -s|--size
 This displays the size of the Trash directory. (-s with -l makes the listing contain 
 sizes of individual entries in the trash)
@@ -103,6 +106,7 @@ my $warn = 0;
 my $verbose = 0;
 my $recursive = 0;
 my $regex_force = 0;
+my $no_color = 0;
 my $human = 0;
 my $perl_regex = 0;
 
@@ -119,6 +123,7 @@ GetOptions( 'e|empty'          => \$empty,
 	    'v|verbose'        => \$verbose,
 	    'x|force-regex'    => \$regex_force,
 	    'p|perl-regex'     => \$perl_regex,
+	    'no-color'         => \$no_color,
     	    'r|recursive'      => \$recursive) == 1 or die "$usage_string";
 
 # Remaining args go into @remaining.
@@ -324,15 +329,27 @@ sub print_colored{
 	my $color = shift;
 	my $size_rec = shift;
 	print "($uncolored_text) ";
-	print color($color), "$colored_text";
+	if($color eq "NULL"){
+		print "$colored_text";
+	} else {
+		print color($color), "$colored_text";
+	}
 	if($size == 1){
 		my $sz = $size_rec;
 		if($human == 1){
 			$sz = kb2hr($size_rec);
 		}
-		print color("Yellow"), " $sz";
+		if($color eq "NULL"){
+			print " $sz";
+		} else {
+			print color("Yellow"), " $sz";
+		}
 	}
-	print color("reset"), "\n";
+	if($color eq "NULL"){
+		print "\n";
+	} else {
+		print color("reset"), "\n";
+	}
 }
 
 
@@ -508,19 +525,17 @@ sub display_trash{
 		foreach my $entry (@sorted_files){
 			my $file = "$trash/${entry}______0";
 			$fsz = $fsz_dict{$entry} if($size == 1);
-			if(-l $file){
+			if($no_color == 1){
+				print_colored($file_count{$entry},$entry,"NULL",$fsz);
+			} elsif(-l $file){
 				print_colored($file_count{$entry},$entry,"Cyan",$fsz);
-			}
-			elsif(-d $file){
+			} elsif(-d $file){
 				print_colored($file_count{$entry},$entry,"Blue",$fsz);
-			}
-			elsif(-x $file){
+			} elsif(-x $file){
 				print_colored($file_count{$entry},$entry,"Green",$fsz);
-			}
-			elsif($entry =~ $regex_tar or $entry =~ $regex_gz or $entry =~ $regex_rpm or $entry =~ $regex_deb){
+			} elsif($entry =~ $regex_tar or $entry =~ $regex_gz or $entry =~ $regex_rpm or $entry =~ $regex_deb){
 				print_colored($file_count{$entry},$entry,"Red",$fsz);
-			}
-			else{
+			} else{
 				print_colored($file_count{$entry},$entry,"reset",$fsz);
 			}
 		}
