@@ -109,6 +109,7 @@ my $regex_force = 0;
 my $no_color = 0;
 my $human = 0;
 my $perl_regex = 0;
+my $no_count = 0;
 
 Getopt::Long::Configure('bundling');
 
@@ -124,6 +125,7 @@ GetOptions( 'e|empty'          => \$empty,
 	    'x|force-regex'    => \$regex_force,
 	    'p|perl-regex'     => \$perl_regex,
 	    'no-color'         => \$no_color,
+	    'no-count'	       => \$no_count,
     	    'r|recursive'      => \$recursive) == 1 or die "$usage_string";
 
 # Remaining args go into @remaining.
@@ -328,7 +330,8 @@ sub print_colored{
 	my $colored_text = shift;
 	my $color = shift;
 	my $size_rec = shift;
-	print "($uncolored_text) ";
+	print "($uncolored_text) " if($no_count == 0);
+
 	if($color eq "NULL"){
 		print "$colored_text";
 	} else {
