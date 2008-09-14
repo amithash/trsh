@@ -1,0 +1,197 @@
+<ui version="4.0" >
+ <author>Amithash Prasad</author>
+ <class>kTrshWindow</class>
+ <widget class="QMainWindow" name="kTrshWindow" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>792</width>
+    <height>552</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>ktrsh</string>
+  </property>
+  <widget class="QWidget" name="centralwidget" >
+   <widget class="QListWidget" name="trshList" >
+    <property name="geometry" >
+     <rect>
+      <x>40</x>
+      <y>30</y>
+      <width>721</width>
+      <height>441</height>
+     </rect>
+    </property>
+    <property name="editTriggers" >
+     <set>QAbstractItemView::SelectedClicked</set>
+    </property>
+    <property name="selectionMode" >
+     <enum>QAbstractItemView::MultiSelection</enum>
+    </property>
+    <property name="resizeMode" >
+     <enum>QListView::Adjust</enum>
+    </property>
+    <property name="viewMode" >
+     <enum>QListView::ListMode</enum>
+    </property>
+    <property name="batchSize" >
+     <number>100</number>
+    </property>
+    <property name="selectionRectVisible" >
+     <bool>true</bool>
+    </property>
+    <property name="sortingEnabled" >
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushRestore" >
+    <property name="geometry" >
+     <rect>
+      <x>50</x>
+      <y>500</y>
+      <width>105</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="cursor" >
+     <cursorShape>PointingHandCursor</cursorShape>
+    </property>
+    <property name="toolTip" >
+     <string>Resore a selected file</string>
+    </property>
+    <property name="text" >
+     <string>Restore</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushRemove" >
+    <property name="geometry" >
+     <rect>
+      <x>180</x>
+      <y>500</y>
+      <width>105</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="cursor" >
+     <cursorShape>PointingHandCursor</cursorShape>
+    </property>
+    <property name="toolTip" >
+     <string>Remove a selected file.</string>
+    </property>
+    <property name="text" >
+     <string>Remove</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushCancel" >
+    <property name="geometry" >
+     <rect>
+      <x>650</x>
+      <y>500</y>
+      <width>105</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="cursor" >
+     <cursorShape>PointingHandCursor</cursorShape>
+    </property>
+    <property name="toolTip" >
+     <string>Cancel and get out</string>
+    </property>
+    <property name="text" >
+     <string>Close</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label" >
+    <property name="geometry" >
+     <rect>
+      <x>320</x>
+      <y>10</y>
+      <width>101</width>
+      <height>18</height>
+     </rect>
+    </property>
+    <property name="text" >
+     <string>Trash Contents</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushSelectAll" >
+    <property name="geometry" >
+     <rect>
+      <x>320</x>
+      <y>500</y>
+      <width>105</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text" >
+     <string>Select All</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushClear" >
+    <property name="geometry" >
+     <rect>
+      <x>440</x>
+      <y>500</y>
+      <width>105</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text" >
+     <string>Clear</string>
+    </property>
+   </widget>
+  </widget>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>pushCancel</sender>
+   <signal>clicked()</signal>
+   <receiver>kTrshWindow</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>702</x>
+     <y>539</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>399</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushSelectAll</sender>
+   <signal>clicked()</signal>
+   <receiver>trshList</receiver>
+   <slot>selectAll()</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>482</x>
+     <y>513</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>400</x>
+     <y>250</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushClear</sender>
+   <signal>clicked()</signal>
+   <receiver>trshList</receiver>
+   <slot>clearSelection()</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>592</x>
+     <y>513</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>400</x>
+     <y>250</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
