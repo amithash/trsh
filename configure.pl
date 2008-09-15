@@ -36,11 +36,13 @@ GetOptions(
 	'shell-path=s'  => \$opts{SHELL},
 	'trash-path=s'  => \$opts{TPATH},
 	'rcfile-path=s' => \$opts{RPATH},
+	'ktrsh!'	=> \$opts{KTRSH},
 	'help'          => \$help
 ) or exit 1;
 
 $help == 0 || usage();
 
+$opts{"KTRSH"} = 1 unless(defined($opts{"KTRSH"}));
 $opts{"USER"} = 0 unless($opts{"USER"});
 $opts{"IPATH"} = "" unless($opts{"IPATH"});
 $opts{"RPATH"} = "" unless($opts{"RPATH"});
@@ -171,7 +173,7 @@ print MK "default:\n";
 $opts{TPATH} =~ s/\//\\\//g;
 $perl_path =~ s/\//\\\//g;
 print MK "\t\@sed -e 's/sub trash{ return \".Trash\"; }/sub trash{ return \"$opts{TPATH}\"; }/g' -e 's/#!\\/usr\\/bin\\/perl/#!$perl_path/g' trsh.pl > trsh.pl.o\n";
-print MK "\t+make -C ktrsh\n";
+print MK "\t+make -C ktrsh\n" if($opts{KTRSH} == 1);
 print MK "\t\@exit 0\n";
 print MK "\n";
 
@@ -185,7 +187,7 @@ print MK "\t\@mv $rc_file.new $rc_file\n";
 print MK "\t\@cp trsh.pl.o $path\n";
 print MK "\t\@cp trsh.1.gz $man_path\n" if($no_man == 0);
 print MK "\t\@chmod +x $path\n";
-print MK "\t\@cp ktrsh/ktrsh /usr/bin\n";
+print MK "\t\@cp ktrsh/ktrsh /usr/bin\n" if($opts{KTRSH} == 1);
 print MK "\t\@exit 0\n";
 print MK "\n";
 
@@ -195,14 +197,14 @@ print MK "\t\@rm $path\n";
 print MK "\t\@rm $man_path/trsh.1.gz\n" if($no_man == 0);
 print MK "\t\@sed -e '/.* # TRSH/d' $rc_file > $rc_file.new\n";
 print MK "\t\@mv $rc_file.new $rc_file\n";
-print MK "\t\@rm /usr/bin/ktrsh\n";
+print MK "\t\@rm /usr/bin/ktrsh\n" if($opts{KTRSH} == 1);
 print MK "\t\@exit 0\n";
 print MK "\n";
 
 # CLEAN
 print MK "clean:\n";
 print MK "\t\@rm trsh.pl.o\n";
-print MK "\t+make -C ktrsh clean\n";
+print MK "\t+make -C ktrsh clean\n" if($opts{KTRSH} == 1);
 print MK "\t\@exit 0\n";
 print MK "\n";
 close(MK);
