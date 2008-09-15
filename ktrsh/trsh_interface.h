@@ -25,18 +25,19 @@ class trshContents{
 	class trshEntry *head;
 	trshContents(void)
 	{
-		;
+		head = NULL;
 	}
 	~trshContents(void)
 	{
 		if(head){
-			class trshEntry *cur, *nex;
+			class trshEntry *cur, *nex = NULL;
 			cur = head;
 			nex = head->next;
 			while(cur){
 				delete cur;
 				cur = nex;
-				nex = nex->next;
+				if(nex)
+					nex = nex->next;
 			}
 		}
 	}

@@ -99,8 +99,9 @@ class trshInterface : public QObject
 				char cmd[500] = TRSH_LOCATION;
 				item = mw->trshList->takeItem(i);
 				strcpy(itemName,item->text().toStdString().c_str());
-				strcat(cmd, " -ef ");
+				strcat(cmd, " -ef '");
 				strcat(cmd, itemName);
+				strcat(cmd, "'");
 				if(system(cmd) != 0)
 					cout << "ktrsh: Could not remove " << itemName << endl;
 				i--;
@@ -119,8 +120,9 @@ class trshInterface : public QObject
 				char cmd[500] = TRSH_LOCATION;
 				item = mw->trshList->takeItem(i);
 				strcpy(itemName,item->text().toStdString().c_str());
-				strcat(cmd, " -u ");
+				strcat(cmd, " -u '");
 				strcat(cmd, itemName);
+				strcat(cmd, "'");
 				if(system(cmd) != 0)
 					cout << "ktrsh: Could not recover " << itemName << endl;
 				i--;
@@ -173,7 +175,7 @@ int main(int argc, char *argv[])
     delete restoreWindow;
     delete yesNoDialog;
     delete yesNoWindow;
-//    delete t;
+    delete t;
     return result;
 }
 
