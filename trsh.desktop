@@ -9,4 +9,7 @@ Name=Delete File
 Icon=user-trash
 Exec=/usr/bin/trsh.pl %U
 
-
+[Desktop Action Ktrsh]
+Name=Launch ktrsh
+Icon=user-trash
+Exec=/usr/bin/ktrsh %U

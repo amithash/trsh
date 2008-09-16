@@ -48,7 +48,14 @@ $opts{"IPATH"} = "" unless($opts{"IPATH"});
 $opts{"RPATH"} = "" unless($opts{"RPATH"});
 $opts{"TPATH"} = ".Trash" unless($opts{"TPATH"});
 $opts{"SHELL"} = $ENV{SHELL} unless($opts{SHELL});
+
+# No KDE Integration if User.
+$opts{"KTRSH"} = 0 if($opts{"USER"} == 1); 
+
+
 my $no_man = $opts{"USER"};
+my $service_menu_dir_kde4 = "/usr/share/kde4/services/ServiceMenus";
+my $service_menu_dir_kde3 = "/usr/share/kde4/services/ServiceMenus";
 
 # Configuring shell
 print "Looking for shell.... ";
@@ -98,6 +105,8 @@ print "[$rc_file]\n";
 
 print "Choosing path of installation.... ";
 my $path;
+my $ipath;
+$ipath = "/usr/bin";
 if($opts{IPATH} eq ""){
 	$path = "/usr/bin/trsh.pl" if($opts{USER} == 0);
 	$path = "$home/.trsh.pl" if($opts{USER} == 1);
@@ -188,6 +197,8 @@ print MK "\t\@cp trsh.pl.o $path\n";
 print MK "\t\@cp trsh.1.gz $man_path\n" if($no_man == 0);
 print MK "\t\@chmod +x $path\n";
 print MK "\t\@cp ktrsh/ktrsh /usr/bin\n" if($opts{KTRSH} == 1);
+print MK "\t\@cp ktrsh.desktop $service_menu_dir_kde4\n" if($opts{KTRSH} == 1 and -d $service_menu_dir_kde4);
+print MK "\t\@cp ktrsh.desktop $service_menu_dir_kde3\n" if($opts{KTRSH} == 1 and -d $service_menu_dir_kde3);
 print MK "\t\@exit 0\n";
 print MK "\n";
 
@@ -198,6 +209,8 @@ print MK "\t\@rm $man_path/trsh.1.gz\n" if($no_man == 0);
 print MK "\t\@sed -e '/.* # TRSH/d' $rc_file > $rc_file.new\n";
 print MK "\t\@mv $rc_file.new $rc_file\n";
 print MK "\t\@rm /usr/bin/ktrsh\n" if($opts{KTRSH} == 1);
+print MK "\t\@rm $service_menu_dir_kde4/ktrsh.desktop" if($opts{KTRSH} == 1 and -d $service_menu_dir_kde4);
+print MK "\t\@rm $service_menu_dir_kde3/ktrsh.desktop" if($opts{KTRSH} == 1 and -d $service_menu_dir_kde3);
 print MK "\t\@exit 0\n";
 print MK "\n";
 
