@@ -197,8 +197,8 @@ print MK "\t\@cp trsh.pl.o $path\n";
 print MK "\t\@cp trsh.1.gz $man_path\n" if($no_man == 0);
 print MK "\t\@chmod +x $path\n";
 print MK "\t\@cp ktrsh/ktrsh /usr/bin\n" if($opts{KTRSH} == 1);
-print MK "\t\@cp ktrsh.desktop $service_menu_dir_kde4\n" if($opts{KTRSH} == 1 and -d $service_menu_dir_kde4);
-print MK "\t\@cp ktrsh.desktop $service_menu_dir_kde3\n" if($opts{KTRSH} == 1 and -d $service_menu_dir_kde3);
+print MK "\t\@cp trsh.desktop $service_menu_dir_kde4\n" if($opts{KTRSH} == 1 and -d $service_menu_dir_kde4);
+print MK "\t\@cp trsh.desktop $service_menu_dir_kde3\n" if($opts{KTRSH} == 1 and -d $service_menu_dir_kde3);
 print MK "\t\@exit 0\n";
 print MK "\n";
 
@@ -209,8 +209,8 @@ print MK "\t\@rm $man_path/trsh.1.gz\n" if($no_man == 0);
 print MK "\t\@sed -e '/.* # TRSH/d' $rc_file > $rc_file.new\n";
 print MK "\t\@mv $rc_file.new $rc_file\n";
 print MK "\t\@rm /usr/bin/ktrsh\n" if($opts{KTRSH} == 1);
-print MK "\t\@rm $service_menu_dir_kde4/ktrsh.desktop" if($opts{KTRSH} == 1 and -d $service_menu_dir_kde4);
-print MK "\t\@rm $service_menu_dir_kde3/ktrsh.desktop" if($opts{KTRSH} == 1 and -d $service_menu_dir_kde3);
+print MK "\t\@rm $service_menu_dir_kde4/trsh.desktop" if($opts{KTRSH} == 1 and -d $service_menu_dir_kde4);
+print MK "\t\@rm $service_menu_dir_kde3/trsh.desktop" if($opts{KTRSH} == 1 and -d $service_menu_dir_kde3);
 print MK "\t\@exit 0\n";
 print MK "\n";
 

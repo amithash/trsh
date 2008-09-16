@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'ktrsh.ui'
 **
-** Created: Mon Sep 15 01:02:11 2008
+** Created: Tue Sep 16 16:14:22 2008
 **      by: Qt User Interface Compiler version 4.4.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
