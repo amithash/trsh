@@ -20,6 +20,16 @@
 
 A safe rm.
 
+I rewrote 3.0 (After 2.x) to strictly follow the freeDesktop's Trash 
+specification. Thus your trash is now in sync with that of your desktop.
+
+CAVIAT:
+------
+
+All regex related functionality is removed till time tests the regular functionality.
+Once this is known not to eat anything, I will add them back.
+
+
 MOTIVATION
 --
 

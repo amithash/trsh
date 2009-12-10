@@ -19,9 +19,12 @@
 #*************************************************************************
 
 echo "Backing up existing trash."
-if [ -d $HOME/.Trash ]
+TRASH=$HOME/.local/share/Trash
+TRASH_BACKUP=$HOME/.local/share/Trash_Backup
+
+if [ -d $TRASH ]
 then
-	mv $HOME/.Trash $HOME/.Trash_backup
+	mv $TRASH ${TRASH}_backup
 fi
 export PATH=`pwd`:$PATH
 
@@ -37,7 +40,7 @@ trsh.pl
 # TEST 1
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 echo "TEST 1: Tests .Trash creation"
-if [ -d $HOME/.Trash ]
+if [ -d $TRASH/files ]
 then
 	echo "TEST 1 PASSED: Trash exists" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -49,9 +52,9 @@ fi
 # TEST 2
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 echo "TEST 2: Tests .history creation"
-if [ -e $HOME/.Trash/.history ]
+if [ -d $TRASH/info ]
 then
-	echo "TEST 2 PASSED: history exists" >&2
+	echo "TEST 2 PASSED: info exists" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 else
 	echo "TEST 2 FAILED: history does not exist" >&2
@@ -64,7 +67,7 @@ cd $HOME
 touch test_trsh3
 trsh.pl test_trsh3
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/.Trash/test_trsh3______0 ]
+if [ -e $TRASH/files/test_trsh3 ]
 then
 	echo "TEST 3A PASSED: file test_trsh3 exists in trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -86,7 +89,7 @@ echo "TEST 4: Tests basic file recovery"
 cd $HOME
 trsh.pl -u test_trsh3
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/.Trash/test_trsh3 ]
+if [ -e $TRASH/files/test_trsh3 ]
 then
 	echo "TEST 4A FAILED: file test_trsh3 exists in trash" >&2
 else
@@ -113,7 +116,7 @@ touch test_trsh42
 touch test_trsh43
 trsh.pl test_trsh41 test_trsh42 test_trsh43
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/.Trash/test_trsh41______0 ] && [ -e $HOME/.Trash/test_trsh42______0 ] && [ -e $HOME/.Trash/test_trsh43______0 ]
+if [ -e $TRASH/files/test_trsh41 ] && [ -e $TRASH/files/test_trsh42 ] && [ -e $TRASH/files/test_trsh43 ]
 then
 	echo "TEST 5A PASSED: Files test_trsh41 test_trsh42 and test_trsh43 exist in Trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -144,13 +147,16 @@ else
 fi
 ##################################################################################
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/.Trash/test_trsh43 ]
+if [ -e $TRASH/files/test_trsh43 ]
 then
 	echo "TEST 6B FAILED: File test_trsh43 exists in trash" >&2
 else
 	echo "TEST 6B PASSED: File test_trsh43 does not exist in trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
 fi
+
+/bin/rm test_trsh42 test_trsh41 test_trsh43
+
 ##################################################################################
 
 # TEST 7 Multiple files with same name
@@ -162,7 +168,7 @@ trsh.pl test_trsh5
 touch test_trsh5
 trsh.pl test_trsh5
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/.Trash/test_trsh5______0 ] && [ -e $HOME/.Trash/test_trsh5______1 ] && [ -e $HOME/.Trash/test_trsh5______2 ]
+if [ -e $TRASH/files/test_trsh5 ] && [ -e $TRASH/files/test_trsh5-1 ] && [ -e $TRASH/files/test_trsh-2 ]
 then
 	echo "TEST 7 PASSED: All three files deleted and exist in trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -175,7 +181,7 @@ fi
 echo "TEST 8: test_trshs recover with multiple files."
 trsh.pl -u
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/.Trash/test_trsh5______0 ] && [ -e $HOME/.Trash/test_trsh5______1 ] && [ ! -e $HOME/.Trash/test_trsh5______2 ]
+if [ -e $TRASH/files/test_trsh5 ] && [ -e $TRASH/files/test_trsh5-1 ] && [ ! -e $TRASH/files/test_trsh5-2 ]
 then
 	echo "TEST 8A PASSED: 2 other files still exist and the 3'd file does not in the trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -198,7 +204,7 @@ echo "TEST 9: Testing capability to handle file name with spaces."
 touch "test_trsh 9"
 trsh.pl "test_trsh 9"
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e "$HOME/.Trash/test_trsh 9______0" ]
+if [ -e "$TRASH/files/test_trsh 9" ]
 then
 	echo "TEST 9 PASSED: File \"test_trsh 9\" exists in trash" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -223,7 +229,7 @@ fi
 mkdir test_trsh10b
 trsh.pl -r test_trsh10b
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -d "$HOME/.Trash/test_trsh10b______0" ]
+if [ -d "$TRASH/files/test_trsh10b" ]
 then
 	echo "TEST 10B PASSED: Dir test_trsh10b removed" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -304,7 +310,7 @@ trsh.pl -e "test_trsh*" < ./yy
 echo ""
 
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/.Trash/test_trsh1______0 ] || [ -e $HOME/.Trash/test_trsh2______0 ]
+if [ -e $TRASH/files/test_trsh1______0 ] || [ -e $TRASH/files/test_trsh2______0 ]
 then
 	echo "TEST 13 FAILED: Erase regex" >&2
 else
@@ -318,7 +324,7 @@ trsh.pl -e "test_trsh1" < ./yy
 echo ""
 
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e $HOME/.Trash/test_trsh1______0 ] || [ ! -e $HOME/.Trash/test_trsh2______0 ]
+if [ -e $TRASH/files/test_trsh1______0 ] || [ ! -e $TRASH/files/test_trsh2______0 ]
 then
 	echo "TEST 14 FAILED: Erase specific file" >&2
 else
@@ -342,7 +348,7 @@ touch "$PATTERNE"
 
 trsh.pl "$PATTERNA"
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
-if [ -e "$HOME/.Trash/${PATTERNA}______0" ]
+if [ -e "$TRASH/files/${PATTERNA}______0" ]
 then
 	echo "TEST 15A PASSED: Delete Special Character Pattern A" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -352,7 +358,7 @@ fi
 
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 trsh.pl "$PATTERNB"
-if [ -e "$HOME/.Trash/${PATTERNB}______0" ]
+if [ -e "$TRASH/files/${PATTERNB}______0" ]
 then
 	echo "TEST 15B PASSED: Delete Special Character Pattern B" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -362,7 +368,7 @@ fi
 
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 trsh.pl "$PATTERNC"
-if [ -e "$HOME/.Trash/${PATTERNC}______0" ]
+if [ -e "$TRASH/files/${PATTERNC}______0" ]
 then
 	echo "TEST 15C PASSED: Delete Special Character Pattern C" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -372,7 +378,7 @@ fi
 
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 trsh.pl "$PATTERND"
-if [ -e "$HOME/.Trash/${PATTERND}______0" ]
+if [ -e "$TRASH/files/${PATTERND}______0" ]
 then
 	echo "TEST 15D PASSED: Delete Special Character Pattern D" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -382,7 +388,7 @@ fi
 
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 trsh.pl "$PATTERNE"
-if [ -e "$HOME/.Trash/${PATTERNE}______0" ]
+if [ -e "$TRASH/files/${PATTERNE}______0" ]
 then
 	echo "TEST 15E PASSED: Delete Special Character Pattern E" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -393,10 +399,10 @@ fi
 ##################################################################################
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 trsh.pl -ef "$PATTERNA"
-if [ -e "$HOME/.Trash/${PATTERNA}______0" ]
+if [ -e "$TRASH/files/${PATTERNA}______0" ]
 then
 	echo "TEST 16A FAILED: Empty Special Character Pattern A" >&2
-	ls $HOME/.Trash
+	ls $TRASH/files
 else
 	echo "TEST 16A PASSED: Empty Special Character Pattern A" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -404,10 +410,10 @@ fi
 
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 trsh.pl -ef "$PATTERNB"
-if [ -e "$HOME/.Trash/${PATTERNB}______0" ]
+if [ -e "$TRASH/files/${PATTERNB}______0" ]
 then
 	echo "TEST 16B FAILED: Empty Special Character Pattern B" >&2
-	ls $HOME/.Trash
+	ls $TRASH/files
 else
 	echo "TEST 16B PASSED: Empty Special Character Pattern B" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -415,10 +421,10 @@ fi
 
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 trsh.pl -ef "$PATTERNC"
-if [ -e "$HOME/.Trash/${PATTERNC}______0" ]
+if [ -e "$TRASH/files/${PATTERNC}______0" ]
 then
 	echo "TEST 16C FAILED: Empty Special Character Pattern C" >&2
-	ls $HOME/.Trash
+	ls $TRASH/files
 else
 	echo "TEST 16C PASSED: Empty Special Character Pattern C" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -426,10 +432,10 @@ fi
 
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 trsh.pl -ef "$PATTERND"
-if [ -e "$HOME/.Trash/${PATTERND}______0" ]
+if [ -e "$TRASH/files/${PATTERND}______0" ]
 then
 	echo "TEST 16D FAILED: Empty Special Character Pattern D" >&2
-	ls $HOME/.Trash
+	ls $TRASH/files
 else
 	echo "TEST 16D PASSED: Empty Special Character Pattern D" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -437,10 +443,10 @@ fi
 
 TOTAL_COUNT=$(( $TOTAL_COUNT+1 ))
 trsh.pl -ef "$PATTERNE"
-if [ -e "$HOME/.Trash/${PATTERNE}______0" ]
+if [ -e "$TRASH/files/${PATTERNE}______0" ]
 then
 	echo "TEST 16E FAILED: Empty Special Character Pattern E" >&2
-	ls $HOME/.Trash
+	ls $TRASH/files
 else
 	echo "TEST 16E PASSED: Empty Special Character Pattern E" >&2
 	PASSED_COUNT=$(( $PASSED_COUNT+1 ))
@@ -462,10 +468,10 @@ echo "" >&2
 
 /bin/rm yy
 
-if [ -d $HOME/.Trash_backup ]
+if [ -d $TRASH_BACKUP ]
 then
-	rm -rf $HOME/.Trash
-	mv $HOME/.Trash_backup $HOME/.Trash
+	rm -rf $TRASH
+	mv $TRASH_BACKUP $TRASH
 fi
 if [ $ALL_PASSED -eq 1 ]
 then
