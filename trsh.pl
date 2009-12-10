@@ -29,6 +29,8 @@ use File::Basename;
 use Cwd 'abs_path'; 
 use Getopt::Long;
 use Fcntl;
+use Term::ANSIColor;
+$Term::ANSIColor::AUTORESET = 1;
 
 # DECLARATIONS
 sub SetEnvirnment();
@@ -40,7 +42,7 @@ sub GetTrashDir($);
 sub ListTrashContents();
 sub GetTrashinfoPath($);
 sub GetLatestDeleted();
-sub PrintTrashinfo($$);
+sub PrintTrashinfo($$$);
 sub Usage();
 sub DeleteFile($);
 sub EmptyTrash();
@@ -48,6 +50,8 @@ sub RemoveFromTrash($);
 sub UndoLatestFiles();
 sub UndoFile($);
 sub GetLatestMatchingFile($);
+sub GetUserPermission($);
+sub FileTypeColor($);
 
 #GLOBALS
 my $user_name;
@@ -82,13 +86,13 @@ GetOptions( 'e|empty'          => \$empty,       # IMPL
     	    'r|recursive'      => \$recursive,   # IMPL
 	    'u|undo'	       => \$undo,        # IMPL
 	    'help'             => \$help,        # IMPL
+	    'i|interactive'    => \$warn,        # IMPL
+	    'v|verbose'        => \$verbose,     # IMPL
+	    'no-color'         => \$no_color,    # IMPL
 	    's|size'	       => \$size,        # NOT IMPL
 	    'h|human-readable' => \$human,       # NOT IMPL
-	    'i|interactive'    => \$warn,        # NOT IMPL
-	    'v|verbose'        => \$verbose,     # NOT IMPL
 	    'x|force-regex'    => \$regex_force, # NOT IMPL
 	    'p|perl-regex'     => \$perl_regex,  # NOT IMPL
-	    'no-color'         => \$no_color,    # NOT IMPL
 ) == 1 or Usage();
 
 SetEnvirnment();
@@ -104,9 +108,16 @@ if($view > 0) {
 
 if($empty > 0) {
 	if(scalar(@ARGV) == 0) {
+		if(GetUserPermission("Completely empty the trash?") == 0) {
+			exit;
+		}
 		EmptyTrash();
 	} else {
 		foreach my $file(@ARGV) {
+			if($force == 0 and GetUserPermission("Remove $file from the trash?") == 0) {
+				next;
+			}
+			print "Removing $file from Trash\n" if($verbose > 0);
 			RemoveFromTrash($file);
 		}
 	}
@@ -118,6 +129,7 @@ if($undo > 0) {
 		UndoLatestFiles();
 	} else {
 		foreach my $file (@ARGV) {
+			print "Restoring $file from Trash\n" if($verbose > 0);
 			UndoFile($file);
 		}
 	}
@@ -125,6 +137,10 @@ if($undo > 0) {
 }
 
 foreach my $file (@ARGV) {
+	if($warn > 0 and GetUserPermission("Delete $file? ") == 0) {
+		next;
+	}
+	print "Deleting $file from Trash\n" if($verbose > 0);
 	DeleteFile($file);
 }
 
@@ -144,7 +160,7 @@ sub UndoLatestFiles()
 			print "REGEX ERROR!\n";
 		}
 		if(-e $to_path) {
-			if(GetOverwriteAns($to_path) != 1) {
+			if(GetUserPermission("Overwrite file $to_path?") != 1) {
 				next;
 			}
 		}
@@ -153,6 +169,7 @@ sub UndoLatestFiles()
 			system("mkdir \"$dir\"");
 		}
 
+		print "Restoring $to_path from Trash\n" if($verbose > 0);
 		my $success = system("mv \"$trsh/files/$basename\" \"$to_path\"");
 		if($success == 0) {
 			system("rm $trsh/info/$basename.trashinfo");
@@ -175,7 +192,7 @@ sub UndoFile($)
 	my $to_path       = $entry->{PATH};
 
 	if(-e $to_path) {
-		if(GetOverWriteAns($to_path) == 0) {
+		if(GetUserPermission("Overwrite file $to_path?") == 0) {
 			return;
 		}
 	}
@@ -191,13 +208,13 @@ sub UndoFile($)
 	}
 }
 
-sub GetOverWriteAns($)
+sub GetUserPermission($)
 {
-	my $path	=	shift;
+	my $question	=	shift;
 	my $success = 0;
 	my $ans;
 	while($success == 0) {
-		print "$path exists: Overwirte? (y/n): ";
+		print "$question (y/n): ";
 		$ans = <STDIN>;
 		chomp($ans);
 		if($ans eq "y") {
@@ -212,6 +229,7 @@ sub GetOverWriteAns($)
 sub EmptyTrash()
 {
 	# Empty Home Trash
+	print "Removing all files in home trash\n" if($verbose > 0);
 	system("rm -rf $home_trash/info/*");
 	system("rm -rf $home_trash/files/*");
 
@@ -227,6 +245,7 @@ sub EmptyTrash()
 		unless(-d $trsh) {
 			next;
 		}
+		print "Removing all files in trash for device: $dev\n" if($verbose > 0);
 		system("rm -rf $trsh/info/*");
 		system("rm -rf $trsh/files/*");
 	}
@@ -453,7 +472,9 @@ sub ListTrashContents()
 	my $info = "$home_trash/info";
 	my @list = <$info/*.trashinfo>;
 	for my $l (@list) {
-		PrintTrashinfo(GetTrashinfo($l),"");
+		my $p = GetTrashinfo($l);
+		$p->{TRASH} = $home_trash;
+		PrintTrashinfo($p, "",$l);
 	}
 	my @devs = GetDeviceList();
 	foreach my $dev (@devs) {
@@ -465,19 +486,84 @@ sub ListTrashContents()
 		my $trsh = GetDeviceTrash($dev);
 		my @list = <$trsh/info/*.trashinfo>;
 		foreach my $l (@list) {
-			PrintTrashinfo(GetTrashinfo($l), "$dev/");
+			my $p = GetTrashinfo($l);
+			$p->{TRASH} = $trsh;
+			PrintTrashinfo($p, "$dev",$l);
 		}
 	}
 }
 
-sub PrintTrashinfo($$)
+sub PrintTrashinfo($$$)
 {
 	my $p		=	shift;
 	my $prefix	=	shift;
+	my $info        =       shift;
+
+	my $dir = dirname($info);
+	$dir = dirname($dir); # GET TRSH;
+	$dir = $dir . "/files";
+	my $nm = basename($info);
+	$nm =~ s/\.trashinfo//g;
+	my $trash_path = "$dir/$nm";
 
 	if(defined($p->{PATH}) and defined($p->{DATE})) {
-		printf("%-40s : %-40s\n",$prefix . $p->{PATH},$p->{DATE});
+		my $name = sprintf("%-50s", basename($p->{PATH}));
+		my $date = sprintf("%-20s", $p->{DATE});
+		my $path = $p->{PATH};
+		if($prefix ne "") {
+			$path = $prefix . "/" . "$path";
+		}
+		
+		if($no_color == 0) {
+			print color(FileTypeColor($trash_path)), "$name";
+			print color("Yellow"), " : $date : ";
+			print color("reset"), "$path\n";
+		} else {
+			print "$name";
+			print " : $date : ";
+			print "$path\n";
+		}
+		# DATE PATH
 	}
+}
+
+sub FileTypeColor($)
+{
+	my $name	=	shift;
+
+	my $ft = "";
+
+	my %TypeColors = (
+		"gz"	=>	"Red",
+		"zip"	=>	"Red",
+		"rpm"	=>	"Red",
+		"deb"	=>	"Red",
+		"bz2"	=>	"Red",
+		"tar.gz"=>	"Red",
+	);
+	my $base = basename($name);
+	if($base =~ /^(.+)\s*$/) {
+		$base = $1;
+	}
+	if($base =~ /^(.+)-\d+$/) {
+		$base = $1;
+	}
+	if($base =~ /^.+\.(.+)$/) {
+		$ft = $1;
+	}
+
+	if(-l $name) {
+		return "Cyan";
+	} elsif(-d $name) {
+		return "Blue";
+	} elsif(-x $name) {
+		return "Green";
+	} elsif(defined($TypeColors{$ft})) {
+		return $TypeColors{$ft};
+	} else {
+		return "reset";
+	}
+
 }
 
 sub GetTrashinfo($)
