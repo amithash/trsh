@@ -741,9 +741,6 @@ Display the contents of the trash.
 --no-color
 An option for listing which turns of term colors.
 
--h|--human-readable
-If provided with the -s option, the size will be printed in a human readable form.
-
 --help
 Displays this help and exits.
 

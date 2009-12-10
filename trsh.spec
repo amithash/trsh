@@ -4,7 +4,7 @@
 Summary: A Trash manager aliased to rm.
 Name: trsh
 Version: 2.4
-Release: 252
+Release: 260
 Group: Utilities
 License: GPL
 BuildArch: noarch
