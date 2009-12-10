@@ -89,10 +89,6 @@ GetOptions( 'e|empty'          => \$empty,       # IMPL
 	    'i|interactive'    => \$warn,        # IMPL
 	    'v|verbose'        => \$verbose,     # IMPL
 	    'no-color'         => \$no_color,    # IMPL
-	    's|size'	       => \$size,        # NOT IMPL
-	    'h|human-readable' => \$human,       # NOT IMPL
-	    'x|force-regex'    => \$regex_force, # NOT IMPL
-	    'p|perl-regex'     => \$perl_regex,  # NOT IMPL
 ) == 1 or Usage();
 
 SetEnvirnment();
@@ -716,7 +712,7 @@ rm FILES just moves FILES to the trash. By default, directories are not deleted.
 
 OPTIONS:
 
--u|--undo [FILES | REGEX]
+-u|--undo [FILES]
 Undo's a delete (Restores FILES or files matching REGEX from trash). 
 Without arguments, the latest deleted file is restored.
 
@@ -734,7 +730,7 @@ Allows directories to be deleted.
 -v|--verbose
 Provide verbose output.
 
--e|--empty [FILES | REGEX]
+-e|--empty [FILES]
 Removed FILES or files matching REGEX from the trash (Permanently).
 Without arguments, the trash is emptied. --force option causes trsh
 to empty the trash without prompting the user.
@@ -745,22 +741,12 @@ Display the contents of the trash.
 --no-color
 An option for listing which turns of term colors.
 
--s|--size
-This displays the size of the Trash directory. (-s with -l makes the listing contain 
-sizes of individual entries in the trash)
-
 -h|--human-readable
 If provided with the -s option, the size will be printed in a human readable form.
 
 --help
 Displays this help and exits.
 
--x|--force-regex
-This forces trsh to assume that the provided arguments are regex's. (Not needed, refer the README for more)
-
--p|--perl-regex
-This assumes that the passed regex is a perl-regex, and also turns on force-regex. If you do not
-know what a perl-regex is, you do not need this.
 \n
 USAGE
 ;
