@@ -1,27 +1,27 @@
 #!/usr/bin/perl
 
-##############################################################################################
-#					TRSH - 3.x					     #
-##############################################################################################
+##############################################################################
+#			           TRSH 3,x                                  #
+##############################################################################
 
-#*************************************************************************
-# Copyright 2009 Amithash Prasad                                         *
-#									 *
-# this file is part of trsh.						 *
-#                                                                        *
-# trsh is free software: you can redistribute it and/or modify           *
-# it under the terms of the GNU General Public License as published by   *
-# the Free Software Foundation, either version 3 of the License, or      *
-# (at your option) any later version.                                    *
-#                                                                        *
-# This program is distributed in the hope that it will be useful,        *
-# but WITHOUT ANY WARRANTY; without even the implied warranty of         *
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
-# GNU General Public License for more details.                           *
-#                                                                        *
-# You should have received a copy of the GNU General Public License      *
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
-#*************************************************************************
+##############################################################################
+# Copyright 2009 Amithash Prasad                                             *
+#									     *
+# this file is part of trsh.						     *
+#                                                                            *
+# trsh is free software: you can redistribute it and/or modify               *
+# it under the terms of the GNU General Public License as published by       *
+# the Free Software Foundation, either version 3 of the License, or          *
+# (at your option) any later version.                                        *
+#                                                                            *
+# This program is distributed in the hope that it will be useful,            *
+# but WITHOUT ANY WARRANTY; without even the implied warranty of             *
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the              *
+# GNU General Public License for more details.                               *
+#                                                                            *
+# You should have received a copy of the GNU General Public License          *
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.      *
+##############################################################################
 
 use strict;
 use warnings;
@@ -30,9 +30,11 @@ use Cwd 'abs_path';
 use Getopt::Long;
 use Fcntl;
 use Term::ANSIColor;
-$Term::ANSIColor::AUTORESET = 1;
 
-# DECLARATIONS
+##############################################################################
+#			   Function Declarations                             #
+##############################################################################
+
 sub SetEnvirnment();
 sub InHome($);
 sub InDevice($);
@@ -57,15 +59,11 @@ sub SysMkdir($);
 sub SysDelete($$);
 sub AddEscapes($);
 
-#GLOBALS
-my $user_name;
-my $user_id;
-my $home;
-my $home_trash;
-my $current_date;
-my @dlist;
+##############################################################################
+#				Global Variables                             #
+##############################################################################
 
-#OPTIONS
+# Parameters
 my $recover = 0;
 my $empty = 0;
 my $view = 0;
@@ -82,18 +80,21 @@ my $human = 0;
 my $perl_regex = 0;
 my $no_count = 0;
 
-Getopt::Long::Configure('bundling');
+# Session information
+my $user_name;
+my $user_id;
+my $home;
+my $home_trash;
+my $current_date;
+my @dlist;
 
-GetOptions( 'e|empty'          => \$empty,       # IMPL
-            'l|list'           => \$view,        # IMPL
-	    'f|force+'	       => \$force,       # IMPL
-    	    'r|recursive'      => \$recursive,   # IMPL
-	    'u|undo'	       => \$undo,        # IMPL
-	    'help'             => \$help,        # IMPL
-	    'i|interactive'    => \$warn,        # IMPL
-	    'v|verbose'        => \$verbose,     # IMPL
-	    'no-color'         => \$no_color,    # IMPL
-) == 1 or Usage();
+# Constants 
+my $name_width = 50;
+my $date_width = 20;
+
+##############################################################################
+#				   MAIN		                             #
+##############################################################################
 
 SetEnvirnment();
 
@@ -143,6 +144,10 @@ foreach my $file (@ARGV) {
 	print "Deleting $file from Trash\n" if($verbose > 0);
 	DeleteFile($file);
 }
+
+##############################################################################
+#		        High Level Trash Management                          #
+##############################################################################
 
 sub UndoLatestFiles()
 {
@@ -210,24 +215,6 @@ sub UndoFile($)
 	}
 }
 
-sub GetUserPermission($)
-{
-	my $question	=	shift;
-	my $success = 0;
-	my $ans;
-	while($success == 0) {
-		print "$question (y/n): ";
-		$ans = <STDIN>;
-		chomp($ans);
-		if($ans eq "y") {
-			return 1;
-		}
-		if($ans eq "n") {
-			return 0;
-		}
-	}
-}
-
 sub EmptyTrash()
 {
 	# Empty Home Trash
@@ -268,66 +255,6 @@ sub RemoveFromTrash($)
 
 	SysDelete("$trsh_dir/files/$name_in_trash","");
 	SysDelete("$trsh_dir/info/$name_in_trash.trashinfo","");
-}
-
-sub GetLatestMatchingFile($)
-{
-	my $file	=	shift;
-
-	my $info = "$home_trash/info";
-	my @remove_list;
-	my @dates;
-	my @list = <$info/*.trashinfo>;
-	for my $l (@list) {
-		my $p = GetTrashinfo($l);
-		my $name = basename($p->{PATH});
-		if($name eq $file) {
-			$p->{TRASH} = $home_trash;
-			$p->{INFO} = $l;
-			push @remove_list, $p;
-			push @dates, $p->{DATE};
-		}
-	}
-	my @devs = GetDeviceList();
-	foreach my $dev (@devs) {
-		# Ignore these two as they go 
-		# to the home trash
-		if($dev eq "/" or $dev eq "/home") {
-			next;
-		}
-		my $trsh = GetDeviceTrash($dev);
-		my @list = <$trsh/info/*.trashinfo>;
-		foreach my $l (@list) {
-			my $p = GetTrashinfo($l);
-			my $name = basename($p->{PATH});
-			if($name eq $file) {
-				$p->{TRASH} = $home_trash;
-				$p->{INFO} = $l;
-				push @remove_list, $p;
-				push @dates, $p->{DATE};
-			}
-		}
-	}
-	@dates = sort @dates;
-	my $date_to_remove = $dates[$#dates];
-	my $return;
-	foreach my $remove (@remove_list) {
-		if($remove->{DATE} ne $date_to_remove) {
-			next;
-		}
-		my $trsh_dir = $remove->{TRASH};
-		my $info     = $remove->{INFO};
-		my $name_in_trash = basename($info);
-		if($name_in_trash =~ /^(.+)\.trashinfo$/) {
-			$name_in_trash = $1;
-		} else {
-			# This should never happen.
-			print "REGEX ERROR!\n";
-		}
-		$remove->{NAME} = $name_in_trash;
-		$return  = $remove;
-	}
-	return $return;
 }
 
 sub DeleteFile($)
@@ -396,6 +323,145 @@ sub DeleteFile($)
 		print "Recovering from failed delete\n";
 		SysDelete("$info_dir/$infoname","");
 	}
+}
+
+sub ListTrashContents()
+{
+	# HOME
+	my $info = "$home_trash/info";
+	my @list = <$info/*.trashinfo>;
+	my @List;
+	for my $l (@list) {
+		my $p = GetTrashinfo($l);
+		$p->{TRASH} = $home_trash;
+		$p->{PREFIX} = "";
+		$p->{INFO} = $l;
+		push @List, $p;
+	}
+	my @devs = GetDeviceList();
+	foreach my $dev (@devs) {
+		# Ignore these two as they go 
+		# to the home trash
+		if($dev eq "/" or $dev eq "/home") {
+			next;
+		}
+		my $trsh = GetDeviceTrash($dev);
+		my @list = <$trsh/info/*.trashinfo>;
+		foreach my $l (@list) {
+			my $p = GetTrashinfo($l);
+			$p->{TRASH} = $trsh;
+			$p->{PREFIX} = $dev;
+			$p->{INFO} = $l;
+			push @List, $p;
+		}
+	}
+	if(scalar(@List) != 0) {
+		printf("%-${name_width}s : %-${date_width}s : %s\n", 
+				"Trash Entry", "Deletion Date", "Restore Path");
+		printf("%-${name_width}s : %-${date_width}s : %s\n",
+				"-----------", "-------------", "------------");
+		foreach my $p (@List) {
+			PrintTrashinfo($p, $p->{PREFIX}, $p->{INFO});
+		}
+	}
+}
+
+sub PrintTrashinfo($$$)
+{
+	my $p		=	shift;
+	my $prefix	=	shift;
+	my $info        =       shift;
+
+	my $dir = dirname($info);
+	$dir = dirname($dir); # GET TRSH;
+	$dir = $dir . "/files";
+	my $nm = basename($info);
+	$nm =~ s/\.trashinfo//g;
+	my $trash_path = "$dir/$nm";
+
+	if(defined($p->{PATH}) and defined($p->{DATE})) {
+		my $name = sprintf("%-${name_width}s", basename($p->{PATH}));
+		my $date = sprintf("%-${date_width}s", $p->{DATE});
+		my $path = $p->{PATH};
+		if($prefix ne "") {
+			$path = $prefix . "/" . "$path";
+		}
+		
+		if($no_color == 0) {
+			print color(FileTypeColor($trash_path)), "$name";
+			print color("Yellow"), " : $date : ";
+			print color("reset"), "$path\n";
+		} else {
+			print "$name";
+			print " : $date : ";
+			print "$path\n";
+		}
+		# DATE PATH
+	}
+}
+
+##############################################################################
+#		        Low Level Trash Management                           #
+##############################################################################
+
+sub GetLatestMatchingFile($)
+{
+	my $file	=	shift;
+
+	my $info = "$home_trash/info";
+	my @remove_list;
+	my @dates;
+	my @list = <$info/*.trashinfo>;
+	for my $l (@list) {
+		my $p = GetTrashinfo($l);
+		my $name = basename($p->{PATH});
+		if($name eq $file) {
+			$p->{TRASH} = $home_trash;
+			$p->{INFO} = $l;
+			push @remove_list, $p;
+			push @dates, $p->{DATE};
+		}
+	}
+	my @devs = GetDeviceList();
+	foreach my $dev (@devs) {
+		# Ignore these two as they go 
+		# to the home trash
+		if($dev eq "/" or $dev eq "/home") {
+			next;
+		}
+		my $trsh = GetDeviceTrash($dev);
+		my @list = <$trsh/info/*.trashinfo>;
+		foreach my $l (@list) {
+			my $p = GetTrashinfo($l);
+			my $name = basename($p->{PATH});
+			if($name eq $file) {
+				$p->{TRASH} = $home_trash;
+				$p->{INFO} = $l;
+				push @remove_list, $p;
+				push @dates, $p->{DATE};
+			}
+		}
+	}
+	@dates = sort @dates;
+	my $date_to_remove = $dates[$#dates];
+	my $return;
+	foreach my $remove (@remove_list) {
+		if($remove->{DATE} ne $date_to_remove) {
+			next;
+		}
+		my $trsh_dir = $remove->{TRASH};
+		my $info     = $remove->{INFO};
+		my $name_in_trash = basename($info);
+		if($name_in_trash =~ /^(.+)\.trashinfo$/) {
+			$name_in_trash = $1;
+		} else {
+			# This should never happen.
+			print "REGEX ERROR!\n";
+		}
+		$remove->{NAME} = $name_in_trash;
+		$return  = $remove;
+	}
+	return $return;
 }
 
 sub GetInfoName($$)
@@ -468,106 +534,6 @@ sub GetLatestDeleted()
 	return @latest_info;
 }
 
-sub ListTrashContents()
-{
-	# HOME
-	my $info = "$home_trash/info";
-	my @list = <$info/*.trashinfo>;
-	for my $l (@list) {
-		my $p = GetTrashinfo($l);
-		$p->{TRASH} = $home_trash;
-		PrintTrashinfo($p, "",$l);
-	}
-	my @devs = GetDeviceList();
-	foreach my $dev (@devs) {
-		# Ignore these two as they go 
-		# to the home trash
-		if($dev eq "/" or $dev eq "/home") {
-			next;
-		}
-		my $trsh = GetDeviceTrash($dev);
-		my @list = <$trsh/info/*.trashinfo>;
-		foreach my $l (@list) {
-			my $p = GetTrashinfo($l);
-			$p->{TRASH} = $trsh;
-			PrintTrashinfo($p, "$dev",$l);
-		}
-	}
-}
-
-sub PrintTrashinfo($$$)
-{
-	my $p		=	shift;
-	my $prefix	=	shift;
-	my $info        =       shift;
-
-	my $dir = dirname($info);
-	$dir = dirname($dir); # GET TRSH;
-	$dir = $dir . "/files";
-	my $nm = basename($info);
-	$nm =~ s/\.trashinfo//g;
-	my $trash_path = "$dir/$nm";
-
-	if(defined($p->{PATH}) and defined($p->{DATE})) {
-		my $name = sprintf("%-50s", basename($p->{PATH}));
-		my $date = sprintf("%-20s", $p->{DATE});
-		my $path = $p->{PATH};
-		if($prefix ne "") {
-			$path = $prefix . "/" . "$path";
-		}
-		
-		if($no_color == 0) {
-			print color(FileTypeColor($trash_path)), "$name";
-			print color("Yellow"), " : $date : ";
-			print color("reset"), "$path\n";
-		} else {
-			print "$name";
-			print " : $date : ";
-			print "$path\n";
-		}
-		# DATE PATH
-	}
-}
-
-sub FileTypeColor($)
-{
-	my $name	=	shift;
-
-	my $ft = "";
-
-	my %TypeColors = (
-		"gz"	=>	"Red",
-		"zip"	=>	"Red",
-		"rpm"	=>	"Red",
-		"deb"	=>	"Red",
-		"bz2"	=>	"Red",
-		"tar.gz"=>	"Red",
-	);
-	my $base = basename($name);
-	if($base =~ /^(.+)\s*$/) {
-		$base = $1;
-	}
-	if($base =~ /^(.+)-\d+$/) {
-		$base = $1;
-	}
-	if($base =~ /^.+\.(.+)$/) {
-		$ft = $1;
-	}
-
-	if(-l $name) {
-		return "Cyan";
-	} elsif(-d $name) {
-		return "Blue";
-	} elsif(-x $name) {
-		return "Green";
-	} elsif(defined($TypeColors{$ft})) {
-		return $TypeColors{$ft};
-	} else {
-		return "reset";
-	}
-
-}
-
 sub GetTrashinfo($)
 {
 	my $trashinfo	=	shift;
@@ -595,38 +561,6 @@ sub GetDeviceTrash($)
 {
 	my $dev		=	shift;
 	return GetTrashDir("$dev/DUMMY");
-}
-
-sub InHome($)
-{
-	my $path	=	shift;
-
-	if($path =~ /$home.+/) {
-		return 1;
-	}
-	return 0;
-}
-
-sub InDevice($)
-{
-	my $path	=	shift;
-	my @matched;
-	foreach my $device (@dlist) {
-		if($path =~ /$device.+/) {
-			push @matched, $device;
-		}
-	}
-	my $outermost = "NULL";
-	foreach my $match (@matched) {
-		if($outermost eq "NULL") {
-			$outermost = $match;
-			next;
-		}
-		if($match =~ /$outermost.+/) {
-			$outermost = $match;
-		}
-	}
-	return $outermost;
 }
 
 sub GetTrashDir($)
@@ -661,6 +595,32 @@ sub GetTrashDir($)
 	return $trash;
 }
 
+##############################################################################
+#		        Mounted Device Handling                              #
+##############################################################################
+
+sub InDevice($)
+{
+	my $path	=	shift;
+	my @matched;
+	foreach my $device (@dlist) {
+		if($path =~ /$device.+/) {
+			push @matched, $device;
+		}
+	}
+	my $outermost = "NULL";
+	foreach my $match (@matched) {
+		if($outermost eq "NULL") {
+			$outermost = $match;
+			next;
+		}
+		if($match =~ /$outermost.+/) {
+			$outermost = $match;
+		}
+	}
+	return $outermost;
+}
+
 sub GetDeviceList()
 {
 	my @list = split(/\n/,`df`);
@@ -674,12 +634,9 @@ sub GetDeviceList()
 	return @dlist;
 }
 
-sub AbsolutePath($)
-{
-	my $in		=	shift;
-	return abs_path($in);
-
-}
+##############################################################################
+#		             Environment                                     #
+##############################################################################
 
 sub SetEnvirnment()
 {
@@ -704,12 +661,33 @@ sub SetEnvirnment()
 	$current_date = "${date}T$time";
 
 	chomp($current_date);
+
+	Getopt::Long::Configure('bundling');
+
+	GetOptions( 
+			'e|empty'	=> \$empty,       # IMPL
+			'l|list'	=> \$view,        # IMPL
+			'f|force+'	=> \$force,       # IMPL
+			'r|recursive'	=> \$recursive,   # IMPL
+			'u|undo'	=> \$undo,        # IMPL
+			'help'		=> \$help,        # IMPL
+			'i|interactive'	=> \$warn,        # IMPL
+			'v|verbose'	=> \$verbose,     # IMPL
+			'no-color'	=> \$no_color,    # IMPL
+	) == 1 or Usage();
+
+	$Term::ANSIColor::AUTORESET = 1;
 }
+
+
+##############################################################################
+#		                   Help!                                     #
+##############################################################################
 
 sub Usage()
 {
 	print <<USAGE
-TRSH VERSION 3.1-273
+TRSH VERSION 3.1-274
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
@@ -756,6 +734,10 @@ USAGE
 exit;
 }
 
+##############################################################################
+#		           System Level Functions                            #
+##############################################################################
+
 sub SysMove($$)
 {
 	my $from = shift;
@@ -798,4 +780,78 @@ sub AddEscapes($)
 	return $in;
 }
 
+sub AbsolutePath($)
+{
+	my $in		=	shift;
+	return abs_path($in);
+
+}
+
+sub InHome($)
+{
+	my $path	=	shift;
+
+	if($path =~ /$home.+/) {
+		return 1;
+	}
+	return 0;
+}
+
+sub FileTypeColor($)
+{
+	my $name	=	shift;
+
+	my $ft = "";
+
+	# XXX It would be nice to build this from
+	# dircolors
+	my %TypeColors = (
+		"gz"	=>	"Red",
+		"zip"	=>	"Red",
+		"rpm"	=>	"Red",
+		"deb"	=>	"Red",
+		"bz2"	=>	"Red",
+		"tar.gz"=>	"Red",
+	);
+	my $base = basename($name);
+	if($base =~ /^(.+)\s*$/) {
+		$base = $1;
+	}
+	if($base =~ /^(.+)-\d+$/) {
+		$base = $1;
+	}
+	if($base =~ /^.+\.(.+)$/) {
+		$ft = $1;
+	}
+
+	if(-l $name) {
+		return "Cyan";
+	} elsif(-d $name) {
+		return "Blue";
+	} elsif(-x $name) {
+		return "Green";
+	} elsif(defined($TypeColors{$ft})) {
+		return $TypeColors{$ft};
+	} else {
+		return "reset";
+	}
+}
+
+sub GetUserPermission($)
+{
+	my $question	=	shift;
+	my $success = 0;
+	my $ans;
+	while($success == 0) {
+		print "$question (y/n): ";
+		$ans = <STDIN>;
+		chomp($ans);
+		if($ans eq "y") {
+			return 1;
+		}
+		if($ans eq "n") {
+			return 0;
+		}
+	}
+}
 
