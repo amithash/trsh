@@ -38,7 +38,7 @@ init_tests()
 		mv $TRASH_HOME $TRASH_BACKUP
 	fi
 	export PATH=`pwd`:$PATH
-	echo "Using $TRSH from location: `which $TRSH`"
+	echo "Using trsh from location: $TRSH"
 	if [ -d $TEST_DIR ]
 	then
 		rm -rf $TEST_DIR
