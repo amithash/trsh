@@ -36,7 +36,6 @@ GetOptions(
 	'shell-path=s'  => \$opts{SHELL},
 	'trash-path=s'  => \$opts{TPATH},
 	'rcfile-path=s' => \$opts{RPATH},
-	'ktrsh!'	=> \$opts{KTRSH},
 	'help'          => \$help
 ) or exit 1;
 
@@ -58,24 +57,6 @@ my $kde3 = 0;
 my $kde4 = 0;
 my $kde3_prefix = "";
 my $kde4_prefix = "";
-
-if($opts{KTRSH} == 1){
-	$kde3 = 1 if(`which kde-config` ne "");
-	$kde4 = 1 if(`which kde4-config` ne ""); 
-	if($kde3 == 0 && $kde4 == 0){
-		print "KDE not installed. Skipping ktrsh\n";
-		$opts{KTRSH} = 0;
-	}
-}
-
-if($opts{KTRSH} == 1){
-	$kde3_prefix = `kde-config --prefix` if($kde3 == 1);
-	$kde4_prefix = `kde4-config --prefix` if($kde4 == 1);
-}
-chomp($kde3_prefix);
-chomp($kde4_prefix);
-my $service_menu_dir_kde4 = "$kde3_prefix/share/kde4/services/ServiceMenus";
-my $service_menu_dir_kde3 = "$kde4_prefix/share/apps/konqueror/servicemenus";
 
 # Configuring shell
 print "Looking for shell.... ";
@@ -202,8 +183,6 @@ print MK "default:\n";
 $opts{TPATH} =~ s/\//\\\//g;
 $perl_path =~ s/\//\\\//g;
 print MK "\t\@sed -e 's/sub trash{ return \".Trash\"; }/sub trash{ return \"$opts{TPATH}\"; }/g' -e 's/#!\\/usr\\/bin\\/perl/#!$perl_path/g' trsh.pl > trsh.pl.o\n";
-print MK "\t\@cd ktrsh;qmake;cd ..\n" if($opts{KTRSH} == 1);
-print MK "\t+make -C ktrsh\n" if($opts{KTRSH} == 1);
 print MK "\t\@echo 'Now login as root and perform make install'\n" if($opts{USER} == 0);
 print MK "\t\@exit 0\n";
 print MK "\n";
@@ -218,9 +197,6 @@ print MK "\t\@mv $rc_file.new $rc_file\n";
 print MK "\t\@cp trsh.pl.o $path\n";
 print MK "\t\@cp trsh.1.gz $man_path\n" if($no_man == 0);
 print MK "\t\@chmod +x $path\n";
-print MK "\t\@cp ktrsh/ktrsh /usr/bin\n" if($opts{KTRSH} == 1);
-print MK "\t\@cp trsh.desktop $service_menu_dir_kde4\n" if($opts{KTRSH} == 1 and $kde4 == 1 and -d $service_menu_dir_kde4);
-print MK "\t\@cp trsh.desktop $service_menu_dir_kde3\n" if($opts{KTRSH} == 1 and $kde3 == 1 and -d $service_menu_dir_kde3);
 print MK "\t\@exit 0\n";
 print MK "\n";
 
@@ -230,17 +206,12 @@ print MK "\t\@rm $path\n";
 print MK "\t\@rm $man_path/trsh.1.gz\n" if($no_man == 0);
 print MK "\t\@sed -e '/.* # TRSH/d' $rc_file > $rc_file.new\n";
 print MK "\t\@mv $rc_file.new $rc_file\n";
-print MK "\t\@rm /usr/bin/ktrsh\n" if($opts{KTRSH} == 1);
-print MK "\t\@rm $service_menu_dir_kde4/trsh.desktop" if($opts{KTRSH} == 1 and $kde4 == 1 and -d $service_menu_dir_kde4);
-print MK "\t\@rm $service_menu_dir_kde3/trsh.desktop" if($opts{KTRSH} == 1 and $kde3 == 1 and -d $service_menu_dir_kde3);
 print MK "\t\@exit 0\n";
 print MK "\n";
 
 # CLEAN
 print MK "clean:\n";
 print MK "\t\@rm trsh.pl.o\n";
-print MK "\t+make -C ktrsh clean\n" if($opts{KTRSH} == 1);
-print MK "\t\@rm ktrsh/ktrsh\n" if($opts{KTRSH} == 1);
 print MK "\t\@exit 0\n";
 print MK "\n";
 close(MK);
