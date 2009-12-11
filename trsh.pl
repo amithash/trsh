@@ -5,7 +5,7 @@
 ##############################################################################
 
 ##############################################################################
-# Copyright 2009 Amithash Prasad                                             *
+# Copyright 2008-2009 Amithash Prasad                                        *
 #									     *
 # this file is part of trsh.						     *
 #                                                                            *
@@ -687,7 +687,7 @@ sub SetEnvirnment()
 sub Usage()
 {
 	print <<USAGE
-TRSH VERSION 3.1-277
+TRSH VERSION 3.1-278
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
