@@ -55,6 +55,7 @@ sub FileTypeColor($);
 sub SysMove($$);
 sub SysMkdir($);
 sub SysDelete($$);
+sub AddEscapes($);
 
 #GLOBALS
 my $user_name;
@@ -397,33 +398,6 @@ sub DeleteFile($)
 	}
 }
 
-sub SysMove($$)
-{
-	my $from = shift;
-	my $to = shift;
-	$from =~ s/"/\\"/g;
-	$to =~ s/"/\\"/g;
-	my $ret = system("mv \"$from\" \"$to\"");
-	return $ret;
-}
-
-sub SysMkdir($)
-{
-	my $dir = shift;
-	$dir =~ s/"/\\"/g;
-	my $ret = system("mkdir -p \"$dir\"");
-	return $ret;
-}
-
-sub SysDelete($$)
-{
-	my $file   = shift;
-	my $flags  = shift;
-	$file =~ s/"/\\"/g;
-	my $ret = system("rm $flags \"$file\"");
-	return $ret;
-}
-
 sub GetInfoName($$)
 {
 	my $info	=	shift;
@@ -735,7 +709,7 @@ sub SetEnvirnment()
 sub Usage()
 {
 	print <<USAGE
-TRSH VERSION 3.1-271
+TRSH VERSION 3.1-272
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
@@ -781,3 +755,47 @@ USAGE
 ;
 exit;
 }
+
+sub SysMove($$)
+{
+	my $from = shift;
+	my $to = shift;
+
+	$from = AddEscapes($from);
+	$to   = AddEscapes($to);
+
+	my $ret = system("mv \"$from\" \"$to\"");
+	return $ret;
+}
+
+sub SysMkdir($)
+{
+	my $dir = shift;
+
+	$dir = AddEscapes($dir);
+
+	my $ret = system("mkdir -p \"$dir\"");
+	return $ret;
+}
+
+sub SysDelete($$)
+{
+	my $file   = shift;
+	my $flags  = shift;
+
+	$file = AddEscapes($file);
+
+	my $ret = system("rm $flags \"$file\"");
+	return $ret;
+}
+
+sub AddEscapes($)
+{
+	my $in = shift;
+	$in =~ s/\\/\\\\/g; # back slash in file names cause problems.
+	$in =~ s/\`/\\\`/g; # Back ticks in file names cause problems.
+	$in =~ s/"/\\"/g;   # Double quites in file names cause problems.
+	return $in;
+}
+
+
