@@ -217,7 +217,7 @@ NOTES
    (You will not need them unless you want to contrubute in the development, for which you will need to ask me first!)
    Along with those, there are some test scripts. these scripts are only present in the svn version (If you do an 
    svn checkout instead of downloading the tarballs). These test the functionality of trsh so that I do not package 
-   a faulty trsh! test-trsh.bash tests trsh on bash and test-trsh.csh tests trsh on csh. And both are run before a
+   a faulty trsh! test-trsh.bash tests trsh on bash. And both are run before a
    package is created.
 
 

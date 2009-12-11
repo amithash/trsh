@@ -25,16 +25,6 @@ if(-e "/bin/bash"){
 } else {
 	print "Tests are not performed for bash as the shell was not found on your system. Please install it for a better package.\n";
 }
-# RUN THE CSH TESTS
-if(-e "/bin/csh" or -e "/bin/tcsh"){
-	if(system("./test-trsh.csh") != 0){
-		print "Hey, your changes failed tests on csh.\n";
-		print "NO PACKAGE FOR YOU\n";
-		exit;
-	}
-} else {
-	print "Tests are not performed for csh/tcsh as the shell was not found on your system. Please install it for a better package.\n";
-}
 
 # Only if these tests pass, allow the person to create the package.
 
@@ -51,7 +41,6 @@ system("svn export . $home/$name");
 system("rm $home/$name/checkin.pl");
 system("rm $home/$name/mkpackage.pl");
 system("rm $home/$name/test-trsh.bash");
-system("rm $home/$name/test-trsh.csh");
 system("rm $home/$name/VERSION");
 chdir("$home");
 system("cp -r $name $name.src");
