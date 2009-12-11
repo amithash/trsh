@@ -34,7 +34,6 @@ GetOptions(
 	'man-path=s'    => \$opts{IPATH},
 	'perl-path=s'   => \$opts{PPATH},
 	'shell-path=s'  => \$opts{SHELL},
-	'trash-path=s'  => \$opts{TPATH},
 	'rcfile-path=s' => \$opts{RPATH},
 	'help'          => \$help
 ) or exit 1;
@@ -45,7 +44,6 @@ $opts{"KTRSH"} = 1 unless(defined($opts{"KTRSH"}));
 $opts{"USER"} = 0 unless($opts{"USER"});
 $opts{"IPATH"} = "" unless($opts{"IPATH"});
 $opts{"RPATH"} = "" unless($opts{"RPATH"});
-$opts{"TPATH"} = ".Trash" unless($opts{"TPATH"});
 $opts{"SHELL"} = $ENV{SHELL} unless($opts{SHELL});
 
 # No KDE Integration if User.
@@ -53,10 +51,6 @@ $opts{"KTRSH"} = 0 if($opts{"USER"} == 1);
 
 
 my $no_man = $opts{"USER"};
-my $kde3 = 0;
-my $kde4 = 0;
-my $kde3_prefix = "";
-my $kde4_prefix = "";
 
 # Configuring shell
 print "Looking for shell.... ";
@@ -153,12 +147,6 @@ $perl_path = $opts{PPATH} if($opts{PPATH});
 die "Perl executable not found [$perl_path]\n" unless(-e $perl_path);
 print "[$perl_path]\n";
 
-print "TRASH will be located in.... ";
-while($opts{TPATH} =~ /^\/(.+)/){
-	$opts{TPATH} = $1;
-}
-print "[\$HOME/$opts{TPATH}]\n";
-
 # Generate known aliases.
 my $alias_rm = "";
 my $alias_undo = "";
@@ -167,6 +155,7 @@ if($shell =~ /bash/){
 	$alias_undo = "alias undo=\\\"$path -u\\\"";
 }
 elsif($shell =~ /csh/){
+	print "Warning: Not tested on csh\n";
 	$alias_rm = "alias rm \\\"$path\\\"";
 	$alias_undo = "alias undo \\\"$path -u\\\"";
 }
@@ -180,9 +169,7 @@ open MK, "+>makefile" or die "Could not create makefile\n";
 
 # DEFAULT
 print MK "default:\n";
-$opts{TPATH} =~ s/\//\\\//g;
 $perl_path =~ s/\//\\\//g;
-print MK "\t\@sed -e 's/sub trash{ return \".Trash\"; }/sub trash{ return \"$opts{TPATH}\"; }/g' -e 's/#!\\/usr\\/bin\\/perl/#!$perl_path/g' trsh.pl > trsh.pl.o\n";
 print MK "\t\@echo 'Now login as root and perform make install'\n" if($opts{USER} == 0);
 print MK "\t\@exit 0\n";
 print MK "\n";
@@ -231,7 +218,6 @@ sub usage{
 	print "--rcfile-path=/path/to/rcOfShell. Default: Determined from SHELL and naming scheme of files on system\n";
 	print "\tConfigure looks in /etc/ (--nouser) or \$HOME/ (--user)\n";
 	print "--man-path=/path/to/place/manpage. Default: got from 'manpath' and preference given to /usr/share/man Not performed for --user\n";
-	print "--trash-path=RelativePath/of/trash/in/home. (Trash = \$HOME/TrashPath) Default: .Trash\n";
 	print "\n";
 	exit;
 }
