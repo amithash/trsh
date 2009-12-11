@@ -46,6 +46,7 @@ init_tests()
 
 	mkdir $TEST_DIR
 	cd $TEST_DIR
+	chmod +x $TRSH
 }
 
 exit_tests()
