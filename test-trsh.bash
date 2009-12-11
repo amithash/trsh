@@ -39,7 +39,11 @@ init_tests()
 	fi
 	export PATH=`pwd`:$PATH
 	echo "Using $TRSH from location: `which $TRSH`"
-	rm -rf $TEST_DIR
+	if [ -d $TEST_DIR ]
+	then
+		rm -rf $TEST_DIR
+	fi
+
 	mkdir $TEST_DIR
 	cd $TEST_DIR
 }
