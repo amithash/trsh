@@ -52,6 +52,9 @@ sub UndoFile($);
 sub GetLatestMatchingFile($);
 sub GetUserPermission($);
 sub FileTypeColor($);
+sub SysMove($$);
+sub SysMkdir($);
+sub SysDelete($$);
 
 #GLOBALS
 my $user_name;
@@ -162,13 +165,13 @@ sub UndoLatestFiles()
 		}
 		unless(-d dirname($to_path)) {
 			my $dir = dirname($to_path);
-			system("mkdir \"$dir\"");
+			SysMkdir($dir);
 		}
 
 		print "Restoring $to_path from Trash\n" if($verbose > 0);
-		my $success = system("mv \"$trsh/files/$basename\" \"$to_path\"");
+		my $success = SysMove("$trsh/files/$basename", $to_path);
 		if($success == 0) {
-			system("rm $trsh/info/$basename.trashinfo");
+			SysDelete("$trsh/info/$basename.trashinfo","");
 		}
 	}
 }
@@ -195,12 +198,14 @@ sub UndoFile($)
 
 	unless(-d dirname($to_path)) {
 		my $dir = dirname($to_path);
-		system("mkdir \"$dir\"");
+		SysMkdir($dir);
 	}
 
-	my $success = system("mv \"$trsh_dir/files/$name_in_trash\" \"$to_path\"");
+	$name_in_trash =~ s/"/\\"/g;
+	$to_path =~ s/"/\\"/g;
+	my $success = SysMove("$trsh_dir/files/$name_in_trash", $to_path);
 	if($success == 0) {
-		system("rm \"$trsh_dir/info/$name_in_trash.trashinfo\"");
+		SysDelete("$trsh_dir/info/$name_in_trash.trashinfo","");
 	}
 }
 
@@ -260,8 +265,8 @@ sub RemoveFromTrash($)
 	my $name_in_trash = $entry->{NAME};
 	my $trsh_dir      = $entry->{TRASH};
 
-	system("rm -rf \"$trsh_dir/files/$name_in_trash\"");
-	system("rm -rf \"$trsh_dir/info/$name_in_trash.trashinfo\"");
+	SysDelete("$trsh_dir/files/$name_in_trash","");
+	SysDelete("$trsh_dir/info/$name_in_trash.trashinfo","");
 }
 
 sub GetLatestMatchingFile($)
@@ -352,7 +357,8 @@ sub DeleteFile($)
 		my $flag = "";
 		$flag = $flag . "-r " if($recursive > 0);
 		$flag = $flag . "-f " if($force > 1);
-		system("rm $flag $path");
+		$path =~ s/"/\\"/g;
+		SysDelete($path,$flag);
 		return;
 	}
 	if(-d $path and $recursive == 0) {
@@ -384,12 +390,38 @@ sub DeleteFile($)
 		# THIS SHOULD NEVER HAPPEN!
 		print "REGEX FAILED!\n";
 	}
-	# I need to do the same to handle special chars.... ???
-	$success = system("mv \"$path\" \"$trsh/files/$in_trash_name\"");
+	$success = SysMove($path, "$trsh/files/$in_trash_name");
 	if($success != 0) {
 		print "Recovering from failed delete\n";
-		system("rm $info_dir/$infoname");
+		SysDelete("$info_dir/$infoname","");
 	}
+}
+
+sub SysMove($$)
+{
+	my $from = shift;
+	my $to = shift;
+	$from =~ s/"/\\"/g;
+	$to =~ s/"/\\"/g;
+	my $ret = system("mv \"$from\" \"$to\"");
+	return $ret;
+}
+
+sub SysMkdir($)
+{
+	my $dir = shift;
+	$dir =~ s/"/\\"/g;
+	my $ret = system("mkdir -p \"$dir\"");
+	return $ret;
+}
+
+sub SysDelete($$)
+{
+	my $file   = shift;
+	my $flags  = shift;
+	$file =~ s/"/\\"/g;
+	my $ret = system("rm $flags \"$file\"");
+	return $ret;
 }
 
 sub GetInfoName($$)
