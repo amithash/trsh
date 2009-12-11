@@ -167,9 +167,13 @@ else{
 system("rm makefile") if(-e "makefile");
 open MK, "+>makefile" or die "Could not create makefile\n";
 
+print "$perl_path\n";
+$perl_path =~ s/\//\\\//g;
+print "$perl_path\n";
+
 # DEFAULT
 print MK "default:\n";
-$perl_path =~ s/\//\\\//g;
+print MK "\t\@sed -e 's/\\\/usr\\\/bin\\\/perl/$perl_path/g' trsh.pl > ./trsh.pl.o\n";
 print MK "\t\@echo 'Now login as root and perform make install'\n" if($opts{USER} == 0);
 print MK "\t\@exit 0\n";
 print MK "\n";
