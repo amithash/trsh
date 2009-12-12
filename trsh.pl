@@ -83,6 +83,7 @@ my $recursive = 0;
 my $regex_force = 0;
 my $no_color = 0;
 my $human = 0;
+my $regex = 0;
 my $perl_regex = 0;
 my $no_count = 0;
 my $gnu_regex = 0;
@@ -93,7 +94,6 @@ my $user_id;
 my $home;
 my $home_trash;
 my $current_date;
-my $regex;
 my @dlist;
 
 # Constants 
@@ -767,7 +767,7 @@ sub SetEnvirnment()
 sub Usage()
 {
 	print <<USAGE
-TRSH VERSION 3.1-280
+TRSH VERSION 3.1-281
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
