@@ -319,25 +319,40 @@ sub DeleteFile($)
 		return;
 	}
 
-	my $dirname = dirname($path);
-
-	# If dirname is not writable, you cannot delete this file.
-	unless(-w $dirname) {
-		print "Do not have permissions to delete $path\n";
+	if($path =~ /$trsh.*/) {
+		print "Cannot delete $path in the trash. Please use -e to remove the file\n";
 		return;
 	}
+
+	my $dirname = dirname($path);
+
+	# Error on directories without -r flag.
+	if(-d $path and $recursive == 0) {
+		print "trsh: cannot remove `$path': Is a directory\n";
+		return;
+	}
+
+	# Always ask for permission for write-protected files
+	unless(-w $path) {
+		my $what_file = FileTypeString($path);
+		if(GetUserPermission("trsh: delete write-protected $what_file `$path'?") == 0) {
+			return;
+		}
+	}
+		
+	# If dirname is not writable, you cannot delete this file.
+	unless(-w $dirname) {
+		print "trsh: cannot delete `$path': Permission denied\n";
+		return;
+	}
+
 
 	# if force is on pass to rm.
 	if($force > 0) {
 		my $flag = "";
 		$flag = $flag . "-r " if($recursive > 0);
 		$flag = $flag . "-f " if($force > 1);
-		$path =~ s/"/\\"/g;
 		SysDelete($path,$flag);
-		return;
-	}
-	if(-d $path and $recursive == 0) {
-		print "Could not delete directory $path\n";
 		return;
 	}
 
@@ -767,7 +782,7 @@ sub SetEnvirnment()
 sub Usage()
 {
 	print <<USAGE
-TRSH VERSION 3.1-281
+TRSH VERSION 3.1-282
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
@@ -856,7 +871,7 @@ sub AddEscapes($)
 	my $in = shift;
 	$in =~ s/\\/\\\\/g; # back slash in file names cause problems.
 	$in =~ s/\`/\\\`/g; # Back ticks in file names cause problems.
-	$in =~ s/"/\\"/g;   # Double quites in file names cause problems.
+	$in =~ s/"/\\"/g;   # Double quotes in file names cause problems.
 	return $in;
 }
 
@@ -864,7 +879,6 @@ sub AbsolutePath($)
 {
 	my $in		=	shift;
 	return abs_path($in);
-
 }
 
 sub InHome($)
@@ -933,5 +947,19 @@ sub GetUserPermission($)
 			return 0;
 		}
 	}
+}
+
+sub FileTypeString($)
+{
+	my $path	=	shift;
+	my $what;
+	if(-d $path) {
+		$what = "directory";
+	} if(-f $path and -s $path == 0) {
+		$what = "regular empty file";
+	} else {
+		$what = "regular file";
+	}
+	return $what;
 }
 
