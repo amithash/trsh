@@ -58,6 +58,12 @@ sub SysMove($$);
 sub SysMkdir($);
 sub SysDelete($$);
 sub AddEscapes($);
+sub RemoveFromTrashRegex($);
+sub RemoveFromTrashPerlRegex($);
+sub DeleteRegex($);
+sub DeletePerlRegex($);
+sub UndoRegex($);
+sub UndoPerlRegex($);
 
 ##############################################################################
 #				Global Variables                             #
@@ -79,6 +85,7 @@ my $no_color = 0;
 my $human = 0;
 my $perl_regex = 0;
 my $no_count = 0;
+my $gnu_regex = 0;
 
 # Session information
 my $user_name;
@@ -86,6 +93,7 @@ my $user_id;
 my $home;
 my $home_trash;
 my $current_date;
+my $regex;
 my @dlist;
 
 # Constants 
@@ -114,7 +122,11 @@ if($empty > 0) {
 		}
 		EmptyTrash();
 	} else {
-		foreach my $file(@ARGV) {
+		foreach my $file (@ARGV) {
+			if($regex == 1) {
+				RemoveFromTrashRegex($file);
+				next;
+			}
 			if($force == 0 and GetUserPermission("Remove $file from the trash?") == 0) {
 				next;
 			}
@@ -130,6 +142,10 @@ if($undo > 0) {
 		UndoLatestFiles();
 	} else {
 		foreach my $file (@ARGV) {
+			if($regex == 1) {
+				UndoRegex($file);
+				next;
+			}
 			print "Restoring $file from Trash\n" if($verbose > 0);
 			UndoFile($file);
 		}
@@ -138,12 +154,23 @@ if($undo > 0) {
 }
 
 foreach my $file (@ARGV) {
+
+	if($regex == 1) {
+		DeleteRegex($file);
+		next;
+	}
+
 	if($warn > 0 and GetUserPermission("Delete $file? ") == 0) {
 		next;
 	}
 	print "Deleting $file from Trash\n" if($verbose > 0);
 	DeleteFile($file);
 }
+
+##############################################################################
+#		             Trash Functions                                 #
+##############################################################################
+
 
 ##############################################################################
 #		        High Level Trash Management                          #
@@ -215,6 +242,21 @@ sub UndoFile($)
 	}
 }
 
+sub UndoRegex($)
+{
+	my $regex	=	shift;
+}
+
+sub GetMatchingGnuRegex($)
+{
+	my $regex	=	shift;
+}
+
+sub GetMatchingPerlRegex($)
+{
+	my $regex	=	shift;
+}
+
 sub EmptyTrash()
 {
 	# Empty Home Trash
@@ -255,6 +297,11 @@ sub RemoveFromTrash($)
 
 	SysDelete("$trsh_dir/files/$name_in_trash","");
 	SysDelete("$trsh_dir/info/$name_in_trash.trashinfo","");
+}
+
+sub RemoveFromTrashRegex($)
+{
+	my $regex	=	shift;
 }
 
 sub DeleteFile($)
@@ -324,6 +371,27 @@ sub DeleteFile($)
 		SysDelete("$info_dir/$infoname","");
 	}
 }
+
+sub DeleteRegex($)
+{
+	my $regex	=	shift;
+	if($gnu_regex == 1) {
+		return DeleteGnuRegex($regex);
+	} else {
+		return DeletePerlRegex($regex);
+	}
+}
+
+sub DeleteGnuRegex($)
+{
+	my $regex	=	shift;
+}
+
+sub DeletePerlRegex($)
+{
+	my $regex	=	shift;
+}
+
 
 sub ListTrashContents()
 {
@@ -646,9 +714,9 @@ sub SetEnvirnment()
 	$home = $ENV{HOME};
 	@dlist = GetDeviceList();
 	unless(-d "$home/.local/share/Trash") {
-		mkdir "$home/.local/share/Trash";
-		mkdir "$home/.local/share/Trash/files";
-		mkdir "$home/.local/share/Trash/info";
+		SysMkdir("$home/.local/share/Trash");
+		SysMkdir("$home/.local/share/Trash/files");
+		SysMkdir("$home/.local/share/Trash/info");
 		system("touch $home/.local/share/Trash/metadata");
 	}
 	$home_trash = "$home/.local/share/Trash";
@@ -673,8 +741,20 @@ sub SetEnvirnment()
 			'help'		=> \$help,        # IMPL
 			'i|interactive'	=> \$warn,        # IMPL
 			'v|verbose'	=> \$verbose,     # IMPL
+			'x|regex'       => \$regex,       # IMPL
+			'P|perl-regex'  => \$perl_regex,  # IMPL
 			'no-color'	=> \$no_color,    # IMPL
 	) == 1 or Usage();
+
+	if($regex == 1 and $perl_regex == 1) {
+		$perl_regex = 1;
+		$gnu_regex  = 0;
+	} elsif($regex == 1 and $perl_regex == 0) {
+		$perl_regex = 0;
+		$gnu_regex  = 1;
+	} else {
+		$perl_regex = 0;
+	}
 
 	$Term::ANSIColor::AUTORESET = 1;
 }
@@ -687,7 +767,7 @@ sub SetEnvirnment()
 sub Usage()
 {
 	print <<USAGE
-TRSH VERSION 3.1-279
+TRSH VERSION 3.1-280
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
