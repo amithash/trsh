@@ -167,7 +167,6 @@ if($size > 0) {
 }
 
 foreach my $file (@ARGV) {
-
 	if($regex == 1) {
 		DeleteRegex($file);
 		next;
@@ -184,9 +183,8 @@ foreach my $file (@ARGV) {
 #		             Trash Functions                                 #
 ##############################################################################
 
-
 ##############################################################################
-#		        High Level Trash Management                          #
+#		                Undo delete                                  #
 ##############################################################################
 
 sub UndoLatestFiles()
@@ -242,6 +240,9 @@ sub UndoRegex($)
 	}
 }
 
+##############################################################################
+#		         Removing from trash                                 #
+##############################################################################
 
 sub EmptyTrash()
 {
@@ -281,17 +282,6 @@ sub RemoveFromTrash($)
 	RemoveTrashinfo($entry);
 }
 
-sub RemoveTrashinfo
-{
-	my $entry	=	shift;
-
-	if($force == 0 and GetUserPermission("Remove $entry->{NAME} for trash?") == 0) {
-		return;
-	}
-	SysDelete($entry->{IN_TRASH_PATH}, "-rf");
-	SysDelete($entry->{INFO_PATH}, "-rf");
-}
-
 sub RemoveFromTrashRegex($)
 {
 	my $reg		=	shift;
@@ -300,6 +290,10 @@ sub RemoveFromTrashRegex($)
 		RemoveTrashinfo($p);
 	}
 }
+
+##############################################################################
+#		                  Deleting                                   #
+##############################################################################
 
 sub DeleteFile($)
 {
@@ -353,35 +347,12 @@ sub DeleteFile($)
 		return;
 	}
 
+	PutTrashinfo({
+			PATH=>$path, 
+			DATE=>$current_date, 
+			NAME=>$name, 
+			TRASH=>$trsh });
 
-	while($success == 0) {
-		$infoname = GetInfoName($info_dir, $name);
-		$success = sysopen INFO, "$info_dir/$infoname",  O_RDWR|O_EXCL|O_CREAT;
-	}
-	print INFO "[Trash Info]\n";
-	my $infile_path = $path;
-	if($trsh ne $home_trash) {
-		my $dev = InDevice($path);
-		if($path =~ /^$dev\/(.+)$/) {
-			$infile_path = $1;
-		}
-	}
-	print INFO "Path=$infile_path\n";
-	print INFO "DeletionDate=$current_date\n";
-
-	close(INFO);
-	my $in_trash_name;
-	if($infoname =~ /^(.+)\.trashinfo$/) {
-		$in_trash_name = $1;
-	} else {
-		# THIS SHOULD NEVER HAPPEN!
-		print "REGEX FAILED!\n";
-	}
-	$success = SysMove($path, "$trsh/files/$in_trash_name");
-	if($success != 0) {
-		print "Recovering from failed delete\n";
-		SysDelete("$info_dir/$infoname","");
-	}
 }
 
 sub DeleteRegex($)
@@ -402,6 +373,11 @@ sub DeleteRegex($)
 		}
 	}
 }
+
+
+##############################################################################
+#		                  Listing                                    #
+##############################################################################
 
 sub ListTrashContents()
 {
@@ -437,42 +413,8 @@ sub ListArrayContents($)
 	}
 }
 
-
-
-sub PrintTrashinfo($)
-{
-	my $p		=	shift;
-
-	# Check for invalid calls.
-	if(not defined($p->{PATH})) {
-		return;
-	}
-
-	my $name = sprintf("%-${name_width}s", $p->{NAME});
-	my $date = sprintf("%-${date_width}s", $p->{DATE});
-	my $path = $p->{PATH};
-	my $sz = sprintf("%-${size_width}s", $p->{SIZE});
-	if($no_color == 0) {
-		print color(FileTypeColor($p->{IN_TRASH_PATH})), "$name";
-		print color("reset"), " |";
-		print color("Yellow"), " $date";
-		print color("reset"), " |";
-		if($size > 0) {
-			print color("Red"), " $sz";
-			print color("reset"), " |";
-		}
-		print color("reset"), " $path\n";
-	} else {
-		print "$name";
-		print " | $date | ";
-		print "$sz | " if($size > 0);
-		print "$path\n";
-	}
-}
-
-
 ##############################################################################
-#		        Low Level Trash Management                           #
+#		                    Trash Size                               #
 ##############################################################################
 
 sub PrintTrashSize()
@@ -529,6 +471,10 @@ sub GetTrashSize($)
 	return $sz;
 }
 
+##############################################################################
+#		          Relating to files in trash                         #
+##############################################################################
+
 sub GetLatestMatchingFile($)
 {
 	my $file	=	shift;
@@ -565,109 +511,6 @@ sub GetLatestMatchingFile($)
 		$return  = $remove;
 	}
 	return $return;
-}
-
-sub GetInfoName($$)
-{
-	my $info	=	shift;
-	my $name	=	shift;
-
-	my $postfix = "";
-	my $infoname = $name . $postfix . ".trashinfo";
-	my $info_path = "$info/$infoname";
-	my $ind = 0;
-	while(-e $info_path) {
-		$ind++;
-		$postfix = "-$ind";
-		$infoname = $name . $postfix . ".trashinfo";
-		$info_path = "$info/$infoname";
-	}
-	return $infoname;
-}
-
-sub GetLatestDeleted()
-{
-	my @List  = GetTrashContents();
-	my @dates = ();
-
-	foreach my $p (@List) {
-		push @dates, $p->{DATE};
-	}
-
-	if(scalar(@dates) == 0) {
-		return ();
-	}
-
-	@dates = sort @dates;
-	my $latest = $dates[$#dates];
-	my @latest_info;
-	foreach my $p (@List) {
-		if($p->{DATE} eq $latest) {
-			push @latest_info, $p;
-		}
-	}
-	return @latest_info;
-}
-
-sub GetTrashinfo($)
-{
-	my $trashinfo	=	shift;
-	open IN, "$trashinfo" or return "ERROR: Could not open $trashinfo";
-	my %ret;
-	while(my $line = <IN>) {
-		chomp($line);
-		if($line =~ /^Path=(.+)$/) {
-			my $path = $1;
-			if(not defined($ret{PATH})) {
-				$ret{PATH} = $path;
-			}
-		}
-		if($line =~ /^DeletionDate=(.+)$/) {
-			my $date = $1;
-			if(not defined($ret{DATE})) {
-				$ret{DATE} = $date;		
-			}
-		}
-	}
-	return \%ret;
-}
-
-sub GetDeviceTrash($)
-{
-	my $dev		=	shift;
-	return GetTrashDir("$dev/DUMMY");
-}
-
-sub GetTrashDir($)
-{
-	my $path	=	shift;
-	$path = AbsolutePath($path);
-	if(InHome($path)) {
-		return $home_trash;
-	}
-	my $dev = InDevice($path);
-	if($dev eq "/" or $dev eq "/home") {
-		return $home_trash;
-	}
-	my $trash = "$dev/.Trash";
-	if(-d $trash and -k $trash and !-l $trash and -w $trash) {
-		$trash = "$trash/$user_id";
-		unless(-d "$trash") {
-			mkdir "$trash";
-			mkdir "$trash/files";
-			mkdir "$trash/info";
-			system("touch $trash/metadata");
-		}
-		return $trash;
-	}
-	$trash = "$dev/.Trash-$user_id";
-	unless(-d $trash) {
-		mkdir "$trash";
-		mkdir "$trash/files";
-		mkdir "$trash/info";
-		system("touch $trash/metadata");
-	}
-	return $trash;
 }
 
 sub GetRegexMatchingFiles($) {
@@ -739,6 +582,198 @@ sub GetSpecificTrashContents($) {
 	}
 	return @TrashList;
 }
+
+sub GetLatestDeleted()
+{
+	my @List  = GetTrashContents();
+	my @dates = ();
+
+	foreach my $p (@List) {
+		push @dates, $p->{DATE};
+	}
+
+	if(scalar(@dates) == 0) {
+		return ();
+	}
+
+	@dates = sort @dates;
+	my $latest = $dates[$#dates];
+	my @latest_info;
+	foreach my $p (@List) {
+		if($p->{DATE} eq $latest) {
+			push @latest_info, $p;
+		}
+	}
+	return @latest_info;
+}
+
+##############################################################################
+#		            Trash info files                                 #
+##############################################################################
+
+sub GetTrashinfo($)
+{
+	my $trashinfo	=	shift;
+	open IN, "$trashinfo" or return "ERROR: Could not open $trashinfo";
+	my %ret;
+	while(my $line = <IN>) {
+		chomp($line);
+		if($line =~ /^Path=(.+)$/) {
+			my $path = $1;
+			if(not defined($ret{PATH})) {
+				$ret{PATH} = $path;
+			}
+		}
+		if($line =~ /^DeletionDate=(.+)$/) {
+			my $date = $1;
+			if(not defined($ret{DATE})) {
+				$ret{DATE} = $date;		
+			}
+		}
+	}
+	return \%ret;
+}
+
+sub PutTrashinfo($)
+{
+	my $entry	=	shift;
+	my $success = 0;
+	my $infoname;
+	my $infodir = "$entry->{TRASH}/info";
+	while($success == 0) {
+		$infoname = GetInfoName($infodir, $entry->{NAME});
+		$success = sysopen INFO, "$infodir/$infoname",  O_RDWR|O_EXCL|O_CREAT;
+	}
+	print INFO "[Trash Info]\n";
+	my $infile_path = $entry->{PATH};
+	if($entry->{TRASH} ne $home_trash) {
+		my $dev = InDevice($entry->{PATH});
+		if($entry->{PATH} =~ /^$dev\/(.+)$/) {
+			$infile_path = $1;
+		}
+	}
+	print INFO "Path=$infile_path\n";
+	print INFO "DeletionDate=$current_date\n";
+
+	close(INFO);
+
+	my $in_trash_name;
+	if($infoname =~ /^(.+)\.trashinfo$/) {
+		$in_trash_name = $1;
+	} else {
+		# THIS SHOULD NEVER HAPPEN!
+		print "REGEX FAILED!\n";
+	}
+	$success = SysMove($entry->{PATH}, "$entry->{TRASH}/files/$in_trash_name");
+	if($success != 0) {
+		print "Recovering from failed delete\n";
+		SysDelete("$infodir/$infoname","-f");
+	}
+}
+
+sub GetInfoName($$)
+{
+	my $info	=	shift;
+	my $name	=	shift;
+
+	my $postfix = "";
+	my $infoname = $name . $postfix . ".trashinfo";
+	my $info_path = "$info/$infoname";
+	my $ind = 0;
+	while(-e $info_path) {
+		$ind++;
+		$postfix = "-$ind";
+		$infoname = $name . $postfix . ".trashinfo";
+		$info_path = "$info/$infoname";
+	}
+	return $infoname;
+}
+
+sub PrintTrashinfo($)
+{
+	my $p		=	shift;
+
+	# Check for invalid calls.
+	if(not defined($p->{PATH})) {
+		return;
+	}
+
+	my $name = sprintf("%-${name_width}s", $p->{NAME});
+	my $date = sprintf("%-${date_width}s", $p->{DATE});
+	my $path = $p->{PATH};
+	my $sz = sprintf("%-${size_width}s", $p->{SIZE});
+	if($no_color == 0) {
+		print color(FileTypeColor($p->{IN_TRASH_PATH})), "$name";
+		print color("reset"), " |";
+		print color("Yellow"), " $date";
+		print color("reset"), " |";
+		if($size > 0) {
+			print color("Red"), " $sz";
+			print color("reset"), " |";
+		}
+		print color("reset"), " $path\n";
+	} else {
+		print "$name";
+		print " | $date | ";
+		print "$sz | " if($size > 0);
+		print "$path\n";
+	}
+}
+
+sub RemoveTrashinfo
+{
+	my $entry	=	shift;
+
+	if($force == 0 and GetUserPermission("Remove $entry->{NAME} for trash?") == 0) {
+		return;
+	}
+	SysDelete($entry->{IN_TRASH_PATH}, "-rf");
+	SysDelete($entry->{INFO_PATH}, "-rf");
+}
+
+
+##############################################################################
+#		        Trash directory location                             #
+##############################################################################
+
+sub GetDeviceTrash($)
+{
+	my $dev		=	shift;
+	return GetTrashDir("$dev/DUMMY");
+}
+
+sub GetTrashDir($)
+{
+	my $path	=	shift;
+	$path = AbsolutePath($path);
+	if(InHome($path)) {
+		return $home_trash;
+	}
+	my $dev = InDevice($path);
+	if($dev eq "/" or $dev eq "/home") {
+		return $home_trash;
+	}
+	my $trash = "$dev/.Trash";
+	if(-d $trash and -k $trash and !-l $trash and -w $trash) {
+		$trash = "$trash/$user_id";
+		unless(-d "$trash") {
+			mkdir "$trash";
+			mkdir "$trash/files";
+			mkdir "$trash/info";
+			system("touch $trash/metadata");
+		}
+		return $trash;
+	}
+	$trash = "$dev/.Trash-$user_id";
+	unless(-d $trash) {
+		mkdir "$trash";
+		mkdir "$trash/files";
+		mkdir "$trash/info";
+		system("touch $trash/metadata");
+	}
+	return $trash;
+}
+
 
 ##############################################################################
 #		        Mounted Device Handling                              #
@@ -835,7 +870,7 @@ sub SetEnvirnment()
 sub Usage()
 {
 	print <<USAGE
-TRSH VERSION 3.1-285
+TRSH VERSION 3.1-286
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
