@@ -44,7 +44,7 @@ sub GetTrashDir($);
 sub ListTrashContents();
 sub GetTrashinfoPath($);
 sub GetLatestDeleted();
-sub PrintTrashinfo($$$);
+sub PrintTrashinfo($);
 sub Usage();
 sub DeleteFile($);
 sub EmptyTrash();
@@ -59,11 +59,8 @@ sub SysMkdir($);
 sub SysDelete($$);
 sub AddEscapes($);
 sub RemoveFromTrashRegex($);
-sub RemoveFromTrashPerlRegex($);
 sub DeleteRegex($);
-sub DeletePerlRegex($);
 sub UndoRegex($);
-sub UndoPerlRegex($);
 sub HumanReadable($);
 sub DirSize($);
 sub FileSize($);
@@ -89,9 +86,7 @@ my $regex_force = 0;
 my $no_color = 0;
 my $human = 0;
 my $regex = 0;
-my $perl_regex = 0;
 my $no_count = 0;
-my $gnu_regex = 0;
 
 # Session information
 my $user_name;
@@ -192,30 +187,21 @@ sub UndoLatestFiles()
 	my @list = GetLatestDeleted();
 
 	foreach my $entry (@list) {
-		my $info = $entry->{INFO};
+		my $info_path = $entry->{INFO_PATH};
 		my $to_path = $entry->{PATH};
 		my $trsh = $entry->{TRASH};
-		my $basename = basename($info);
-		if($basename =~ /^(.+)\.trashinfo$/) {
-			$basename = $1;
-		} else {
-			# This should never happen
-			print "REGEX ERROR!\n";
-		}
+		my $from_path = $entry->{IN_TRASH_PATH};
 		if(-e $to_path) {
 			if(GetUserPermission("Overwrite file $to_path?") != 1) {
 				next;
 			}
 		}
-		unless(-d dirname($to_path)) {
-			my $dir = dirname($to_path);
-			SysMkdir($dir);
-		}
+		SysMkdir(dirname($to_path)) unless(-d dirname($to_path));
 
 		print "Restoring $to_path from Trash\n" if($verbose > 0);
-		my $success = SysMove("$trsh/files/$basename", $to_path);
+		my $success = SysMove($from_path, $to_path);
 		if($success == 0) {
-			SysDelete("$trsh/info/$basename.trashinfo","");
+			SysDelete($info_path,"-f");
 		}
 	}
 }
@@ -230,9 +216,9 @@ sub UndoFile($)
 		return;
 	}
 
-	my $name_in_trash = $entry->{NAME};
-	my $trsh_dir      = $entry->{TRASH};
-	my $to_path       = $entry->{PATH};
+	my $from_path = $entry->{IN_TRASH_PATH};
+	my $to_path   = $entry->{PATH};
+	my $info_path = $entry->{INFO_PATH};
 
 	if(-e $to_path) {
 		if(GetUserPermission("Overwrite file $to_path?") == 0) {
@@ -240,16 +226,11 @@ sub UndoFile($)
 		}
 	}
 
-	unless(-d dirname($to_path)) {
-		my $dir = dirname($to_path);
-		SysMkdir($dir);
-	}
+	SysMkdir(dirname($to_path)) unless(-d dirname($to_path));
 
-	$name_in_trash =~ s/"/\\"/g;
-	$to_path =~ s/"/\\"/g;
-	my $success = SysMove("$trsh_dir/files/$name_in_trash", $to_path);
+	my $success = SysMove($from_path, $to_path);
 	if($success == 0) {
-		SysDelete("$trsh_dir/info/$name_in_trash.trashinfo","");
+		SysDelete($info_path,"-f");
 	}
 }
 
@@ -258,15 +239,6 @@ sub UndoRegex($)
 	my $regex	=	shift;
 }
 
-sub GetMatchingGnuRegex($)
-{
-	my $regex	=	shift;
-}
-
-sub GetMatchingPerlRegex($)
-{
-	my $regex	=	shift;
-}
 
 sub EmptyTrash()
 {
@@ -303,11 +275,11 @@ sub RemoveFromTrash($)
 		print "$file does not exist in the Trash\n";
 		return;
 	}
-	my $name_in_trash = $entry->{NAME};
-	my $trsh_dir      = $entry->{TRASH};
+	my $file_path = $entry->{IN_TRASH_PATH};
+	my $info_path = $entry->{INFO_PATH};
 
-	SysDelete("$trsh_dir/files/$name_in_trash","");
-	SysDelete("$trsh_dir/info/$name_in_trash.trashinfo","");
+	SysDelete($file_path, "-f");
+	SysDelete($info_path, "-f");
 }
 
 sub RemoveFromTrashRegex($)
@@ -401,122 +373,56 @@ sub DeleteFile($)
 sub DeleteRegex($)
 {
 	my $regex	=	shift;
-	if($gnu_regex == 1) {
-		return DeleteGnuRegex($regex);
-	} else {
-		return DeletePerlRegex($regex);
-	}
 }
-
-sub DeleteGnuRegex($)
-{
-	my $regex	=	shift;
-}
-
-sub DeletePerlRegex($)
-{
-	my $regex	=	shift;
-}
-
 
 sub ListTrashContents()
 {
-	# HOME
-	my $info = "$home_trash/info";
-	my @list = <$info/*.trashinfo>;
-	my @List;
-	for my $l (@list) {
-		my $p = GetTrashinfo($l);
-		$p->{TRASH} = $home_trash;
-		$p->{PREFIX} = "";
-		$p->{INFO} = $l;
-		push @List, $p;
-	}
-	my @devs = GetDeviceList();
-	foreach my $dev (@devs) {
-		# Ignore these two as they go 
-		# to the home trash
-		if($dev eq "/" or $dev eq "/home") {
-			next;
-		}
-		my $trsh = GetDeviceTrash($dev);
-		my @list = <$trsh/info/*.trashinfo>;
-		foreach my $l (@list) {
-			my $p = GetTrashinfo($l);
-			$p->{TRASH} = $trsh;
-			$p->{PREFIX} = $dev;
-			$p->{INFO} = $l;
-			push @List, $p;
-		}
-	}
-	if(scalar(@List) != 0) {
-		printf("%-${name_width}s | %-${date_width}s | ", "Trash Entry", "Deletion Date");
-		printf("%-${size_width}s | ", "Size") if($size > 0);
-		printf("%s\n", "Restore Path");
-		printf("%-${name_width}s | %-${date_width}s | ", "-----------", "-------------");
-		printf("%-${size_width}s | ", "----") if($size > 0);
-		printf("%s\n", "------------");
+	my @List = GetTrashContents();
 
-		foreach my $p (@List) {
-			PrintTrashinfo($p, $p->{PREFIX}, $p->{INFO});
-		}
+	if(scalar(@List) == 0) {
+		return;
+	}
+
+	printf("%-${name_width}s | %-${date_width}s | ", "Trash Entry", "Deletion Date");
+	printf("%-${size_width}s | ", "Size") if($size > 0);
+	printf("%s\n", "Restore Path");
+	printf("%-${name_width}s | %-${date_width}s | ", "-----------", "-------------");
+	printf("%-${size_width}s | ", "----") if($size > 0);
+	printf("%s\n", "------------");
+
+	foreach my $p (@List) {
+		PrintTrashinfo($p);
 	}
 }
 
-sub PrintTrashinfo($$$)
+sub PrintTrashinfo($)
 {
 	my $p		=	shift;
-	my $prefix	=	shift;
-	my $info        =       shift;
 
-	my $dir = dirname($info);
-	$dir = dirname($dir); # GET TRSH;
-	$dir = $dir . "/files";
-	my $nm = basename($info);
-	$nm =~ s/\.trashinfo//g;
-	my $trash_path = "$dir/$nm";
+	# Check for invalid calls.
+	if(not defined($p->{PATH})) {
+		return;
+	}
 
-	if(defined($p->{PATH}) and defined($p->{DATE})) {
-		my $name = sprintf("%-${name_width}s", basename($p->{PATH}));
-		my $date = sprintf("%-${date_width}s", $p->{DATE});
-		my $path = $p->{PATH};
-		if($prefix ne "") {
-			$path = $prefix . "/" . "$path";
-		}
-		my $sz = 0;
+	my $name = sprintf("%-${name_width}s", $p->{NAME});
+	my $date = sprintf("%-${date_width}s", $p->{DATE});
+	my $path = $p->{PATH};
+	my $sz = sprintf("%-${size_width}s", $p->{SIZE});
+	if($no_color == 0) {
+		print color(FileTypeColor($p->{IN_TRASH_PATH})), "$name";
+		print color("reset"), " |";
+		print color("Yellow"), " $date";
+		print color("reset"), " |";
 		if($size > 0) {
-			my $inf = basename($p->{INFO});
-			if($inf =~ /^(.+)\.trashinfo$/) {
-				$inf = $1;
-			} else {
-				# This should never happen.
-				print "REGEX ERROR\n";
-				return;
-			}
-			my $ent = "$p->{TRASH}/files/$inf";
-			$sz = EntrySize($ent);
-			$sz = HumanReadable($sz) if($human > 0);
-			$sz = "$sz";
-			$sz = sprintf("%-${size_width}s", $sz);
-		}
-		
-		if($no_color == 0) {
-			print color(FileTypeColor($trash_path)), "$name";
+			print color("Red"), " $sz";
 			print color("reset"), " |";
-			print color("Yellow"), " $date";
-			print color("reset"), " |";
-			if($size > 0) {
-				print color("Red"), " $sz";
-				print color("reset"), " |";
-			}
-			print color("reset"), " $path\n";
-		} else {
-			print "$name";
-			print " | $date | ";
-			print "$size | " if($size > 0);
-			print "$path\n";
 		}
-		# DATE PATH
+		print color("reset"), " $path\n";
+	} else {
+		print "$name";
+		print " | $date | ";
+		print "$sz | " if($size > 0);
+		print "$path\n";
 	}
 }
 
@@ -574,6 +480,8 @@ sub GetTrashSize($)
 		}
 	}
 
+	$sz = HumanReadable($sz) if($human > 0);
+
 	return $sz;
 }
 
@@ -581,57 +489,35 @@ sub GetLatestMatchingFile($)
 {
 	my $file	=	shift;
 
-	my $info = "$home_trash/info";
-	my @remove_list;
+	my @List = GetTrashContents();
 	my @dates;
-	my @list = <$info/*.trashinfo>;
-	for my $l (@list) {
-		my $p = GetTrashinfo($l);
-		my $name = basename($p->{PATH});
-		if($name eq $file) {
-			$p->{TRASH} = $home_trash;
-			$p->{INFO} = $l;
-			push @remove_list, $p;
-			push @dates, $p->{DATE};
-		}
+	my $search_path = 0;
+
+	if($file =~ /\//) {
+		$search_path = 1;
 	}
-	my @devs = GetDeviceList();
-	foreach my $dev (@devs) {
-		# Ignore these two as they go 
-		# to the home trash
-		if($dev eq "/" or $dev eq "/home") {
-			next;
-		}
-		my $trsh = GetDeviceTrash($dev);
-		my @list = <$trsh/info/*.trashinfo>;
-		foreach my $l (@list) {
-			my $p = GetTrashinfo($l);
-			my $name = basename($p->{PATH});
-			if($name eq $file) {
-				$p->{TRASH} = $home_trash;
-				$p->{INFO} = $l;
+
+	my @remove_list = ();
+
+	foreach my $p (@List) {
+		if($search_path == 1) {
+			if($p->{PATH} eq $file) {
+				push @remove_list, $p;
+				push @dates, $p->{DATE};
+			}
+		} else {
+			if($p->{NAME} eq $file) {
 				push @remove_list, $p;
 				push @dates, $p->{DATE};
 			}
 		}
 	}
+
 	@dates = sort @dates;
 	my $date_to_remove = $dates[$#dates];
 	my $return;
 	foreach my $remove (@remove_list) {
-		if($remove->{DATE} ne $date_to_remove) {
-			next;
-		}
-		my $trsh_dir = $remove->{TRASH};
-		my $info     = $remove->{INFO};
-		my $name_in_trash = basename($info);
-		if($name_in_trash =~ /^(.+)\.trashinfo$/) {
-			$name_in_trash = $1;
-		} else {
-			# This should never happen.
-			print "REGEX ERROR!\n";
-		}
-		$remove->{NAME} = $name_in_trash;
+		next if($remove->{DATE} ne $date_to_remove);
 		$return  = $remove;
 	}
 	return $return;
@@ -657,39 +543,11 @@ sub GetInfoName($$)
 
 sub GetLatestDeleted()
 {
-	my $info = "$home_trash/info";
-	my @list = <$info/*.trashinfo>;
-	my @dates;
-	my @infos;
-	foreach my $l (@list) {
-		my $p = GetTrashinfo($l);
-		if(defined($p->{DATE})) {
-			push @dates, $p->{DATE};
-			$p->{TRASH} = $home_trash;
-			$p->{PREFIX} = "";
-			$p->{INFO} = $l;
-			push @infos, $p;
-		}
-	}
-	my @devs = GetDeviceList();
-	foreach my $dev (@devs) {
-		# Ignore these two as they go 
-		# to the home trash
-		if($dev eq "/" or $dev eq "/home") {
-			next;
-		}
-		my $trsh = GetDeviceTrash($dev);
-		my @list = <$trsh/info/*.trashinfo>;
-		foreach my $l (@list) {
-			my $p = GetTrashinfo($l);
-			if(defined($p->{DATE})) {
-				push @dates, $p->{DATE};
-				$p->{TRASH} = $trsh;
-				$p->{PREFIX} = "$dev/";
-				$p->{INFO} = $l;
-				push @infos, $p;
-			}
-		}
+	my @List  = GetTrashContents();
+	my @dates = ();
+
+	foreach my $p (@List) {
+		push @dates, $p->{DATE};
 	}
 
 	if(scalar(@dates) == 0) {
@@ -699,7 +557,7 @@ sub GetLatestDeleted()
 	@dates = sort @dates;
 	my $latest = $dates[$#dates];
 	my @latest_info;
-	foreach my $p (@infos) {
+	foreach my $p (@List) {
 		if($p->{DATE} eq $latest) {
 			push @latest_info, $p;
 		}
@@ -766,6 +624,68 @@ sub GetTrashDir($)
 		system("touch $trash/metadata");
 	}
 	return $trash;
+}
+
+sub GetRegexMatchingFiles($) {
+	my $reg		=	shift;
+	$reg = PrepareRegex($reg);
+	my @List = GetTrashContents();
+	my @Matched = ();
+	foreach my $p (@List) {
+		if($p->{NAME} =~ $reg) {
+			push @Matched, $p;
+		}
+	}
+	return @Matched;
+}
+
+sub GetTrashContents()
+{
+	my $trsh = $home_trash;
+	my @List = ();
+	push @List, GetSpecificTrashContents($trsh);
+	my @devs = GetDeviceList();
+	foreach my $dev (@devs) {
+		next if($dev eq "/" or $dev eq "/home");
+		push @List, GetSpecificTrashContents(GetDeviceTrash($dev));
+	}
+	return @List;
+}
+
+sub GetSpecificTrashContents($) {
+	my $trash_dir	=	shift;
+	my @list = <$trash_dir/info/*.trashinfo>;
+	my @TrashList = ();
+	foreach my $info (@list) {
+		my $name = basename($info);
+		if($name =~ /^(.+).trashinfo$/) {
+			$name = $1;
+		} else {
+			# This should never happen
+			print "REGEX ERROR!\n";
+			return ();
+		}
+		my $p = GetTrashinfo($info);
+		$p->{TRASH} = $trash_dir;
+		$p->{IN_TRASH_NAME} = $name;
+		$p->{INFO_PATH} = "$trash_dir/info/$name.trashinfo";
+		$p->{IN_TRASH_PATH} = "$trash_dir/files/$name";
+		if($trash_dir eq $home_trash) {
+			$p->{DEV} = "HOME";
+		} else {
+			$p->{DEV} = InDevice($trash_dir);
+			$p->{PATH} = $p->{DEV} . "/" . $p->{PATH};
+		}
+		$p->{NAME} = basename($p->{PATH});
+		if($size > 0) {
+			$p->{SIZE} = EntrySize($p->{IN_TRASH_PATH});
+			$p->{SIZE} = HumanReadable($p->{SIZE}) if($human > 0);
+		} else {
+			$p->{SIZE} = 0;
+		}
+		push @TrashList, $p;
+	}
+	return @TrashList;
 }
 
 ##############################################################################
@@ -847,21 +767,10 @@ sub SetEnvirnment()
 			'i|interactive'	=> \$warn,        # IMPL
 			'v|verbose'	=> \$verbose,     # IMPL
 			'x|regex'       => \$regex,       # IMPL
-			'P|perl-regex'  => \$perl_regex,  # IMPL
 			'no-color'	=> \$no_color,    # IMPL
 			's|size'	=> \$size,        # IMPL
 			'h|human-readable'=> \$human,     # IMPL
 	) == 1 or Usage();
-
-	if($regex == 1 and $perl_regex == 1) {
-		$perl_regex = 1;
-		$gnu_regex  = 0;
-	} elsif($regex == 1 and $perl_regex == 0) {
-		$perl_regex = 0;
-		$gnu_regex  = 1;
-	} else {
-		$perl_regex = 0;
-	}
 
 	$Term::ANSIColor::AUTORESET = 1;
 }
@@ -874,7 +783,7 @@ sub SetEnvirnment()
 sub Usage()
 {
 	print <<USAGE
-TRSH VERSION 3.1-283
+TRSH VERSION 3.1-284
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
@@ -1000,9 +909,6 @@ sub FileTypeColor($)
 		"tar.gz"=>	"Red",
 	);
 	my $base = basename($name);
-	if($base =~ /^(.+)\s*$/) {
-		$base = $1;
-	}
 	if($base =~ /^(.+)-\d+$/) {
 		$base = $1;
 	}
@@ -1107,3 +1013,14 @@ sub HumanReadable($)
 	}
 }
 
+sub PrepareRegex($)
+{
+	my $reg		=	shift;
+	$reg =~ s/\$$//;
+	my $regex = eval { qr/($reg)$/ };
+	if($@) {
+		print "ERROR: Invalid regex: $reg\n$@\n";
+		exit;
+	}
+	return $regex;
+}
