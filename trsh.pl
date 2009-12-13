@@ -845,18 +845,18 @@ sub SetEnvirnment()
 	Getopt::Long::Configure('bundling');
 
 	GetOptions( 
-			'e|empty'	=> \$empty,       # IMPL
-			'l|list'	=> \$view,        # IMPL
-			'f|force+'	=> \$force,       # IMPL
-			'r|recursive'	=> \$recursive,   # IMPL
-			'u|undo'	=> \$undo,        # IMPL
-			'help'		=> \$help,        # IMPL
-			'i|interactive'	=> \$warn,        # IMPL
-			'v|verbose'	=> \$verbose,     # IMPL
-			'x|regex'       => \$regex,       # IMPL
-			'no-color'	=> \$no_color,    # IMPL
-			's|size'	=> \$size,        # IMPL
-			'h|human-readable'=> \$human,     # IMPL
+			'e|empty'	  => \$empty,
+			'l|list'	  => \$view,
+			'f|force+'	  => \$force,
+			'r|recursive'	  => \$recursive,
+			'u|undo'	  => \$undo,
+			'help'		  => \$help,
+			'i|interactive'	  => \$warn,
+			'v|verbose'	  => \$verbose,
+			'x|regex'         => \$regex,
+			'no-color'	  => \$no_color,
+			's|size'	  => \$size,
+			'h|human-readable'=> \$human,
 	) == 1 or Usage();
 
 	$Term::ANSIColor::AUTORESET = 1;
@@ -870,7 +870,7 @@ sub SetEnvirnment()
 sub Usage()
 {
 	print <<USAGE
-TRSH VERSION 3.2-287
+TRSH VERSION 3.3-288
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
@@ -908,8 +908,28 @@ Display the contents of the trash.
 --no-color
 An option for listing which turns of term colors.
 
+-x|--regex
+Considers input as perl regex rather than names or paths.
+rm -x REGEX # Delete files matching REGEX
+rm -ux REGEX # Recover files in trash matching regex.
+rm -ex REGEX # Remove files in trash matching regex.
+rm -lx REGEX # List trash contents matching regex.
+Note REGEX can be expressed multiple times.
+REGEX can be a path with the file name being a regex.
+example: "/home/user/test_\\d"
+
+-s|--size
+Display the size in bytes of the trash. 
+If used along with -l, the trash listing will also display each file's size.
+
+-h|--human-readable
+If used along with -s, the file size displayed will be human readable
+(KB, MB etc) rather than in bytes.
+
 --help
 Displays this help and exits.
+
+Please read the README accompanying trsh.
 
 \n
 USAGE

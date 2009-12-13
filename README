@@ -1,7 +1,7 @@
 ========================================================================================
                                     TRSH
 	 		Copyright 2008 Amithash Prasad                                         
-			       Version 3.2-287
+			       Version 3.3-288
 
 	 trsh is free software: you can redistribute it and/or modify         
 	 it under the terms of the GNU General Public License as published by   
@@ -20,23 +20,44 @@
 
 A safe rm.
 
-I rewrote 3.0 (After 2.x) to strictly follow the freeDesktop's Trash 
-specification. Thus your trash is now in sync with that of your desktop.
-
-CAVIAT:
-------
-
-All regex related functionality is removed till time tests the regular functionality.
-Once this is known not to eat anything, I will add them back.
-
-
 MOTIVATION
---
+----------
 
 I wrote this script when I accidentally deleted my homework. Enough Said...
 
+FEATURES
+--------
+
+1. trsh follows the freeDesktop.org's Trash specification. What does that mean to the user?
+   a. Files you delete using trsh, will be visible to your desktop's (Following 
+      freeDesktop like KDE or GNOME of course) trash utility. 
+   b. Files you delete using trsh can be undone using your desktop's trash utility.
+   c. Files deleted using your desktop's trash utility will be visible to trsh.
+   d. Files deleted using your desktop's trash utility can be undone by trsh.
+
+   This is quite important and the reason for the rewrite between 2.x to 3.x.
+   I got irritated with trsh 2.x as it was orthogonal to my desktop's trash.
+
+2. You can delete files, undo deleted files and remove specific files from your trash. 
+
+3. You can empty your trash.
+
+4. You can list your trash contents.
+
+5. You can use perl's regex's in most of the operations (Do not bother with it if you
+   do not know perl's regex. You can perfectly live without this feature).
+
+6. Each mounted device has its own trash. This means that there will be no costly and
+   time consuming moves from one device to another. This was the bane of trsh 2.x where
+   when you deleted something on an external hard disk, it was moved to your home
+   trash folder! 
+
+7. Installs the alias to rm. So you do not have to learn to use trsh instead of rm. 
+   You can continue deleting files thinking that you are using rm!
+
+
 SETUP
---
+-----
 ./configure.pl [OPTIONS]
 make 
 make install
@@ -57,10 +78,6 @@ or in $home for USER=1
 MPATH="/path/to/man/files" -- specify the path to the commands man page (default - 
 got from `manpath` and a preference is given to /usr/share/man/man1). This option 
 is ignored for USER=1, as no man pages are installed for a user installation.
-
-TPATH="RelPath/to/Trash" -- Specify the relative path from the home directory. 
-Default: .Trash (Making the trash to be located in $HOME/.Trash). Necessary only
-when you want Trash to be present elsewhere, or have a different name.
 
 PPATH="/path/to/perl" -- specify the path to perl.
 Default: got from the output of `which perl`
@@ -83,97 +100,230 @@ described in the second point in the NOTES Section.
 
 
 USAGE
---
+-----
+
 rm [OPTIONS]... [FILES]...
 
-FILES:
-This is a list of files to recover or delete.
+FILES: A list of files to recover or delete.
+rm FILES just moves FILES to the trash. By default, directories are not deleted.
 
 OPTIONS:
 
--u|--undo [FILES | REGEX]
-If this option is provided without any other arguments, the latest deleted file will be restored.
-If FILE/FILES are provided, the latest copy of these (If they exist in the trash) is recovered
-If instead a regex is provided, then all files in the trash matching with the regex is recovered. 
-(For regex usage, refer the subsection on regex below)
+-u|--undo [FILES]
+Undo's a delete (Restores FILES or files matching REGEX from trash). 
+Without arguments, the latest deleted file is restored.
 
--f|--force
-This option instructs trsh to permanently delete FILES and completely bypass the trash
-If provided twice, (-ff) The force option is passed onto rm. This is not needed for 99%
-of the use cases.
+-f|--force FILES
+Instructs trsh to permanently delete FILES and completely bypass the trash
+-ff or --force --force causes trsh to permanently delete files, and also pass
+the force option on to rm.
 
 -i|--interactively
-This option will instruct trsh to prompt the user before deleting each and every file.
-
--v|--verbose
-This option will instruct trsh to talk about whatever it is doing.
-
--e|--empty
-If this option is provided without any other arguments, Trash is emptied.
-If FILE/FILES are provided, All copies of FILE is removed permanently from the trash
-If instead a regex is provided, then all files in the trash matching with the regex is permanently removed.
-(For regex usage, refer the subsection on regex below)
+Prompt the user before any operation.
 
 -r|--recursive
-This option if provided will allow directories to be deleted.
+Allows directories to be deleted.
+
+-v|--verbose
+Provide verbose output.
+
+-e|--empty [FILES]
+Removed FILES or files matching REGEX from the trash (Permanently).
+Without arguments, the trash is emptied. --force option causes trsh
+to empty the trash without prompting the user.
 
 -l|--list
-This will display the contents of the trash.
+Display the contents of the trash.
+
+--no-color
+An option for listing which turns of term colors.
+
+-x|--regex
+Considers input as perl regex rather than names or paths.
+rm -x REGEX # Delete files matching REGEX
+rm -ux REGEX # Recover files in trash matching regex.
+rm -ex REGEX # Remove files in trash matching regex.
+rm -lx REGEX # List trash contents matching regex.
+Note REGEX can be expressed multiple times.
+REGEX can be a path with the file name being a regex.
+example: "/home/user/test_\\d"
 
 -s|--size
-This displays the size of the Trash directory. 
-If provided with the -l option, The size of each trash entry will also be displayed.
+Display the size in bytes of the trash. 
+If used along with -l, the trash listing will also display each file's size.
 
 -h|--human-readable
-If provided with the -s option, the size will be printed in a human readable form.
+If used along with -s, the file size displayed will be human readable
+(KB, MB etc) rather than in bytes.
 
 --help
-Displays this help and exits.
+Displays help.
 
--x|--force-regex
-This forces trsh to assume that the provided arguments are regex's. (Not needed most of the time, Read the REGEX Section)
+Deleting Files
+--------------
 
--p|--perl-regex
-This assumes that the passed regex is a perl-regex, and also turns on force-regex. If you do not
-know what a perl-regex is, you do not need this. 
+When properly installed, the script is written to mimic rm in all its options.
+Even the error messages are mimicked up to a certain point. Thus trsh should
+not need any learning to delete files.
 
-rm FILES just moves FILES to the trash. By default, directories are not deleted.
+rm [-f -v -r -i -x] FILE1
+rm *
+rm /home/user/Desktop/* 
+
+-v makes all operations verbose. So you know what is being deleted.
+
+-f permanently deletes files bypassing the trash.
+
+-ff permanently deletes files bypassing the trash and passed the force (-f)
+    option to the real rm.
+
+-r recursively deletes directories. Note this option name (recursive) does 
+not make sense but used to match rm's option. 
+
+-i option will ask the user's permission to delete each file.
+
+-x Considers all input as Perl's regex. 
+   Be _very_ careful when using -x with -f. 
+
+Examples:
+rm FILE                   # Moves FILE to Trash
+rm -r Directory           # Moves Directory to Trash
+rm -f FILE                # Permanently deletes FILE
+rm -rf DIR                # Permanently deletes DIR
+rm -rff DIR               # Permanently deletes DIR and passes -f to rm.
+
+rm -x "test_[a-z]"        # Deletes all files in current directory matching
+                          # test_[a-z]
+
+# -v to any of the above makes the operation verbose.
+
+Refer to the regex section for a more detailed coverage.
+
+
+Listing files in trash
+----------------------
+
+rm -l [-s -h -x --no-color]
+rm -l 
+lists the trash contents displaying the files in color based on their type.
+rm -l --no-color
+Lists the trash without colors. Useful for terminals which does not support
+colored display.
+rm -ls
+Lists trash contents with an extra column with the size of each file in bytes
+rm -lsh
+Same as rm -ls except that the size is displayed in human readable format.
+rm -l -x REGEX [REGEX2 REGEX3]
+Lists only the files matching REGEX or optionally a list of regex's.
+Refer to the regex section for a more detailed coverage.
+
+Size of the trash
+-----------------
+
+rm -s [-h]
+
+To view the size of the trash, use the -s option which 
+prints the size of the trash in each device in bytes.
+specifying the -h option will make the sizes to be printed
+in human readable format. 
+
+Undoing trashed files
+---------------------
+
+rm -u [-x -v] [FILE|REGEX]
+
+rm -u
+Restores the _latest_ deleted trashed file(s) to their original location.
+Example:
+rm test1 test2 test3
+rm -u 
+will restore test1 test2 and test3.
+
+rm -u FILE [FILE2 FILE3 ...]
+Restores the _latest_ copy of FILE (or FILE, FILE2 FILE3 etc) to their
+original location. Note, FILE FILE2 FILE3... Can also be the original
+path rather than the file/dir name if you want to be more specific.
+By specifying the path helps in removing any ambiguity if there
+are files in the trash with the same name but coming from different
+paths:
+example:
+rm /home/user/test
+rm /home/user/Desktop/test
+
+rm -u test # Recovers to /home/user/Desktop/test as that is the 
+latest deleted file with the name "test".
+instead if you awnted /home/user/test,
+rm -u /home/user/test
+will recover that file.
+
+If while recovering a file, another file exists with the same 
+name, then trsh will ask the user if they want to overwrite
+the file. 
+
+-x option with a regex (or list of regexes) can be specified
+to undo files in trash. It can be a path with the name as
+a regex. 
+
+Refer to the regex section for a more detailed coverage.
+
+Emptying the trash
+------------------
+
+rm -e [-x -f ] [FILES | REGEXES]
+
+rm -e
+empties the trash and asks for the user permission before
+doing it.
+rm -ef empties the trash and does not nag the user.
+
+rm -e FILE
+removes all files with the name FILE in the trash (All trashes)
+rm -e PATH
+Removes all files in the trash with the path PATH (PATH is the original path before deletion).
+
+note different FILE/PATH can be specified together.
+Trsh will ask for the user's permission for each file. -f will override this behavior.
+
+rm -ex REGEX [REGEX1 REGEX2]
+removes all files in the trash matching REGEX (or REGEX1, REGEX2,...). 
+
+Refer to the regex section for a more detailed coverage.
 
 REGEX
 --
 
-A regex is accepted for restoration and emptying the trash (refer -e and -u options above).
-Currently only the * operator is accpeted. But as the shell tries to expand these, you will have
-to escape the * by either putting the entire regex in quotes or escaping every instance of the *.
-rm -u "some*"  # Correct
-rm -r "some\*  # Correct
-rm -u some*    # Wrong
+Currently Perl's regex which is a better form of POSIX's Regex is supported.
+This is done as the script is written in perl and is very easy for me to
+evaluate the supplied regex. Please google Perl Regex to know more of the format. 
 
-The -x option is probably going to be the least used. Here is one of the scenarios where it might be useful:
-touch test1 te\*t1
-rm test1 te\*t1
-rm -u "te\*t1"    # This will restore only te\*t1.
-rm -ux "te\*t1"   # This will restore both test1 and te\*t1.
-But rm -u "te*" will still restore both.
+1. Always use the -v option with -x. This way you will know what is going on. 
+   There might be bugs or you might have accidentally specified the wrong 
+   regex. So it is nice to know.
+2. Never specify -f when removing files from the trash with the -x option. 
+   You would want to know what the damn thing is doing. You still can, but
+   do it at your own risk, but do use the -v option to at least know if you
+   fu*ked up. 
 
-PERL REGEX
---
-With the -p option, you are no longer restricted with the bash regex completion. Now, trsh accepts perl regex's
-to delete files.
+Example typical usages:
+deleting all test log files:
+rm -x "test.log.\d+"
+you could have as well done:
+rm -x test.log.*,
+   but the regex becomes useful when you do not want to delete files 
+   which are named:
+   test.log.helloworld
 
-So you can do the following
+This is the reason, I can say that the -x option for deleting will be the 
+least used. Probably more useful restoring multiple files.
 
-rm -p "/some/random/path/test\.\d+\.out"
-and test.1.out, test.2.out is deleted but test.A.out is left alone.
+Note you can always restore the _latest_ deleted files. 
 
-Trsh is written in perl (If you did not know that already), so trsh just modifies the regex
-passed and then uses that to find files or entries.
 
 NOTES
 --
 
 1. If you really want to use the svn snapshot, then please stick to the revision 
-   I have made avaliable for download! Revisions are dime a dozen, and they mean nothing!
+   I have made available for download! Revisions are dime a dozen, and they mean nothing!
    I run the tests only for the revision I want to upload to the downloads page.
 
 2. MANUAL INSTALLATION: (These are steps which are followed by the configure and makefile scripts)
@@ -197,38 +347,33 @@ NOTES
 	 If your shell is not one of these, figure out from your shell's manual on how
 	 to make aliases.
 
-3. The installation will not allow you to use a Trash directory which is not 
-   in the user home directory. This is due to:
-   a. Privacy. It is easier to secure things in your home directory 
-   b. Avoid complications with permissions in directories outside the user directory.
-   If you really want trash to be in another directory, (Reasons might be a seperate scratch
-   mount avaliable to users with a higher quota and no backups) After installation, do the following:
+3. Trsh sticks to freeDesktop.org's trash specifications. Any non-conformance _is_ a bug. Please
+   open a bug in the issues page. 
+   Each mounted device other than / or /home will contain its own trash directory and files in 
+   those mount points will be moved to their trash directory. 
    
-   /bin/rm -r /path/to/trash/dir 
-   mkdir /path/to/new/trash
-   ln -s /path/to/new/trash /path/to/trash/dir
-
-   example:
-   /bin/rm ~/.Trash
-   mkdir -p /scratch/users/prasad/.Trash
-   ln -s /scratch/users/prasad/.Trash ~/.Trash
+4. Version 2.x of trsh allowed you to specify the trash directory as it was following an ad-hoc 
+   specification dreamed up by me. 
+   If you have installed trsh 2.x, then please empty the trash or undo all of them. Uninstall 
+   trsh by either doing a `make uninstall` or deleting all your trsh directories. 
+   (trsh 3.x uses the same alias mechanism and same install path, so those will be overwritten)
 
 4. The svn snapshot contains some extra scripts mostly to do with making my life easier in packaging and checkins. 
-   (You will not need them unless you want to contrubute in the development, for which you will need to ask me first!)
+   (You will not need them unless you want to contribute in the development, for which you will need to ask me first!
+    I am more than willing to share my work, but I need to enable the user in googlecode's subversion).
    Along with those, there are some test scripts. these scripts are only present in the svn version (If you do an 
    svn checkout instead of downloading the tarballs). These test the functionality of trsh so that I do not package 
-   a faulty trsh! test-trsh.bash tests trsh on bash. And both are run before a
-   package is created.
+   a faulty trsh! test-trsh.bash tests trsh on bash. And both are run before a package is created.
 
 
 REPORTING BUGS
---
+--------------
 
 Report all bugs to:
 http://code.google.com/p/trsh/issues
 
 AUTHOR
---
+------
 
 Amithash Prasad {amithash@gmail.com}
 
