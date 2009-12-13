@@ -64,6 +64,11 @@ sub DeleteRegex($);
 sub DeletePerlRegex($);
 sub UndoRegex($);
 sub UndoPerlRegex($);
+sub HumanReadable($);
+sub DirSize($);
+sub FileSize($);
+sub EntrySize($);
+sub PrintTrashSize();
 
 ##############################################################################
 #				Global Variables                             #
@@ -99,6 +104,7 @@ my @dlist;
 # Constants 
 my $name_width = 50;
 my $date_width = 20;
+my $size_width = 10;
 
 ##############################################################################
 #				   MAIN		                             #
@@ -150,6 +156,11 @@ if($undo > 0) {
 			UndoFile($file);
 		}
 	}
+	exit;
+}
+
+if($size > 0) {
+	PrintTrashSize();
 	exit;
 }
 
@@ -439,10 +450,13 @@ sub ListTrashContents()
 		}
 	}
 	if(scalar(@List) != 0) {
-		printf("%-${name_width}s : %-${date_width}s : %s\n", 
-				"Trash Entry", "Deletion Date", "Restore Path");
-		printf("%-${name_width}s : %-${date_width}s : %s\n",
-				"-----------", "-------------", "------------");
+		printf("%-${name_width}s | %-${date_width}s | ", "Trash Entry", "Deletion Date");
+		printf("%-${size_width}s | ", "Size") if($size > 0);
+		printf("%s\n", "Restore Path");
+		printf("%-${name_width}s | %-${date_width}s | ", "-----------", "-------------");
+		printf("%-${size_width}s | ", "----") if($size > 0);
+		printf("%s\n", "------------");
+
 		foreach my $p (@List) {
 			PrintTrashinfo($p, $p->{PREFIX}, $p->{INFO});
 		}
@@ -469,23 +483,99 @@ sub PrintTrashinfo($$$)
 		if($prefix ne "") {
 			$path = $prefix . "/" . "$path";
 		}
+		my $sz = 0;
+		if($size > 0) {
+			my $inf = basename($p->{INFO});
+			if($inf =~ /^(.+)\.trashinfo$/) {
+				$inf = $1;
+			} else {
+				# This should never happen.
+				print "REGEX ERROR\n";
+				return;
+			}
+			my $ent = "$p->{TRASH}/files/$inf";
+			$sz = EntrySize($ent);
+			$sz = HumanReadable($sz) if($human > 0);
+			$sz = "$sz";
+			$sz = sprintf("%-${size_width}s", $sz);
+		}
 		
 		if($no_color == 0) {
 			print color(FileTypeColor($trash_path)), "$name";
-			print color("Yellow"), " : $date : ";
-			print color("reset"), "$path\n";
+			print color("reset"), " |";
+			print color("Yellow"), " $date";
+			print color("reset"), " |";
+			if($size > 0) {
+				print color("Red"), " $sz";
+				print color("reset"), " |";
+			}
+			print color("reset"), " $path\n";
 		} else {
 			print "$name";
-			print " : $date : ";
+			print " | $date | ";
+			print "$size | " if($size > 0);
 			print "$path\n";
 		}
 		# DATE PATH
 	}
 }
 
+
 ##############################################################################
 #		        Low Level Trash Management                           #
 ##############################################################################
+
+sub PrintTrashSize()
+{
+	my $sz = GetTrashSize($home_trash);
+	printf("%-40s | $sz\n", "Home Trash");
+	my @devs = GetDeviceList();
+	foreach my $dev (@devs) {
+		next if($dev eq "/" or $dev eq "/home");
+		$sz = GetTrashSize(GetDeviceTrash($dev));
+		print("%-40s | $sz\n", "$dev Trash");
+	}
+}
+
+sub GetTrashSize($)
+{
+	my $trash_path	=	shift;
+	
+	my $calculate_trash = 0;
+
+	my $sz = "";
+
+	my $info_mtime = (stat("$trash_path/info"))[9];
+	my $metadata_mtime = (stat("$trash_path/metadata"))[9];
+
+	# If info was modified after metadata
+	if(! -e "$trash_path/metadata" or $info_mtime > $metadata_mtime) {
+		$sz = DirSize($trash_path);
+		open OUT, "+>$trash_path/metadata" or die "Could not open $trash_path/metadata for write\n";
+		print OUT "[Cached]\n";
+		print OUT "Size=$sz\n";
+		close(OUT);
+		$sz = HumanReadable($sz) if($human > 0);
+	} else {
+		open IN, "$trash_path/metadata" or die "Could not open $trash_path/metadata for read\n";
+		while(my $line = <IN>) {
+			chomp($line);
+			if($line =~ /^Size=(\d+)$/) {
+				$sz = $1;
+				last;
+			}
+		}
+		close(IN);
+		if($sz eq "") {
+			print "WARNING BAD metadata file. Deleting it\n";
+			SysDelete("$trash_path/metadata","-f");
+			$sz = 0;
+			$sz = "0 B" if($human > 0);
+		}
+	}
+
+	return $sz;
+}
 
 sub GetLatestMatchingFile($)
 {
@@ -759,6 +849,8 @@ sub SetEnvirnment()
 			'x|regex'       => \$regex,       # IMPL
 			'P|perl-regex'  => \$perl_regex,  # IMPL
 			'no-color'	=> \$no_color,    # IMPL
+			's|size'	=> \$size,        # IMPL
+			'h|human-readable'=> \$human,     # IMPL
 	) == 1 or Usage();
 
 	if($regex == 1 and $perl_regex == 1) {
@@ -782,7 +874,7 @@ sub SetEnvirnment()
 sub Usage()
 {
 	print <<USAGE
-TRSH VERSION 3.1-282
+TRSH VERSION 3.1-283
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
@@ -961,5 +1053,57 @@ sub FileTypeString($)
 		$what = "regular file";
 	}
 	return $what;
+}
+
+sub DirSize($)
+{
+	my $path = shift;
+	my $size = 0;
+	my $fd;
+	opendir($fd, $path) or die "$!\n";
+	for my $item (readdir($fd)) {
+		next if($item =~ /^\.\.?$/);
+		my $path = "$path/$item";
+		$size += ((-d $path) ? DirSize($path) : FileSize($path));
+	}
+	closedir($fd);
+
+	return $size;
+}
+
+sub FileSize($)
+{
+	my $path = shift;
+	return (-f $path) ? (stat($path))[7] : 0;
+}
+
+sub EntrySize($)
+{
+	my $path = shift;
+	return (-d $path) ? DirSize($path) : FileSize($path);
+}
+
+sub HumanReadable($)
+{
+	my $sz = shift;
+	my $kb = 1024;
+	my $mb = 1024 * $kb;
+	my $gb = 1024 * $mb;
+	my $pb = 1024 * $gb;
+	if($sz > $pb) {
+		$sz = $sz / $pb;
+		return sprintf("%.3f PB", $sz);
+	} elsif($sz > $gb) {
+		$sz = $sz / $gb;
+		return sprintf("%.3f GB", $sz);
+	} elsif($sz > $mb) {
+		$sz = $sz / $mb;
+		return sprintf("%.3f MB", $sz);
+	} elsif($sz > $kb) {
+		$sz = $sz / $kb;
+		return sprintf("%.3f kB", $sz);
+	} else {
+		return sprintf("%.3f B", $sz);
+	}
 }
 
