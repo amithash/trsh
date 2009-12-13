@@ -66,6 +66,7 @@ sub DirSize($);
 sub FileSize($);
 sub EntrySize($);
 sub PrintTrashSize();
+sub ListRegexTrashContents($);
 
 ##############################################################################
 #				Global Variables                             #
@@ -112,6 +113,12 @@ if($help > 0) {
 }
 
 if($view > 0) {
+	if($regex > 0) {
+		foreach my $reg (@ARGV) {
+			ListRegexTrashContents($reg);
+		}
+		exit;
+	}
 	ListTrashContents();
 	exit;
 }
@@ -187,22 +194,7 @@ sub UndoLatestFiles()
 	my @list = GetLatestDeleted();
 
 	foreach my $entry (@list) {
-		my $info_path = $entry->{INFO_PATH};
-		my $to_path = $entry->{PATH};
-		my $trsh = $entry->{TRASH};
-		my $from_path = $entry->{IN_TRASH_PATH};
-		if(-e $to_path) {
-			if(GetUserPermission("Overwrite file $to_path?") != 1) {
-				next;
-			}
-		}
-		SysMkdir(dirname($to_path)) unless(-d dirname($to_path));
-
-		print "Restoring $to_path from Trash\n" if($verbose > 0);
-		my $success = SysMove($from_path, $to_path);
-		if($success == 0) {
-			SysDelete($info_path,"-f");
-		}
+		UndoTrashinfo($entry);
 	}
 }
 
@@ -215,6 +207,12 @@ sub UndoFile($)
 		print "$file does not exist in the Trash\n";
 		return;
 	}
+	UndoTrashinfo($entry);
+}
+
+sub UndoTrashinfo($)
+{
+	my $entry	=	shift;
 
 	my $from_path = $entry->{IN_TRASH_PATH};
 	my $to_path   = $entry->{PATH};
@@ -236,7 +234,12 @@ sub UndoFile($)
 
 sub UndoRegex($)
 {
-	my $regex	=	shift;
+	my $reg		=	shift;
+	my @List = GetRegexMatchingFiles($reg);
+	foreach my $p (@List) {
+		print "Restoring $p->{PATH}\n" if($verbose > 0);
+		UndoTrashinfo($p);
+	}
 }
 
 
@@ -275,16 +278,27 @@ sub RemoveFromTrash($)
 		print "$file does not exist in the Trash\n";
 		return;
 	}
-	my $file_path = $entry->{IN_TRASH_PATH};
-	my $info_path = $entry->{INFO_PATH};
+	RemoveTrashinfo($entry);
+}
 
-	SysDelete($file_path, "-f");
-	SysDelete($info_path, "-f");
+sub RemoveTrashinfo
+{
+	my $entry	=	shift;
+
+	if($force == 0 and GetUserPermission("Remove $entry->{NAME} for trash?") == 0) {
+		return;
+	}
+	SysDelete($entry->{IN_TRASH_PATH}, "-rf");
+	SysDelete($entry->{INFO_PATH}, "-rf");
 }
 
 sub RemoveFromTrashRegex($)
 {
-	my $regex	=	shift;
+	my $reg		=	shift;
+	my @List = GetRegexMatchingFiles($reg);
+	foreach my $p (@List) {
+		RemoveTrashinfo($p);
+	}
 }
 
 sub DeleteFile($)
@@ -372,12 +386,40 @@ sub DeleteFile($)
 
 sub DeleteRegex($)
 {
-	my $regex	=	shift;
+	my $reg		=	shift;
+	my $dir = dirname($reg);
+	if($dir eq ""){
+		$dir = cwd();
+	}
+	$reg = PrepareRegex(basename($reg));
+	foreach my $file (<$dir/*>) {
+		if($file =~ $reg) {
+			if($warn > 0 and GetUserPermission("Delete $file? ") == 0) {
+				next;
+			}
+			print "Deleting $file from Trash\n" if($verbose > 0);
+			DeleteFile($file);
+		}
+	}
 }
 
 sub ListTrashContents()
 {
 	my @List = GetTrashContents();
+	ListArrayContents(\@List);
+}
+
+sub ListRegexTrashContents($)
+{
+	my $reg		=	shift;
+	my @List = GetRegexMatchingFiles($reg);
+	ListArrayContents(\@List);
+}
+
+sub ListArrayContents($)
+{
+	my $ref		=	shift;
+	my @List = @{$ref};
 
 	if(scalar(@List) == 0) {
 		return;
@@ -394,6 +436,8 @@ sub ListTrashContents()
 		PrintTrashinfo($p);
 	}
 }
+
+
 
 sub PrintTrashinfo($)
 {
@@ -628,10 +672,18 @@ sub GetTrashDir($)
 
 sub GetRegexMatchingFiles($) {
 	my $reg		=	shift;
-	$reg = PrepareRegex($reg);
+	my $dir = "";
+	if($reg =~ /\//) {
+		$dir = dirname($reg);
+	}
+	$reg = PrepareRegex(basename($reg));
 	my @List = GetTrashContents();
 	my @Matched = ();
 	foreach my $p (@List) {
+		if($dir ne "") {
+			my $d = dirname($p->{PATH});
+			next if($dir ne "$d");
+		}
 		if($p->{NAME} =~ $reg) {
 			push @Matched, $p;
 		}
@@ -783,7 +835,7 @@ sub SetEnvirnment()
 sub Usage()
 {
 	print <<USAGE
-TRSH VERSION 3.1-284
+TRSH VERSION 3.1-285
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
