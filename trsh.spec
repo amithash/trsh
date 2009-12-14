@@ -4,7 +4,7 @@
 Summary: A Trash manager aliased to rm.
 Name: trsh
 Version: 3.3
-Release: 291
+Release: 292
 Group: Utilities
 License: GPL
 BuildArch: noarch
@@ -28,13 +28,15 @@ cp $RPM_BUILD_DIR/%name-%version-%release/trsh.pl %_bindir
 cp $RPM_BUILD_DIR/%name-%version-%release/trsh.1.gz %_mandir/man1
 cp $RPM_BUILD_DIR/%name-%version-%release/trsh.sh /etc/profile.d/
 cp $RPM_BUILD_DIR/%name-%version-%release/trsh.csh /etc/profile.d/
-echo "alias rm=\"/usr/bin/trsh.pl\" # TRSH" >> /etc/bash.bashrc
-echo "alias undo=\"/usr/bin/trsh.pl -u\" # TRSH" >> /etc/bash.bashrc
+#echo "alias rm=\"/usr/bin/trsh.pl\" # TRSH" >> /etc/bash.bashrc
+#echo "alias undo=\"/usr/bin/trsh.pl -u\" # TRSH" >> /etc/bash.bashrc
 exit 0
 
 %preun
 rm -f %_bindir/trsh.pl
 rm -f %_mandir/man1/trsh.1.gz
+#sed -e '/.* # TRSH/d' /etc/bash.bashrc > /etc/bash.bashrc.new
+#mv /etc/bash.bashrc.new /etc/bash.bashrc
 rm -f /etc/profile.d/trsh.sh
 rm -f /etc/profile.d/trsh.csh
 exit 0
