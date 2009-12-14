@@ -1,5 +1,16 @@
 #!/usr/bin/perl
 
+use strict;
+use warnings;
+use Cwd;
+
+my $this_dir = cwd();
+
+my $packages_dir = "/usr/src/packages";
+unless(-d $packages_dir) {
+	$packages_dir = "/usr/src/redhat";
+}
+
 my $verstr = `cat VERSION`;
 $verstr =~ /(\d+)\.(\d+)/;
 my $main = $1;
@@ -44,8 +55,6 @@ system("rm $home/$name/test-trsh.bash");
 system("rm $home/$name/VERSION");
 chdir("$home");
 system("cp -r $name $name.src");
-system("rm $name/trsh.bash");
-system("rm $name/trsh.csh");
 system("rm $name/trsh.spec");
 system("tar -zcf $name.tar.gz $name");
 system("rm -rf $name");
@@ -57,15 +66,20 @@ system("mv $name/trsh.spec .");
 system("tar -zcf $name.tar.gz $name");
 system("rm -r $name");
 if(`id -u` eq "0\n"){
-	system("mv $name.tar.gz /usr/src/packages/SOURCES") == 0 or die "could not move source to SOURCE dir\n";
+	unless(-d $packages_dir) {
+		print "Unknown distribution: neither of /usr/src/packages (SuSE) or /usr/src/redhat (Redhat) exists\n";
+		system("rm -r trsh.spec");
+		exit;
+	}
+	system("mv $name.tar.gz $packages_dir/SOURCES") == 0 or die "could not move source to SOURCE dir\n";
 	system("rpmbuild -bb trsh.spec") == 0 or die "rpmbuild failed\n";
-	system("mv /usr/src/packages/RPMS/noarch/$name.noarch.rpm trsh-build");
+	system("mv $packages_dir/RPMS/noarch/$name.noarch.rpm trsh-build");
+	chdir("$home/trsh-build");
+	system("alien -k --scripts $name.noarch.rpm") == 0 or die "Could not create deb package.\n";
 } else {
-	print "Not a root user, no rpm for you\n";
+	print "Not a root user, no rpm or deb for you\n";
 }
 system("rm -r trsh.spec");
-
-my $pwd = `pwd`;
-chomp($pwd);
-print "PACKAGES ARE IN: $pwd/trsh-build\n";
+chdir("$home/trsh-build");
+system("mv * $this_dir/");
 
