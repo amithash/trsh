@@ -4,7 +4,7 @@
 Summary: A Trash manager aliased to rm.
 Name: trsh
 Version: 3.3
-Release: 296
+Release: 297
 Group: Utilities
 License: GPL
 BuildArch: noarch
@@ -22,6 +22,9 @@ listing, undo, recover, etc etc.
 %prep
 rm -rf $RPM_BUILD_DIR/%name-%version-%release
 zcat $RPM_SOURCE_DIR/%name-%version-%release.tar.gz | tar -xvf -
+mkdir -p %buildroot/%_bindir
+mkdir -p %buildroot/%_mandir/man1
+mkdir -p %buildroot/etc/profile.d
 
 %install
 cp $RPM_BUILD_DIR/%name-%version-%release/trsh.pl %buildroot/%_bindir
