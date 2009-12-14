@@ -4,7 +4,7 @@
 Summary: A Trash manager aliased to rm.
 Name: trsh
 Version: 3.3
-Release: 308
+Release: 309
 Group: Utilities
 License: GPL
 BuildArch: noarch
@@ -33,7 +33,7 @@ for rc in $(ls /etc/*rc* | grep $SHELL_NAME | grep -vP "\.bac$" | grep -vP "\.ne
 do
 	RC_FILE=$rc
 done
-if [[ $RC_FILE -eq "" ]]
+if [ -z $RC_FILE ]
 then
 	echo "ERROR! No RC FILE Found"
 	exit -127
@@ -57,18 +57,18 @@ cp $RPM_BUILD_DIR/%name-%version-%release/trsh.pl %buildroot/%_bindir
 cp $RPM_BUILD_DIR/%name-%version-%release/trsh.1.gz %buildroot/%_mandir/man1
 chmod +x %buildroot/%_bindir/trsh.pl
 mv $RC_FILE.new $RC_FILE
+
 exit 0
 
 %preun
 
 TRSH_SHELL=$SHELL
 SHELL_NAME=${TRSH_SHELL##/bin/}
-RC_FILE=""
 for rc in $(ls /etc/*rc* | grep $SHELL_NAME | grep -vP "\.bac$" | grep -vP "\.new$" )
 do
 	RC_FILE=$rc
 done
-if [[ $RC_FILE -eq "" ]]
+if [ -z $RC_FILE ]
 then
 	echo "ERROR! No RC FILE Found"
 	exit -127
@@ -78,6 +78,7 @@ sed -e '/.* # TRSH/d' $RC_FILE > $RC_FILE.new
 rm -f %buildroot/%_bindir/trsh.pl
 rm -f %buildroot/%_mandir/man1/trsh.1.gz
 mv $RC_FILE.new $RC_FILE
+
 exit 0
 
 %files
