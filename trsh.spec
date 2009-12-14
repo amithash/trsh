@@ -4,7 +4,7 @@
 Summary: A Trash manager aliased to rm.
 Name: trsh
 Version: 3.3
-Release: 301
+Release: 302
 Group: Utilities
 License: GPL
 BuildArch: noarch
@@ -20,6 +20,26 @@ just like he/she would with rm, with extra features like trash
 listing, undo, recover, etc etc.
 
 %prep
+TRSH_SHELL=$SHELL
+SHELL_NAME=${TRSH_SHELL##/bin/}
+for rc in $(ls /etc/*rc* | grep $SHELL_NAME | grep -vP "\.bac$" )
+do
+	RC_FILE=$rc
+done
+if [[ $SHELL_NAME -eq "bash" ]]
+then
+	ALIAS_RM="alias rm=\"%buildroot/%_bindir/trsh.pl\" # TRSH"
+	ALIAS_UNDO="alias undo=\"%buildroot/%_bindir/trsh.pl -u\" # TRSH"
+elif [[ $SHELL_NAME -eq "csh" ]] || [[ $SHELL_NAME -eq "tcsh" ]]
+then
+	ALIAS_RM="alias rm \"%buildroot/%_bindir/trsh.pl\" # TRSH"
+	ALIAS_UNDO="alias undo \"%buildroot/%_bindir/trsh.pl -u\" # TRSH"
+else
+	exit -127
+fi
+sed -e '/.* # TRSH/d' $RC_FILE > $RC_FILE.new
+echo \"$ALIAS_RM\" >> $RC_FILE.new
+echo \"$ALIAS_UNDO\" >> $RC_FILE.new
 rm -rf $RPM_BUILD_DIR/%name-%version-%release
 zcat $RPM_SOURCE_DIR/%name-%version-%release.tar.gz | tar -xvf -
 mkdir -p %buildroot/%_bindir
@@ -29,25 +49,19 @@ mkdir -p %buildroot/etc/profile.d
 %install
 cp $RPM_BUILD_DIR/%name-%version-%release/trsh.pl %buildroot/%_bindir
 cp $RPM_BUILD_DIR/%name-%version-%release/trsh.1.gz %buildroot/%_mandir/man1
-cp $RPM_BUILD_DIR/%name-%version-%release/trsh.bash %buildroot/etc/profile.d/
-cp $RPM_BUILD_DIR/%name-%version-%release/trsh.csh %buildroot/etc/profile.d/
 chmod +x %buildroot/%_bindir/trsh.pl
-#echo "alias rm=\"/usr/bin/trsh.pl\" # TRSH" >> /etc/bash.bashrc
-#echo "alias undo=\"/usr/bin/trsh.pl -u\" # TRSH" >> /etc/bash.bashrc
+echo "cp $RC_FILE $RC_FILE.bac"
+echo "mv $RC_FILE.new $RC_FILE"
 exit 0
 
 %preun
+sed -e '/.* # TRSH/d' $RC_FILE > $RC_FILE.new
 rm -f %buildroot/%_bindir/trsh.pl
 rm -f %buildroot/%_mandir/man1/trsh.1.gz
-#sed -e '/.* # TRSH/d' /etc/bash.bashrc > /etc/bash.bashrc.new
-#mv /etc/bash.bashrc.new /etc/bash.bashrc
-rm -f %buildroot/etc/profile.d/trsh.bash
-rm -f %buildroot/etc/profile.d/trsh.csh
+mv $RC_FILE.new $RC_FILE
 exit 0
 
 %files
 %_bindir/trsh.pl
 %_mandir/man1/trsh.1.gz
-/etc/profile.d/trsh.bash
-/etc/profile.d/trsh.csh
 
