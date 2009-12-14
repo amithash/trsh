@@ -79,6 +79,7 @@ if(`id -u` eq "0\n"){
 } else {
 	print "Not a root user, no rpm or deb for you\n";
 }
+chdir("$home");
 system("rm -r trsh.spec");
 chdir("$home/trsh-build");
 system("mv * $this_dir/");
