@@ -4,7 +4,7 @@
 Summary: A Trash manager aliased to rm.
 Name: trsh
 Version: 3.3
-Release: 305
+Release: 306
 Group: Utilities
 License: GPL
 BuildArch: noarch
@@ -29,7 +29,7 @@ mkdir -p %buildroot/etc/profile.d
 %install
 TRSH_SHELL=$SHELL
 SHELL_NAME=${TRSH_SHELL##/bin/}
-for rc in $(ls /etc/*rc* | grep $SHELL_NAME | grep -vP "\.bac$" )
+for rc in $(ls /etc/*rc* | grep $SHELL_NAME | grep -vP "\.bac$" | grep -vP "\.new$" )
 do
 	RC_FILE=$rc
 done
@@ -41,12 +41,12 @@ fi
 
 if [[ $SHELL_NAME -eq "bash" ]]
 then
-	ALIAS_RM="alias rm=\"%buildroot/%_bindir/trsh.pl\" # TRSH"
-	ALIAS_UNDO="alias undo=\"%buildroot/%_bindir/trsh.pl -u\" # TRSH"
+	ALIAS_RM="alias rm=\"%_bindir/trsh.pl\" # TRSH"
+	ALIAS_UNDO="alias undo=\"%_bindir/trsh.pl -u\" # TRSH"
 elif [[ $SHELL_NAME -eq "csh" ]] || [[ $SHELL_NAME -eq "tcsh" ]]
 then
-	ALIAS_RM="alias rm \"%buildroot/%_bindir/trsh.pl\" # TRSH"
-	ALIAS_UNDO="alias undo \"%buildroot/%_bindir/trsh.pl -u\" # TRSH"
+	ALIAS_RM="alias rm \"%_bindir/trsh.pl\" # TRSH"
+	ALIAS_UNDO="alias undo \"%_bindir/trsh.pl -u\" # TRSH"
 else
 	exit -127
 fi
@@ -56,14 +56,13 @@ echo \"$ALIAS_UNDO\" >> $RC_FILE.new
 cp $RPM_BUILD_DIR/%name-%version-%release/trsh.pl %buildroot/%_bindir
 cp $RPM_BUILD_DIR/%name-%version-%release/trsh.1.gz %buildroot/%_mandir/man1
 chmod +x %buildroot/%_bindir/trsh.pl
-echo "cp $RC_FILE $RC_FILE.bac"
 echo "mv $RC_FILE.new $RC_FILE"
 exit 0
 
 %preun
 TRSH_SHELL=$SHELL
 SHELL_NAME=${TRSH_SHELL##/bin/}
-for rc in $(ls /etc/*rc* | grep $SHELL_NAME | grep -vP "\.bac$" )
+for rc in $(ls /etc/*rc* | grep $SHELL_NAME | grep -vP "\.bac$" | grep -vP "\.new" )
 do
 	RC_FILE=$rc
 done
