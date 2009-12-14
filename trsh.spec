@@ -4,14 +4,18 @@
 Summary: A Trash manager aliased to rm.
 Name: trsh
 Version: 3.3
-Release: 309
+Release: 310
 Group: Utilities
 License: GPL
+Copyright: GPL
 BuildArch: noarch
 URL: http://code.google.com/p/trsh
 Vendor: Amithash Prasad
 Packager: Amithash Prasad <amithash@gmail.com>
 Source: $RPM_SOURCE_DIR/trsh-2.2-212.tar.gz
+Provides: trsh
+Requires: perl
+
 
 %description
 Trsh is a trash manager with an attitude! Once aliased to rm
