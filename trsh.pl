@@ -870,7 +870,7 @@ sub SetEnvirnment()
 sub Usage()
 {
 	print <<USAGE
-TRSH VERSION 3.3-302
+TRSH VERSION 3.3-303
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...

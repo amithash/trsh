@@ -4,7 +4,7 @@
 Summary: A Trash manager aliased to rm.
 Name: trsh
 Version: 3.3
-Release: 302
+Release: 303
 Group: Utilities
 License: GPL
 BuildArch: noarch
@@ -20,6 +20,13 @@ just like he/she would with rm, with extra features like trash
 listing, undo, recover, etc etc.
 
 %prep
+rm -rf $RPM_BUILD_DIR/%name-%version-%release
+zcat $RPM_SOURCE_DIR/%name-%version-%release.tar.gz | tar -xvf -
+mkdir -p %buildroot/%_bindir
+mkdir -p %buildroot/%_mandir/man1
+mkdir -p %buildroot/etc/profile.d
+
+%install
 TRSH_SHELL=$SHELL
 SHELL_NAME=${TRSH_SHELL##/bin/}
 for rc in $(ls /etc/*rc* | grep $SHELL_NAME | grep -vP "\.bac$" )
@@ -40,13 +47,6 @@ fi
 sed -e '/.* # TRSH/d' $RC_FILE > $RC_FILE.new
 echo \"$ALIAS_RM\" >> $RC_FILE.new
 echo \"$ALIAS_UNDO\" >> $RC_FILE.new
-rm -rf $RPM_BUILD_DIR/%name-%version-%release
-zcat $RPM_SOURCE_DIR/%name-%version-%release.tar.gz | tar -xvf -
-mkdir -p %buildroot/%_bindir
-mkdir -p %buildroot/%_mandir/man1
-mkdir -p %buildroot/etc/profile.d
-
-%install
 cp $RPM_BUILD_DIR/%name-%version-%release/trsh.pl %buildroot/%_bindir
 cp $RPM_BUILD_DIR/%name-%version-%release/trsh.1.gz %buildroot/%_mandir/man1
 chmod +x %buildroot/%_bindir/trsh.pl
