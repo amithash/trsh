@@ -4,7 +4,7 @@
 Summary: A Trash manager aliased to rm.
 Name: trsh
 Version: 3.3
-Release: 306
+Release: 307
 Group: Utilities
 License: GPL
 BuildArch: noarch
@@ -56,13 +56,15 @@ echo \"$ALIAS_UNDO\" >> $RC_FILE.new
 cp $RPM_BUILD_DIR/%name-%version-%release/trsh.pl %buildroot/%_bindir
 cp $RPM_BUILD_DIR/%name-%version-%release/trsh.1.gz %buildroot/%_mandir/man1
 chmod +x %buildroot/%_bindir/trsh.pl
-echo "mv $RC_FILE.new $RC_FILE"
+mv $RC_FILE.new $RC_FILE
 exit 0
 
 %preun
+
 TRSH_SHELL=$SHELL
 SHELL_NAME=${TRSH_SHELL##/bin/}
-for rc in $(ls /etc/*rc* | grep $SHELL_NAME | grep -vP "\.bac$" | grep -vP "\.new" )
+RC_FILE=""
+for rc in $(ls /etc/*rc* | grep $SHELL_NAME | grep -vP "\.bac$" | grep -vP "\.new$" )
 do
 	RC_FILE=$rc
 done
