@@ -4,7 +4,7 @@
 Summary: A Trash manager aliased to rm.
 Name: trsh
 Version: 3.3
-Release: 300
+Release: 301
 Group: Utilities
 License: GPL
 BuildArch: noarch
@@ -29,7 +29,7 @@ mkdir -p %buildroot/etc/profile.d
 %install
 cp $RPM_BUILD_DIR/%name-%version-%release/trsh.pl %buildroot/%_bindir
 cp $RPM_BUILD_DIR/%name-%version-%release/trsh.1.gz %buildroot/%_mandir/man1
-cp $RPM_BUILD_DIR/%name-%version-%release/trsh.sh %buildroot/etc/profile.d/
+cp $RPM_BUILD_DIR/%name-%version-%release/trsh.bash %buildroot/etc/profile.d/
 cp $RPM_BUILD_DIR/%name-%version-%release/trsh.csh %buildroot/etc/profile.d/
 chmod +x %buildroot/%_bindir/trsh.pl
 #echo "alias rm=\"/usr/bin/trsh.pl\" # TRSH" >> /etc/bash.bashrc
@@ -41,13 +41,13 @@ rm -f %buildroot/%_bindir/trsh.pl
 rm -f %buildroot/%_mandir/man1/trsh.1.gz
 #sed -e '/.* # TRSH/d' /etc/bash.bashrc > /etc/bash.bashrc.new
 #mv /etc/bash.bashrc.new /etc/bash.bashrc
-rm -f %buildroot/etc/profile.d/trsh.sh
+rm -f %buildroot/etc/profile.d/trsh.bash
 rm -f %buildroot/etc/profile.d/trsh.csh
 exit 0
 
 %files
 %_bindir/trsh.pl
 %_mandir/man1/trsh.1.gz
-/etc/profile.d/trsh.sh
+/etc/profile.d/trsh.bash
 /etc/profile.d/trsh.csh
 

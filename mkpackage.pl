@@ -44,7 +44,7 @@ system("rm $home/$name/test-trsh.bash");
 system("rm $home/$name/VERSION");
 chdir("$home");
 system("cp -r $name $name.src");
-system("rm $name/trsh.sh");
+system("rm $name/trsh.bash");
 system("rm $name/trsh.csh");
 system("rm $name/trsh.spec");
 system("tar -zcf $name.tar.gz $name");
