@@ -4,7 +4,7 @@
 Summary: A Trash manager aliased to rm.
 Name: trsh
 Version: 3.3
-Release: 307
+Release: 308
 Group: Utilities
 License: GPL
 BuildArch: noarch
@@ -51,8 +51,8 @@ else
 	exit -127
 fi
 sed -e '/.* # TRSH/d' $RC_FILE > $RC_FILE.new
-echo \"$ALIAS_RM\" >> $RC_FILE.new
-echo \"$ALIAS_UNDO\" >> $RC_FILE.new
+echo $ALIAS_RM >> $RC_FILE.new
+echo $ALIAS_UNDO >> $RC_FILE.new
 cp $RPM_BUILD_DIR/%name-%version-%release/trsh.pl %buildroot/%_bindir
 cp $RPM_BUILD_DIR/%name-%version-%release/trsh.1.gz %buildroot/%_mandir/man1
 chmod +x %buildroot/%_bindir/trsh.pl
