@@ -4,7 +4,7 @@
 Summary: A Trash manager aliased to rm.
 Name: trsh
 Version: 3.3
-Release: 303
+Release: 304
 Group: Utilities
 License: GPL
 BuildArch: noarch
@@ -33,6 +33,12 @@ for rc in $(ls /etc/*rc* | grep $SHELL_NAME | grep -vP "\.bac$" )
 do
 	RC_FILE=$rc
 done
+if [[ $RC_FILE -eq "" ]]
+then
+	echo "ERROR! No RC FILE Found"
+	exit -127
+fi
+
 if [[ $SHELL_NAME -eq "bash" ]]
 then
 	ALIAS_RM="alias rm=\"%buildroot/%_bindir/trsh.pl\" # TRSH"
