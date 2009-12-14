@@ -167,9 +167,7 @@ else{
 system("rm makefile") if(-e "makefile");
 open MK, "+>makefile" or die "Could not create makefile\n";
 
-print "$perl_path\n";
 $perl_path =~ s/\//\\\//g;
-print "$perl_path\n";
 
 # DEFAULT
 print MK "default:\n";
