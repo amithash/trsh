@@ -125,7 +125,7 @@ if($view > 0) {
 
 if($empty > 0) {
 	if(scalar(@ARGV) == 0) {
-		if(GetUserPermission("Completely empty the trash?") == 0) {
+		if($force == 0 and GetUserPermission("Completely empty the trash?") == 0) {
 			exit;
 		}
 		EmptyTrash();
@@ -870,7 +870,7 @@ sub SetEnvirnment()
 sub Usage()
 {
 	print <<USAGE
-TRSH VERSION 3.3-289
+TRSH VERSION 3.3-290
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...

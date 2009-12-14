@@ -354,7 +354,81 @@ else
 	passed $NUM $TEST
 fi
 
+############################### TEST 012 ################################
+TEST="Regex Delete"
+NUM="12A"
+FILE1="test_1"
+FILE2="test_2"
+FILE3="test_a"
+FILE4="test_\\d+"
+
+touch $FILE1 $FILE2 $FILE3 $FILE4
+
+$TRSH -ef
+$TRSH -x "test_\d+"
+
+if [ -e $FILE1 ] && [ -e $FILE2 ] && [ ! -e $FILE3 ] && [ ! -e $FILE4 ]
+then
+	failed $NUM "Files either not deleted or deletes other files"
+else
+	passed $NUM $TEST
+fi
+
+NUM="12B"
+
+if [ -e $TRASH_HOME/files/$FILE1 ] && [ -e $TRASH_HOME/files/$FILE2 ] && [ ! -e $TRASH_HOME/files/$FILE3 ] && [ ! -e $TRASH_HOME/files/$FILE4 ]
+then
+	passed $NUM $TEST
+else
+	failed $NUM "Files were either not present in trash or other files present in trash"
+fi
+
+############################### TEST 013 ################################
+TEST="Undo Regex"
+NUM="13A"
+
+$TRSH -ux "test_\d+"
+
+if [ -e $FILE1 ] && [ -e $FILE2 ]
+then
+	passed $NUM $TEST
+else
+	failed $NUM "Not all files in the regex were undoed."
+fi
+
+NUM="13B"
+if [ -e $TRASH_HOME/files/$FILE1 ] && [ -e $TRASH_HOME/files/$FILE2 ]
+then
+	failed $NUM "Regex undo does not remove files from trash"
+else
+	passed $NUM $TEST
+fi
+############################### TEST 014 ################################
+TEST="Empty regex"
+NUM="14A"
+
+FILE1="test_a"
+FILE2="test_b"
+FILE3="test_1"
+FILE4="test_2"
+
+$TRSH $FILE1 $FILE2 $FILE3 $FILE4
+$TRSH -exf "test_[a-z]+"
+if [ -e $TRASH_HOME/files/$FILE1 ] || [ -e $TRASH_HOME/files/$FILE2 ]
+then
+	failed $NUM "Not all files removed from trash"
+else
+	passed $NUM $TEST
+fi
+NUM="14B"
+if [ ! -e $TRASH_HOME/files/$FILE3 ] || [ ! -e $TRASH_HOME/files/$FILE4 ]
+then
+	failed $NUM "Files not part of regex removed"
+else
+	passed $NUM $TEST
+fi
 
 ############################  END OF TESTS  #############################
+# How do I test listing and size? They do not matter anyway
 
 exit_tests
