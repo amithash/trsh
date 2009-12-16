@@ -12,19 +12,20 @@ unless(-d $packages_dir) {
 }
 
 my $verstr = `cat VERSION`;
-$verstr =~ /(\d+)\.(\d+)/;
+$verstr =~ /(\d+)\.(\d+)-(\d+)/;
 my $main = $1;
 my $sub  = $2;
+my $rev = $3;
 
-my $rev = `svnversion`;
-if($rev =~ /M/){
+my $srev = `svnversion`;
+if($srev =~ /M/){
 	print "There are modifications made. Please checkin and then create a package.\n";
 	exit;
 }
 system("svn update");
-$rev = `svnversion`;
-if($rev =~ /^(\d+)/){
-	$rev = $1 + 0;
+$srev = `svnversion`;
+if($srev =~ /^(\d+)/){
+	$srev = $1 + 0;
 }
 # RUN THE BASH TESTS
 if(-e "/bin/bash"){
