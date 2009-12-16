@@ -12,7 +12,7 @@ my $srev  = `svnversion`;
 if($srev =~ /^(\d+)M/){
 	# modification has occured.
 	$rel = $rel + 1;
-} elsif($rel =~ /^\d+\:(\d+)M/){
+} elsif($srev =~ /^\d+\:(\d+)M/){
 	print "WARNING: You need to do a svn update.\n";
 	$rel = $rel + 1;
 } else{
