@@ -84,5 +84,5 @@ if(`id -u` eq "0\n"){
 chdir("$home");
 system("rm -r trsh.spec");
 chdir("$home/trsh-build");
-system("mv * $this_dir/");
+system("cp * $this_dir/");
 
