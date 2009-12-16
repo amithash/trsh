@@ -63,7 +63,7 @@ system("mkdir trsh-build");
 system("mv $name.tar.gz trsh-build");
 system("mv $name.src $name");
 system("mv $name/trsh.spec .");
-system("rm $name/configure.pl")
+system("rm $name/configure.pl");
 system("tar -zcf $name.tar.gz $name");
 system("rm -r $name");
 if(`id -u` eq "0\n"){
