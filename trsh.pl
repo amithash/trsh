@@ -166,6 +166,13 @@ if($size > 0) {
 	exit;
 }
 
+
+if(scalar(@ARGV) == 0) {
+	print "$0 (Aliased to rm): missing operand\n";
+	print "Try `$0 (Or rm) --help' for more information.\n";
+	exit;
+}
+
 foreach my $file (@ARGV) {
 	if($regex == 1) {
 		DeleteRegex($file);
@@ -870,7 +877,7 @@ sub SetEnvirnment()
 sub Usage()
 {
 	print <<USAGE
-TRSH VERSION 3.3-314
+TRSH VERSION 3.3-315
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
