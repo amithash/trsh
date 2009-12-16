@@ -19,6 +19,10 @@ if($srev =~ /^(\d+)M/){
 	print "No modifications, checkin not required.\n";
 	exit;
 }
+open VER,"+>VERSION" or die "Could not write to VERSION\n";
+print VER "$main.$sub-$rel\n";
+close(VER);
+
 open TRSH,"trsh.pl" or die "Could not find trsh.pl";
 my @trsh = <TRSH>;
 close(TRSH);
