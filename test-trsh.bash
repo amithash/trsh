@@ -346,7 +346,7 @@ TEST="Test force delete"
 NUM="11A"
 FILE="test_force"
 touch $FILE
-trsh -f $FILE
+trsh -p $FILE
 if [ -e $FILE ]
 then
 	failed $NUM "File not deleted with force"
@@ -356,7 +356,7 @@ fi
 NUM="11B"
 if [ -e $TRASH_HOME/files/$FILE ]
 then
-	failed $NUM "File moved to trash even with the -f option"
+	failed $NUM "File moved to trash even with the -p option"
 else
 	passed $NUM $TEST
 fi
