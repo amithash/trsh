@@ -4,7 +4,7 @@
 Summary: A Trash manager aliased to rm.
 Name: trsh
 Version: 3.5
-Release: 3
+Release: 4
 Group: Utilities
 License: GPL
 BuildArch: noarch
@@ -117,8 +117,8 @@ then
 	echo "ERROR! No RC FILE Found"
 	exit -127
 fi
-
-if [ `grep "# TRSH" $RC_FILE | wc -l` -ne 2 ]
+RC_TEST=`grep "# TRSH" $RC_FILE | wc -l`
+if [ $RC_TEST -ne 2 ]
 then
 	exit -127
 fi
@@ -132,9 +132,6 @@ then
 	exit -127
 fi
 exit 0
-
-	
-
 
 %files
 %_bindir/trsh.pl
