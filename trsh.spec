@@ -4,7 +4,7 @@
 Summary: A Trash manager aliased to rm.
 Name: trsh
 Version: 3.5
-Release: 5
+Release: 6
 Group: Utilities
 License: GPL
 BuildArch: noarch
@@ -114,22 +114,25 @@ do
 done
 if [ -z $RC_FILE ]
 then
-	echo "ERROR! No RC FILE Found"
+	echo "ERROR! No RC FILE Found" >&2
 	exit -127
 fi
 RC_TEST=`grep "# TRSH" $RC_FILE | wc -l`
 if [ $RC_TEST -ne 2 ]
 then
+	echo "Alias entries not found in $RC_FILE" >&2
 	exit -127
 fi
 
 if [ ! -e %_bindir/trsh.pl ]
 then
+	echo "trsh.pl not found in %_bindir" >&2
 	exit -127
 fi
 
 if [ ! -e %_mandir/man1/trsh.1.gz ]
 then
+	echo "Man page not found in %_mandir/man1/" >&2
 	exit -127
 fi
 exit 0
