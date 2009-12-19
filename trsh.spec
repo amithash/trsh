@@ -4,7 +4,7 @@
 Summary: A Trash manager aliased to rm.
 Name: trsh
 Version: 3.4
-Release: 7
+Release: 8
 Group: Utilities
 License: GPL
 BuildArch: noarch
@@ -27,9 +27,15 @@ rm -rf $RPM_BUILD_DIR/%name-%version-%release
 zcat $RPM_SOURCE_DIR/%name-%version-%release.tar.gz | tar -xvf -
 mkdir -p %buildroot/%_bindir
 mkdir -p %buildroot/%_mandir/man1
-mkdir -p %buildroot/etc/profile.d
 
-%install
+%post
+
+# Do not run the bashrc update if an upgrade.
+if [ $1 -eq 2 ]
+then
+	exit 0
+fi
+
 TRSH_SHELL=$SHELL
 SHELL_NAME=${TRSH_SHELL##/bin/}
 for rc in $(ls /etc/*rc* | grep $SHELL_NAME | grep -vP "\.bac$" | grep -vP "\.new$" )
@@ -56,14 +62,23 @@ fi
 sed -e '/.* # TRSH/d' $RC_FILE > $RC_FILE.new
 echo $ALIAS_RM >> $RC_FILE.new
 echo $ALIAS_UNDO >> $RC_FILE.new
+mv $RC_FILE.new $RC_FILE
+	
+
+%install
 cp $RPM_BUILD_DIR/%name-%version-%release/trsh.pl %buildroot/%_bindir
 cp $RPM_BUILD_DIR/%name-%version-%release/trsh.1.gz %buildroot/%_mandir/man1
 chmod +x %buildroot/%_bindir/trsh.pl
-mv $RC_FILE.new $RC_FILE
 
 exit 0
 
 %preun
+
+# Do not run the update bashrc scripts if an update
+if [ $1 -eq 1 ]
+then
+	exit 0
+fi
 
 TRSH_SHELL=$SHELL
 SHELL_NAME=${TRSH_SHELL##/bin/}
@@ -78,11 +93,17 @@ then
 fi
 
 sed -e '/.* # TRSH/d' $RC_FILE > $RC_FILE.new
-rm -f %buildroot/%_bindir/trsh.pl
-rm -f %buildroot/%_mandir/man1/trsh.1.gz
 mv $RC_FILE.new $RC_FILE
 
 exit 0
+
+%postun
+
+rm -f %buildroot/%_bindir/trsh.pl
+rm -f %buildroot/%_mandir/man1/trsh.1.gz
+
+exit 0
+
 
 %files
 %_bindir/trsh.pl
