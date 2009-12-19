@@ -9,6 +9,7 @@ TRSH="`pwd`/trsh.pl"
 
 trsh()
 {
+	# Add sleep to execute trsh with a granularity of 1 second as the info files has a granularity of 1 second. 
 	sleep 1
 	$TRSH "$@"
 } 
