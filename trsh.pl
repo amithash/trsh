@@ -31,6 +31,8 @@ use Getopt::Long;
 use Fcntl;
 use Term::ANSIColor;
 
+my $VERSION = "3.5-7";
+
 ##############################################################################
 #			   Function Declarations                             #
 ##############################################################################
@@ -88,6 +90,7 @@ my $no_color = 0;
 my $human = 0;
 my $regex = 0;
 my $no_count = 0;
+my $vers = 0;
 
 # Session information
 my $user_name;
@@ -110,6 +113,10 @@ SetEnvirnment();
 
 if($help > 0) {
 	Usage();
+}
+
+if($vers > 0) {
+	Version();
 }
 
 if($view > 0) {
@@ -182,7 +189,7 @@ foreach my $file (@ARGV) {
 	if($warn > 0 and GetUserPermission("Delete $file? ") == 0) {
 		next;
 	}
-	print "Deleting $file from Trash\n" if($verbose > 0);
+	print "Deleted: `$file'\n" if($verbose > 0);
 	DeleteFile($file);
 }
 
@@ -858,6 +865,7 @@ sub SetEnvirnment()
 			'l|list'	  => \$view,
 			'f|force+'	  => \$force,
 			'r|recursive'	  => \$recursive,
+			'R|recursive'	  => \$recursive,
 			'u|undo'	  => \$undo,
 			'help'		  => \$help,
 			'i|interactive'	  => \$warn,
@@ -866,6 +874,7 @@ sub SetEnvirnment()
 			'no-color'	  => \$no_color,
 			's|size'	  => \$size,
 			'h|human-readable'=> \$human,
+			'version'         => \$vers,
 	) == 1 or Usage();
 
 	$Term::ANSIColor::AUTORESET = 1;
@@ -876,10 +885,16 @@ sub SetEnvirnment()
 #		                   Help!                                     #
 ##############################################################################
 
+sub Version()
+{
+	print "TRASH VERSION: $VERSION\n";
+	exit;
+}
+
 sub Usage()
 {
 	print <<USAGE
-TRSH VERSION 3.5-6
+TRSH VERSION $VERSION
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
