@@ -7,6 +7,12 @@ declare TRASH_BACKUP=""
 TEST_DIR=$HOME/____trsh____test____dir
 TRSH="`pwd`/trsh.pl"
 
+trsh()
+{
+	sleep 1
+	$TRSH "$@"
+} 
+
 passed()
 {
 	echo "TEST ${1} PASSED: ${2} ${3} ${4} ${5} ${6} ${7} ${8} ${9} ${10} ${11} ${11} ${12} ${13} ${14} ${15} ${16}" >&2
@@ -38,7 +44,7 @@ init_tests()
 		mv $TRASH_HOME $TRASH_BACKUP
 	fi
 	export PATH=`pwd`:$PATH
-	echo "Using trsh from location: $TRSH"
+	echo "Using trsh from location: trsh"
 	if [ -d $TEST_DIR ]
 	then
 		rm -rf $TEST_DIR
@@ -73,7 +79,7 @@ init_tests "$HOME/.local/share/Trash"
 ############################### TEST 001 ################################
 TEST="creation of folders"
 NUM="1A"
-$TRSH
+trsh > /dev/null
 
 if [ -d $TRASH_HOME/files ]
 then
@@ -93,7 +99,7 @@ TEST="Delete regular files"
 NUM="2A"
 FILE="____test_2"
 touch $FILE
-$TRSH $FILE
+trsh $FILE
 
 if [ -e $FILE ] 
 then
@@ -121,7 +127,7 @@ fi
 TEST="Delete multiple files with same name does not overwrite trash contents"
 NUM="3A"
 touch $FILE
-$TRSH $FILE
+trsh $FILE
 if [ -e $TRASH_HOME/files/$FILE ] && [ -e "$TRASH_HOME/files/${FILE}-1" ] 
 then
 	passed $NUM $TEST
@@ -134,7 +140,7 @@ TEST="Delete directories"
 NUM="4A"
 FILE="____test_3"
 mkdir $FILE
-$TRSH $FILE > /dev/null 2> /dev/null
+trsh $FILE > /dev/null 2> /dev/null
 # -r is not provided. $FILE must not be trashed.
 if [ -d $FILE ]
 then
@@ -143,7 +149,7 @@ else
 	failed $NUM "directories are allowed to be deleted without -r option"
 fi
 NUM="4B"
-$TRSH -r $FILE
+trsh -r $FILE
 if [ -d $FILE ]
 then
 	failed $NUM "Directory not deleted even with -r option"
@@ -160,9 +166,9 @@ fi
 ############################### TEST 005 ################################
 TEST="Delete Files names with space."
 NUM="5A"
-FILE="____test space"
+FILE='____test space'
 touch "$FILE"
-$TRSH "$TEST_DIR/$FILE"
+trsh "$FILE"
 if [ -e "$FILE" ] 
 then
 	failed $NUM "File still exists after deleting"
@@ -192,7 +198,7 @@ touch "$PATTERND"
 touch "$PATTERNE"
 
 NUM="6A"
-$TRSH "$PATTERNA"
+trsh "$PATTERNA"
 if [ -e "$TRASH_HOME/files/$PATTERNA" ]
 then
 	passed $NUM $TEST
@@ -202,7 +208,7 @@ fi
 
 
 NUM="6B"
-$TRSH "$PATTERNB"
+trsh "$PATTERNB"
 if [ -e "$TRASH_HOME/files/$PATTERNB" ]
 then
 	passed $NUM $TEST
@@ -212,7 +218,7 @@ fi
 
 
 NUM="6C"
-$TRSH "$PATTERNC"
+trsh "$PATTERNC"
 if [ -e "$TRASH_HOME/files/$PATTERNC" ]
 then
 	passed $NUM $TEST
@@ -221,7 +227,7 @@ else
 fi
 
 NUM="6D"
-$TRSH "$PATTERND"
+trsh "$PATTERND"
 if [ -e "$TRASH_HOME/files/$PATTERND" ]
 then
 	passed $NUM $TEST
@@ -230,7 +236,7 @@ else
 fi
 
 NUM="6E"
-$TRSH "$PATTERNE"
+trsh "$PATTERNE"
 if [ -e "$TRASH_HOME/files/$PATTERNE" ]
 then
 	passed $NUM $TEST
@@ -248,7 +254,8 @@ touch $FILE1
 touch $FILE2
 touch $FILE3
 
-$TRSH $FILE1 $FILE2 $FILE3
+sleep 1
+trsh $FILE1 $FILE2 $FILE3
 
 if [ -e $TRASH_HOME/files/$FILE1 ] && [ -e $TRASH_HOME/files/$FILE2 ] && [ -e $TRASH_HOME/files/$FILE3 ]
 then
@@ -268,13 +275,12 @@ fi
 TEST="Recover latests deleted files"
 NUM="8A"
 
-$TRSH -u
+trsh -u
 if [ -e $FILE1 ] && [ -e $FILE2 ] && [ -e $FILE3 ]
 then
 	passed $NUM $TEST
 else
 	failed $NUM "All files were not recovered together."
-	ls $TEST_DIR/____multiple_*
 fi
 rm $FILE1 $FILE2 $FILE3
 
@@ -284,8 +290,8 @@ NUM="9A"
 
 FILE="____recover_specific"
 touch $FILE
-$TRSH $FILE
-$TRSH -u $FILE
+trsh $FILE
+trsh -u $FILE
 if [ -e $FILE ] 
 then
 	passed $NUM $TEST
@@ -314,7 +320,7 @@ touch $FILE1
 touch $FILE2
 touch $FILE3
 
-$TRSH -i $FILE1 $FILE2 $FILE3 < nnn
+trsh -i $FILE1 $FILE2 $FILE3 < nnn
 echo ""
 # Answer was n. so files should not be deleted.
 if [ -e $FILE1 ] && [ -e $FILE2 ] && [ -e $FILE3 ]
@@ -325,7 +331,7 @@ else
 fi
 
 NUM="10B"
-$TRSH -i $FILE1 $FILE2 $FILE3 < yyy
+trsh -i $FILE1 $FILE2 $FILE3 < yyy
 echo ""
 if [ -e $FILE1 ] && [ -e $FILE2 ] && [ -e $FILE3 ]
 then
@@ -339,7 +345,7 @@ TEST="Test force delete"
 NUM="11A"
 FILE="test_force"
 touch $FILE
-$TRSH -f $FILE
+trsh -f $FILE
 if [ -e $FILE ]
 then
 	failed $NUM "File not deleted with force"
@@ -364,8 +370,8 @@ FILE4="test_\\d+"
 
 touch $FILE1 $FILE2 $FILE3 $FILE4
 
-$TRSH -ef
-$TRSH -x "test_\d+"
+trsh -ef
+trsh -x "test_\d+"
 
 if [ -e $FILE1 ] && [ -e $FILE2 ] && [ ! -e $FILE3 ] && [ ! -e $FILE4 ]
 then
@@ -387,7 +393,7 @@ fi
 TEST="Undo Regex"
 NUM="13A"
 
-$TRSH -ux "test_\d+"
+trsh -ux "test_\d+"
 
 if [ -e $FILE1 ] && [ -e $FILE2 ]
 then
@@ -412,8 +418,10 @@ FILE2="test_b"
 FILE3="test_1"
 FILE4="test_2"
 
-$TRSH $FILE1 $FILE2 $FILE3 $FILE4
-$TRSH -exf "test_[a-z]+"
+touch $FILE1 $FILE2 $FILE3 $FILE4
+
+trsh $FILE1 $FILE2 $FILE3 $FILE4
+trsh -exf "test_[a-z]+"
 if [ -e $TRASH_HOME/files/$FILE1 ] || [ -e $TRASH_HOME/files/$FILE2 ]
 then
 	failed $NUM "Not all files removed from trash"

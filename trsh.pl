@@ -231,6 +231,8 @@ sub UndoTrashinfo($)
 
 	SysMkdir(dirname($to_path)) unless(-d dirname($to_path));
 
+	print "Undoing $to_path\n" if($verbose > 0);
+
 	my $success = SysMove($from_path, $to_path);
 	if($success == 0) {
 		SysDelete($info_path,"-f");
@@ -877,7 +879,7 @@ sub SetEnvirnment()
 sub Usage()
 {
 	print <<USAGE
-TRSH VERSION 3.4-6
+TRSH VERSION 3.4-7
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
 
 USAGE: rm [OPTIONS]... [FILES]...
