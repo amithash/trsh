@@ -32,7 +32,7 @@ use Fcntl;
 use Term::ANSIColor;
 use File::Spec;
 
-my $VERSION = "3.5-9";
+my $VERSION = "3.5-10";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -93,6 +93,7 @@ my $human = 0;
 my $regex = 0;
 my $no_count = 0;
 my $vers = 0;
+my $permanent = 0;
 
 # Session information
 my $user_name;
@@ -233,7 +234,7 @@ sub UndoTrashinfo($)
 	my $info_path = $entry->{INFO_PATH};
 
 	if(-e $to_path) {
-		if(GetUserPermission("Overwrite file $to_path?") == 0) {
+		if($force == 0 and GetUserPermission("Overwrite file $to_path?") == 0) {
 			return;
 		}
 	}
@@ -344,11 +345,11 @@ sub DeleteFile($)
 	# Always ask for permission for write-protected files
 	unless(-w $path) {
 		my $what_file = FileTypeString($path);
-		if(GetUserPermission("trsh: delete write-protected $what_file `$path'?") == 0) {
+		if($force == 0 and GetUserPermission("trsh: delete write-protected $what_file `$path'?") == 0) {
 			return;
 		}
 	}
-		
+
 	# If dirname is not writable, you cannot delete this file.
 	unless(-w $dirname) {
 		print "trsh: cannot delete `$path': Permission denied\n";
@@ -357,10 +358,10 @@ sub DeleteFile($)
 
 
 	# if force is on pass to rm.
-	if($force > 0) {
+	if($permanent > 0) {
 		my $flag = "";
 		$flag = $flag . "-r " if($recursive > 0);
-		$flag = $flag . "-f " if($force > 1);
+		$flag = $flag . "-f " if($force > 0);
 		SysDelete($path,$flag);
 		return;
 	}
@@ -871,6 +872,7 @@ sub SetEnvirnment()
 			'u|undo'	  => \$undo,
 			'help'		  => \$help,
 			'i|interactive'	  => \$warn,
+			'p|permanent'	  => \$permanent,
 			'v|verbose'	  => \$verbose,
 			'x|regex'         => \$regex,
 			'no-color'	  => \$no_color,
@@ -880,6 +882,10 @@ sub SetEnvirnment()
 	) == 1 or Usage();
 
 	$Term::ANSIColor::AUTORESET = 1;
+
+	if($force > 0) {
+		$warn = 0;
+	}
 }
 
 
@@ -909,10 +915,8 @@ OPTIONS:
 Undo's a delete (Restores FILES or files matching REGEX from trash). 
 Without arguments, the latest deleted file is restored.
 
--f|--force FILES
+-p|--permanent FILES
 Instructs trsh to permanently delete FILES and completely bypass the trash
--ff or --force --force causes trsh to permanently delete files, and also pass
-the force option on to rm.
 
 -i|--interactively
 Prompt the user before any operation.
@@ -927,6 +931,14 @@ Provide verbose output.
 Removed FILES or files matching REGEX from the trash (Permanently).
 Without arguments, the trash is emptied. --force option causes trsh
 to empty the trash without prompting the user.
+
+-f|--force
+Forces any operation:
+	deletion   : overrides -i and does not prompt the user for any action.
+	             with -p passes the -f flag to /bin/rm
+	restore    : will force overwrites of files and will not ask for user permission.
+	empty file : will not ask the user's permission for each file.
+	empty trash: will not ask for confirmation from the user.
 
 -l|--list
 Display the contents of the trash.

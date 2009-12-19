@@ -1,7 +1,7 @@
 ========================================================================================
                                     TRSH
 	 		Copyright 2008 Amithash Prasad                                         
-			       Version 3.5-9
+			       Version 3.5-10
 
 	 trsh is free software: you can redistribute it and/or modify         
 	 it under the terms of the GNU General Public License as published by   
@@ -113,10 +113,8 @@ OPTIONS:
 Undo's a delete (Restores FILES or files matching REGEX from trash). 
 Without arguments, the latest deleted file is restored.
 
--f|--force FILES
+-p|--permanent FILES
 Instructs trsh to permanently delete FILES and completely bypass the trash
--ff or --force --force causes trsh to permanently delete files, and also pass
-the force option on to rm.
 
 -i|--interactively
 Prompt the user before any operation.
@@ -131,6 +129,15 @@ Provide verbose output.
 Removed FILES or files matching REGEX from the trash (Permanently).
 Without arguments, the trash is emptied. --force option causes trsh
 to empty the trash without prompting the user.
+
+-f|--force
+Forces any operation:
+	deletion   : overrides -i and does not prompt the user for any action.
+	             with -p passes the -f flag to /bin/rm
+	restore    : will force overwrites of files and will not ask for user permission.
+	empty file : will not ask the user's permission for each file.
+	empty trash: will not ask for confirmation from the user.
+
 
 -l|--list
 Display the contents of the trash.
@@ -166,31 +173,33 @@ When properly installed, the script is written to mimic rm in all its options.
 Even the error messages are mimicked up to a certain point. Thus trsh should
 not need any learning to delete files.
 
-rm [-f -v -r -i -x] FILE1
+rm [-p -f -v -r -i -x] FILE1
 rm *
 rm /home/user/Desktop/* 
 
 -v makes all operations verbose. So you know what is being deleted.
 
--f permanently deletes files bypassing the trash.
+-p permanently deletes files bypassing the trash.
 
--ff permanently deletes files bypassing the trash and passed the force (-f)
-    option to the real rm.
+-f will not ask for permission while deleting files.
+   with the -p option, it will pass the -f flag to rm
 
 -r recursively deletes directories. Note this option name (recursive) does 
 not make sense but used to match rm's option. 
 
 -i option will ask the user's permission to delete each file.
+   is overwridden if the -f flag is also present.
 
 -x Considers all input as Perl's regex. 
-   Be _very_ careful when using -x with -f. 
+   Be _very_ careful when using -x with -p and -f. 
 
 Examples:
 rm FILE                   # Moves FILE to Trash
 rm -r Directory           # Moves Directory to Trash
-rm -f FILE                # Permanently deletes FILE
-rm -rf DIR                # Permanently deletes DIR
-rm -rff DIR               # Permanently deletes DIR and passes -f to rm.
+rm -f FILE                # deletes FILE does not ask for confirmations (For example, write protected files.)
+rm -p FILE                # permanently deletes file
+rm -rp DIR                # Permanently deletes DIR
+rm -rpf DIR               # Permanently deletes DIR and passes -f to rm.
 
 rm -x "test_[a-z]"        # Deletes all files in current directory matching
                           # test_[a-z]
@@ -230,7 +239,7 @@ in human readable format.
 Undoing trashed files
 ---------------------
 
-rm -u [-x -v] [FILE|REGEX]
+rm -u [-x -v -f] [FILE|REGEX]
 
 rm -u
 Restores the _latest_ deleted trashed file(s) to their original location.
@@ -258,7 +267,7 @@ will recover that file.
 
 If while recovering a file, another file exists with the same 
 name, then trsh will ask the user if they want to overwrite
-the file. 
+the file. This is not performed with the -f (--force) flag.
 
 -x option with a regex (or list of regexes) can be specified
 to undo files in trash. It can be a path with the name as
