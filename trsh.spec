@@ -4,7 +4,7 @@
 Summary: A Trash manager aliased to rm.
 Name: trsh
 Version: 3.5
-Release: 4
+Release: 5
 Group: Utilities
 License: GPL
 BuildArch: noarch
@@ -124,6 +124,7 @@ then
 fi
 
 if [ ! -e %_bindir/trsh.pl ]
+then
 	exit -127
 fi
 
