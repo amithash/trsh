@@ -31,7 +31,7 @@ use Getopt::Long;
 use Fcntl;
 use Term::ANSIColor;
 
-my $VERSION = "3.5-7";
+my $VERSION = "3.5-8";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -48,6 +48,7 @@ sub GetTrashinfoPath($);
 sub GetLatestDeleted();
 sub PrintTrashinfo($);
 sub Usage();
+sub Version();
 sub DeleteFile($);
 sub EmptyTrash();
 sub RemoveFromTrash($);
