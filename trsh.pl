@@ -30,8 +30,9 @@ use Cwd 'abs_path';
 use Getopt::Long;
 use Fcntl;
 use Term::ANSIColor;
+use File::Spec;
 
-my $VERSION = "3.5-8";
+my $VERSION = "3.5-9";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -322,7 +323,7 @@ sub DeleteFile($)
 	my $infoname;
 	my $success = 0;
 
-	unless(-e $path) {
+	if(not(-l $path) and not(-e $path)){
 		print "Cowardly refused to delete non-existant file $path\n";
 		return;
 	}
@@ -1011,7 +1012,7 @@ sub AddEscapes($)
 sub AbsolutePath($)
 {
 	my $in		=	shift;
-	return abs_path($in);
+	return File::Spec->rel2abs( $in ) ;
 }
 
 sub InHome($)
