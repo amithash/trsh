@@ -32,7 +32,7 @@ use Fcntl;
 use Term::ANSIColor;
 use File::Spec;
 
-my $VERSION = "3.5-12";
+my $VERSION = "3.5-13";
 
 ##############################################################################
 #			   Function Declarations                             #
