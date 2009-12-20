@@ -32,7 +32,7 @@ use Fcntl;
 use Term::ANSIColor;
 use File::Spec;
 
-my $VERSION = "3.5-11";
+my $VERSION = "3.5-12";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -885,6 +885,12 @@ sub SetEnvirnment()
 
 	if($force > 0) {
 		$warn = 0;
+	}
+
+	# Allow -h to stand for help.
+	if($size == 0 and $human > 1) {
+		$human = 0;
+		$help = 1;
 	}
 }
 
