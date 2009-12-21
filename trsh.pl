@@ -33,7 +33,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.6-3";
+my $VERSION = "3.6-4";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -130,59 +130,69 @@ if($vers > 0) {
 	Version();
 }
 
-if($view > 0) {
-	if($regex > 0) {
-		foreach my $reg (@ARGV) {
-			ListRegexTrashContents($reg);
-		}
-		exit;
+# List specific files
+if($view > 0 and $regex > 0 and scalar(@ARGV) > 0) {
+	foreach my $reg (@ARGV) {
+		ListRegexTrashContents($reg);
 	}
+	exit;
+}
+
+if($view > 0) {
 	ListTrashContents();
 	exit;
 }
 
+# Empty trash
+if($empty > 0 and scalar(@ARGV) == 0) {
+	EmptyTrash();
+	exit;
+}
+
+# Remove specific files from trash
 if($empty > 0) {
-	if(scalar(@ARGV) == 0) {
-		EmptyTrash();
-	} else {
-		foreach my $file (@ARGV) {
-			if($regex == 1) {
-				RemoveFromTrashRegex($file);
-				next;
-			}
-			RemoveFromTrash($file);
+	foreach my $file (@ARGV) {
+		if($regex == 1) {
+			RemoveFromTrashRegex($file);
+			next;
 		}
+		RemoveFromTrash($file);
 	}
 	exit;
 }
 
+# Undo Latest file.
+if($undo > 0 and scalar(@ARGV) == 0) {
+	UndoLatestFiles();
+	exit;
+}
+
+# Undo specific files
 if($undo > 0) {
-	if(scalar(@ARGV) == 0) {
-		UndoLatestFiles();
-	} else {
-		foreach my $file (@ARGV) {
-			if($regex == 1) {
-				UndoRegex($file);
-				next;
-			}
-			UndoFile($file);
+	foreach my $file (@ARGV) {
+		if($regex == 1) {
+			UndoRegex($file);
+			next;
 		}
+		UndoFile($file);
 	}
 	exit;
 }
 
+# Trash size
 if($size > 0) {
 	PrintTrashSize();
 	exit;
 }
 
-
+# Error Condition: no arguments
 if(scalar(@ARGV) == 0) {
 	print "$0 (Aliased to rm): missing operand\n";
 	print "Try `$0 (Or rm) --help' for more information.\n";
 	exit;
 }
 
+# Delete files
 foreach my $file (@ARGV) {
 	if($regex == 1) {
 		DeleteRegex($file);
@@ -909,7 +919,7 @@ sub SetEnvirnment()
 	}
 
 	# Allow -h to stand for help.
-	if($size == 0 and $human > 1) {
+	if($size == 0 and $human > 0) {
 		$human = 0;
 		$help = 1;
 	}
@@ -1018,9 +1028,7 @@ If used along with -s, the file size displayed will be human readable
 --help
 Displays this help and exits.
 
-Please read the README accompanying trsh.
-
-\n
+Please read the README for more information
 USAGE
 ;
 exit;
