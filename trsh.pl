@@ -33,7 +33,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.6-4";
+my $VERSION = "3.6-5";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -928,6 +928,11 @@ sub SetEnvirnment()
 	if($size == 0) {
 		$path_width_perc += $size_width_perc;
 		$size_width_perc = 0;
+	}
+
+	if($ldate == 0) {
+		$name_width_perc += $date_width_perc;
+		$date_width_perc = 0;
 	}
 
 	my $screen_width = (GetTerminalSize())[0];
