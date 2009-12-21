@@ -32,7 +32,7 @@ use Fcntl;
 use Term::ANSIColor;
 use File::Spec;
 
-my $VERSION = "3.5-13";
+my $VERSION = "3.5-14";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -145,10 +145,6 @@ if($empty > 0) {
 				RemoveFromTrashRegex($file);
 				next;
 			}
-			if($force == 0 and GetUserPermission("Remove $file from the trash?") == 0) {
-				next;
-			}
-			print "Removing $file from Trash\n" if($verbose > 0);
 			RemoveFromTrash($file);
 		}
 	}
@@ -746,6 +742,7 @@ sub RemoveTrashinfo
 	if($force == 0 and GetUserPermission("Remove $entry->{NAME} for trash?") == 0) {
 		return;
 	}
+	print "Removing from trash: `$entry->{PATH}'\n" if($verbose > 0);
 	SysDelete($entry->{IN_TRASH_PATH}, "-rf");
 	SysDelete($entry->{INFO_PATH}, "-rf");
 }
