@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 ##############################################################################
-#			           TRSH 3,x                                  #
+#			           TRSH 3.x                                  #
 ##############################################################################
 
 ##############################################################################
@@ -26,13 +26,14 @@
 use strict;
 use warnings;
 use File::Basename;
+use File::Spec;
 use Cwd 'abs_path'; 
 use Getopt::Long;
 use Fcntl;
 use Term::ANSIColor;
-use File::Spec;
+use Term::ReadKey;
 
-my $VERSION = "3.5-14";
+my $VERSION = "3.6-1";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -71,6 +72,7 @@ sub FileSize($);
 sub EntrySize($);
 sub PrintTrashSize();
 sub ListRegexTrashContents($);
+sub Crop($$);
 
 ##############################################################################
 #				Global Variables                             #
@@ -102,11 +104,16 @@ my $home;
 my $home_trash;
 my $current_date;
 my @dlist;
+my $name_width;
+my $date_width;
+my $size_width;
+my $path_width;
 
 # Constants 
-my $name_width = 50;
-my $date_width = 20;
-my $size_width = 10;
+my $name_width_perc = 30;
+my $date_width_perc = 20;
+my $size_width_perc = 10;
+my $path_width_perc = 40;
 
 ##############################################################################
 #				   MAIN		                             #
@@ -135,9 +142,6 @@ if($view > 0) {
 
 if($empty > 0) {
 	if(scalar(@ARGV) == 0) {
-		if($force == 0 and GetUserPermission("Completely empty the trash?") == 0) {
-			exit;
-		}
 		EmptyTrash();
 	} else {
 		foreach my $file (@ARGV) {
@@ -160,7 +164,6 @@ if($undo > 0) {
 				UndoRegex($file);
 				next;
 			}
-			print "Restoring $file from Trash\n" if($verbose > 0);
 			UndoFile($file);
 		}
 	}
@@ -184,11 +187,6 @@ foreach my $file (@ARGV) {
 		DeleteRegex($file);
 		next;
 	}
-
-	if($warn > 0 and GetUserPermission("Delete $file? ") == 0) {
-		next;
-	}
-	print "Deleted: `$file'\n" if($verbose > 0);
 	DeleteFile($file);
 }
 
@@ -221,30 +219,6 @@ sub UndoFile($)
 	UndoTrashinfo($entry);
 }
 
-sub UndoTrashinfo($)
-{
-	my $entry	=	shift;
-
-	my $from_path = $entry->{IN_TRASH_PATH};
-	my $to_path   = $entry->{PATH};
-	my $info_path = $entry->{INFO_PATH};
-
-	if(-e $to_path) {
-		if($force == 0 and GetUserPermission("Overwrite file $to_path?") == 0) {
-			return;
-		}
-	}
-
-	SysMkdir(dirname($to_path)) unless(-d dirname($to_path));
-
-	print "Undoing $to_path\n" if($verbose > 0);
-
-	my $success = SysMove($from_path, $to_path);
-	if($success == 0) {
-		SysDelete($info_path,"-f");
-	}
-}
-
 sub UndoRegex($)
 {
 	my $reg		=	shift;
@@ -261,6 +235,10 @@ sub UndoRegex($)
 
 sub EmptyTrash()
 {
+	if($force == 0 and GetUserPermission("Completely empty the trash?") == 0) {
+		exit;
+	}
+
 	# Empty Home Trash
 	print "Removing all files in home trash\n" if($verbose > 0);
 	system("rm -rf $home_trash/info/*");
@@ -338,6 +316,11 @@ sub DeleteFile($)
 		return;
 	}
 
+
+	if($warn > 0 and GetUserPermission("Delete $path? ") == 0) {
+		next;
+	}
+
 	# Always ask for permission for write-protected files
 	unless(-w $path) {
 		my $what_file = FileTypeString($path);
@@ -359,6 +342,7 @@ sub DeleteFile($)
 		$flag = $flag . "-r " if($recursive > 0);
 		$flag = $flag . "-f " if($force > 0);
 		SysDelete($path,$flag);
+		print "Permanently removed: `$path'\n" if($verbose > 0);
 		return;
 	}
 
@@ -368,6 +352,7 @@ sub DeleteFile($)
 			NAME=>$name, 
 			TRASH=>$trsh });
 
+	print "Deleted: `$path'\n" if($verbose > 0);
 }
 
 sub DeleteRegex($)
@@ -712,11 +697,11 @@ sub PrintTrashinfo($)
 	if(not defined($p->{PATH})) {
 		return;
 	}
+	my $name = Crop(sprintf("%-${name_width}s", $p->{NAME}), $name_width);
+	my $date = Crop(sprintf("%-${date_width}s", $p->{DATE}), $date_width);
+	my $path = Crop(sprintf("%-${path_width}s", $p->{PATH}), $path_width);
+	my $sz   = Crop(sprintf("%-${size_width}s", $p->{SIZE}), $size_width);
 
-	my $name = sprintf("%-${name_width}s", $p->{NAME});
-	my $date = sprintf("%-${date_width}s", $p->{DATE});
-	my $path = $p->{PATH};
-	my $sz = sprintf("%-${size_width}s", $p->{SIZE});
 	if($no_color == 0) {
 		print color(FileTypeColor($p->{IN_TRASH_PATH})), "$name";
 		print color("reset"), " |";
@@ -746,6 +731,38 @@ sub RemoveTrashinfo
 	SysDelete($entry->{IN_TRASH_PATH}, "-rf");
 	SysDelete($entry->{INFO_PATH}, "-rf");
 }
+
+sub UndoTrashinfo($)
+{
+	my $entry	=	shift;
+
+	my $from_path = $entry->{IN_TRASH_PATH};
+	my $to_path   = $entry->{PATH};
+	my $info_path = $entry->{INFO_PATH};
+
+	if($warn > 0 and GetUserPermission("Restore $to_path?") == 0) {
+		return;
+	}
+
+	if(-e $to_path) {
+		if($force == 0 and GetUserPermission("Overwrite file $to_path?") == 0) {
+			return;
+		}
+	}
+
+	SysMkdir(dirname($to_path)) unless(-d dirname($to_path));
+
+
+	my $success = SysMove($from_path, $to_path);
+	if($success == 0) {
+		SysDelete($info_path,"-f");
+	} else {
+		print "Error restoring $to_path\n";
+		return;
+	}
+	print "Restored: $to_path\n" if($verbose > 0);
+}
+
 
 
 ##############################################################################
@@ -889,6 +906,22 @@ sub SetEnvirnment()
 		$human = 0;
 		$help = 1;
 	}
+
+	# Do not reserve space without -s option.
+	if($size == 0) {
+		$path_width_perc += $size_width_perc;
+		$size_width_perc = 0;
+	}
+
+	my $screen_width = (GetTerminalSize())[0];
+
+	# Adjust for each character '| '
+	$screen_width = $screen_width - 4;
+
+	$name_width = int($screen_width * $name_width_perc / 100);
+	$date_width = int($screen_width * $date_width_perc / 100);
+	$size_width = int($screen_width * $size_width_perc / 100);
+	$path_width = int($screen_width * $path_width_perc / 100);
 }
 
 
@@ -1172,3 +1205,16 @@ sub PrepareRegex($)
 	}
 	return $regex;
 }
+
+sub Crop($$)
+{
+	my $string	=	shift;
+	my $width	=	shift;
+	if(length($string) <= $width) {
+		return $string;
+	}
+	my @tmp = split(//,$string);
+	my $ret = join("", @tmp[0..$width]);
+	return $ret;
+}
+
