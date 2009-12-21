@@ -33,7 +33,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.6-1";
+my $VERSION = "3.6-2";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -90,7 +90,8 @@ my $warn = 0;
 my $verbose = 0;
 my $recursive = 0;
 my $regex_force = 0;
-my $no_color = 0;
+my $color = 1;
+my $ldate = 1;
 my $human = 0;
 my $regex = 0;
 my $no_count = 0;
@@ -110,8 +111,8 @@ my $size_width;
 my $path_width;
 
 # Constants 
-my $name_width_perc = 30;
-my $date_width_perc = 20;
+my $name_width_perc = 25;
+my $date_width_perc = 25;
 my $size_width_perc = 10;
 my $path_width_perc = 40;
 
@@ -401,11 +402,13 @@ sub ListArrayContents($)
 		return;
 	}
 
-	printf("%-${name_width}s | %-${date_width}s | ", "Trash Entry", "Deletion Date");
-	printf("%-${size_width}s | ", "Size") if($size > 0);
+	printf("%-${name_width}s| ", "Trash Entry");
+	printf("%-${date_width}s| ", "Deletion Date") if($ldate > 0);
+	printf("%-${size_width}s| ", "Size") if($size > 0);
 	printf("%s\n", "Restore Path");
-	printf("%-${name_width}s | %-${date_width}s | ", "-----------", "-------------");
-	printf("%-${size_width}s | ", "----") if($size > 0);
+	printf("%-${name_width}s| ", "-----------");
+	printf("%-${date_width}s| ", "-------------") if($ldate > 0);
+	printf("%-${size_width}s| ", "----") if($size > 0);
 	printf("%s\n", "------------");
 
 	foreach my $p (@List) {
@@ -702,11 +705,13 @@ sub PrintTrashinfo($)
 	my $path = Crop(sprintf("%-${path_width}s", $p->{PATH}), $path_width);
 	my $sz   = Crop(sprintf("%-${size_width}s", $p->{SIZE}), $size_width);
 
-	if($no_color == 0) {
+	if($color > 0) {
 		print color(FileTypeColor($p->{IN_TRASH_PATH})), "$name";
 		print color("reset"), " |";
-		print color("Yellow"), " $date";
-		print color("reset"), " |";
+		if($ldate > 0) {
+			print color("Yellow"), " $date";
+			print color("reset"), " |";
+		}
 		if($size > 0) {
 			print color("Red"), " $sz";
 			print color("reset"), " |";
@@ -714,9 +719,10 @@ sub PrintTrashinfo($)
 		print color("reset"), " $path\n";
 	} else {
 		print "$name";
-		print " | $date | ";
-		print "$sz | " if($size > 0);
-		print "$path\n";
+		print " |";
+		print " $date |" if($ldate > 0);
+		print " $sz | " if($size > 0);
+		print " $path\n";
 	}
 }
 
@@ -889,7 +895,8 @@ sub SetEnvirnment()
 			'p|permanent'	  => \$permanent,
 			'v|verbose'	  => \$verbose,
 			'x|regex'         => \$regex,
-			'no-color'	  => \$no_color,
+			'color!'	  => \$color,
+			'date!'		  => \$ldate,
 			's|size'	  => \$size,
 			'h|human-readable'=> \$human,
 			'version'         => \$vers,
@@ -979,8 +986,16 @@ Forces any operation:
 -l|--list
 Display the contents of the trash.
 
---no-color
-An option for listing which turns of term colors.
+--color (Default)
+Print listings (Refer -l) using the terminal's support for colored text.
+--nocolor
+Print listings normally without color.
+
+--date (Default)
+Print the deletion date with the trash listing (-l)
+
+--nodate
+Do not print the deletion date with the trash listing (-l)
 
 -x|--regex
 Considers input as perl regex rather than names or paths.
@@ -1210,6 +1225,7 @@ sub Crop($$)
 {
 	my $string	=	shift;
 	my $width	=	shift;
+	$width = $width - 2;
 	if(length($string) <= $width) {
 		return $string;
 	}
