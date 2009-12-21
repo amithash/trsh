@@ -4,7 +4,7 @@
 Summary: A Trash manager aliased to rm.
 Name: trsh
 Version: 3.6
-Release: 2
+Release: 3
 Group: Utilities
 License: GPL
 BuildArch: noarch
@@ -13,7 +13,7 @@ Vendor: Amithash Prasad
 Packager: Amithash Prasad <amithash@gmail.com>
 Source: $RPM_SOURCE_DIR/trsh-2.2-212.tar.gz
 Provides: trsh
-Requires: perl
+Requires: perl(strict), perl(warnings), perl(File::Basename), perl(File::Spec), perl(Cwd), perl(Getopt::Long), perl(Fcntl), perl(Term::ANSIColor), perl(Term::ReadKey)
 
 
 %description
