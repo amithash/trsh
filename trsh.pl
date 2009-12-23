@@ -23,6 +23,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.      *
 ##############################################################################
 
+##############################################################################
+#			     Notes On Style                                  #
+# 1. Global variables and function - FirstLetterCaps                         #
+# 2. Local variables               - all_low_case_with_undercore             #
+# 3. Parameters                    - OptionOptionName                        #
+#                                                                            #
+# 4. All Functions must be typed and declared.                               #
+##############################################################################
 use strict;
 use warnings;
 use File::Basename;
@@ -33,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.6-9";
+my $VERSION = "3.6-10";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -81,48 +89,45 @@ sub PrintColored($$);
 ##############################################################################
 
 # Parameters
-my $recover = 0;
-my $empty = 0;
-my $view = 0;
-my $force = 0;
-my $undo = 0;
-my $size = 0;
-my $help = 0;
-my $warn = 0;
-my $verbose = 0;
-my $recursive = 0;
-my $regex_force = 0;
-my $color = 1;
-my $ldate = 1;
-my $human = 0;
-my $regex = 0;
-my $no_count = 0;
-my $vers = 0;
-my $permanent = 0;
+my $OptionEmpty		= 0;
+my $OptionList		= 0;
+my $OptionForce		= 0;
+my $OptionUndo		= 0;
+my $OptionSize		= 0;
+my $OptionHelp		= 0;
+my $OptionInteractive	= 0;
+my $OptionVerbose	= 0;
+my $OptionRecursive	= 0;
+my $OptionColor		= 1;
+my $OptionDate		= 1;
+my $OptionHumanReadable = 0;
+my $OptionRegex		= 0;
+my $OptionVersion	= 0;
+my $OptionPermanent	= 0;
 
 # Session information
-my $user_name;
-my $user_id;
-my $home;
-my $home_trash;
-my $current_date;
-my @dlist;
-my $name_width;
-my $date_width;
-my $size_width;
-my $path_width;
-my $sz_width;
-my $dev_width;
+my $UserName;
+my $UserID;
+my $Home;
+my $HomeTrash;
+my $CurrentDate;
+my $ListNameWidth;
+my $ListDateWidth;
+my $ListSizeWidth;
+my $ListPathWidth;
+my $SSizeWidth;
+my $SDevWidth;
 my %TypeColors;
 my %AttrColors;
+my @DevList;
 
 # Constants 
-my $name_width_perc = 25;
-my $date_width_perc = 25;
-my $size_width_perc = 10;
-my $path_width_perc = 40;
-my $sz_width_perc   = 20;
-my $dev_width_perc  = 80;
+my $ListNameWidthPerc = 25;
+my $ListDateWidthPerc = 25;
+my $ListSizeWidthPerc = 10;
+my $ListPathWidthPerc = 40;
+my $SSizeWidthPerc    = 20;
+my $SDevWidthPerc     = 80;
 
 ##############################################################################
 #				   MAIN		                             #
@@ -130,37 +135,37 @@ my $dev_width_perc  = 80;
 
 SetEnvirnment();
 
-if($help > 0) {
+if($OptionHelp > 0) {
 	Usage();
 }
 
-if($vers > 0) {
+if($OptionVersion > 0) {
 	Version();
 }
 
 # List specific files
-if($view > 0 and $regex > 0 and scalar(@ARGV) > 0) {
+if($OptionList > 0 and $OptionRegex > 0 and scalar(@ARGV) > 0) {
 	foreach my $reg (@ARGV) {
 		ListRegexTrashContents($reg);
 	}
 	exit;
 }
 
-if($view > 0) {
+if($OptionList > 0) {
 	ListTrashContents();
 	exit;
 }
 
 # Empty trash
-if($empty > 0 and scalar(@ARGV) == 0) {
+if($OptionEmpty > 0 and scalar(@ARGV) == 0) {
 	EmptyTrash();
 	exit;
 }
 
 # Remove specific files from trash
-if($empty > 0) {
+if($OptionEmpty > 0) {
 	foreach my $file (@ARGV) {
-		if($regex == 1) {
+		if($OptionRegex == 1) {
 			RemoveFromTrashRegex($file);
 			next;
 		}
@@ -170,15 +175,15 @@ if($empty > 0) {
 }
 
 # Undo Latest file.
-if($undo > 0 and scalar(@ARGV) == 0) {
+if($OptionUndo > 0 and scalar(@ARGV) == 0) {
 	UndoLatestFiles();
 	exit;
 }
 
 # Undo specific files
-if($undo > 0) {
+if($OptionUndo > 0) {
 	foreach my $file (@ARGV) {
-		if($regex == 1) {
+		if($OptionRegex == 1) {
 			UndoRegex($file);
 			next;
 		}
@@ -188,7 +193,7 @@ if($undo > 0) {
 }
 
 # Trash size
-if($size > 0) {
+if($OptionSize > 0) {
 	PrintTrashSize();
 	exit;
 }
@@ -202,7 +207,7 @@ if(scalar(@ARGV) == 0) {
 
 # Delete files
 foreach my $file (@ARGV) {
-	if($regex == 1) {
+	if($OptionRegex == 1) {
 		DeleteRegex($file);
 		next;
 	}
@@ -241,9 +246,9 @@ sub UndoFile($)
 sub UndoRegex($)
 {
 	my $reg		=	shift;
-	my @List = GetRegexMatchingFiles($reg);
-	foreach my $p (@List) {
-		print "Restoring $p->{PATH}\n" if($verbose > 0);
+	my @list = GetRegexMatchingFiles($reg);
+	foreach my $p (@list) {
+		print "Restoring $p->{PATH}\n" if($OptionVerbose > 0);
 		UndoTrashinfo($p);
 	}
 }
@@ -254,14 +259,14 @@ sub UndoRegex($)
 
 sub EmptyTrash()
 {
-	if($force == 0 and GetUserPermission("Completely empty the trash?") == 0) {
+	if($OptionForce == 0 and GetUserPermission("Completely empty the trash?") == 0) {
 		exit;
 	}
 
 	# Empty Home Trash
-	print "Removing all files in home trash\n" if($verbose > 0);
-	system("rm -rf $home_trash/info/*");
-	system("rm -rf $home_trash/files/*");
+	print "Removing all files in home trash\n" if($OptionVerbose > 0);
+	system("rm -rf $HomeTrash/info/*");
+	system("rm -rf $HomeTrash/files/*");
 
 	# Empty Devices Trash
 	my @devs = GetDeviceList();
@@ -275,7 +280,7 @@ sub EmptyTrash()
 		unless(-d $trsh) {
 			next;
 		}
-		print "Removing all files in trash for device: $dev\n" if($verbose > 0);
+		print "Removing all files in trash for device: $dev\n" if($OptionVerbose > 0);
 		system("rm -rf $trsh/info/*");
 		system("rm -rf $trsh/files/*");
 	}
@@ -297,8 +302,8 @@ sub RemoveFromTrash($)
 sub RemoveFromTrashRegex($)
 {
 	my $reg		=	shift;
-	my @List = GetRegexMatchingFiles($reg);
-	foreach my $p (@List) {
+	my @list = GetRegexMatchingFiles($reg);
+	foreach my $p (@list) {
 		RemoveTrashinfo($p);
 	}
 }
@@ -330,20 +335,20 @@ sub DeleteFile($)
 	my $dirname = dirname($path);
 
 	# Error on directories without -r flag.
-	if(-d $path and $recursive == 0) {
+	if(-d $path and $OptionRecursive == 0) {
 		print "trsh: cannot remove `$path': Is a directory\n";
 		return;
 	}
 
 
-	if($warn > 0 and GetUserPermission("Delete $path? ") == 0) {
+	if($OptionInteractive > 0 and GetUserPermission("Delete $path? ") == 0) {
 		next;
 	}
 
 	# Always ask for permission for write-protected files
 	unless(-w $path) {
 		my $what_file = FileTypeString($path);
-		if($force == 0 and GetUserPermission("trsh: delete write-protected $what_file `$path'?") == 0) {
+		if($OptionForce == 0 and GetUserPermission("trsh: delete write-protected $what_file `$path'?") == 0) {
 			return;
 		}
 	}
@@ -356,22 +361,22 @@ sub DeleteFile($)
 
 
 	# if force is on pass to rm.
-	if($permanent > 0) {
+	if($OptionPermanent > 0) {
 		my $flag = "";
-		$flag = $flag . "-r " if($recursive > 0);
-		$flag = $flag . "-f " if($force > 0);
+		$flag = $flag . "-r " if($OptionRecursive > 0);
+		$flag = $flag . "-f " if($OptionForce > 0);
 		SysDelete($path,$flag);
-		print "Permanently removed: `$path'\n" if($verbose > 0);
+		print "Permanently removed: `$path'\n" if($OptionVerbose > 0);
 		return;
 	}
 
 	PutTrashinfo({
 			PATH=>$path, 
-			DATE=>$current_date, 
+			DATE=>$CurrentDate, 
 			NAME=>$name, 
 			TRASH=>$trsh });
 
-	print "Deleted: `$path'\n" if($verbose > 0);
+	print "Deleted: `$path'\n" if($OptionVerbose > 0);
 }
 
 sub DeleteRegex($)
@@ -384,10 +389,10 @@ sub DeleteRegex($)
 	$reg = PrepareRegex(basename($reg));
 	foreach my $file (<$dir/*>) {
 		if($file =~ $reg) {
-			if($warn > 0 and GetUserPermission("Delete $file? ") == 0) {
+			if($OptionInteractive > 0 and GetUserPermission("Delete $file? ") == 0) {
 				next;
 			}
-			print "Deleting $file from Trash\n" if($verbose > 0);
+			print "Deleting $file from Trash\n" if($OptionVerbose > 0);
 			DeleteFile($file);
 		}
 	}
@@ -400,37 +405,37 @@ sub DeleteRegex($)
 
 sub ListTrashContents()
 {
-	my @List = GetTrashContents();
-	ListArrayContents(\@List);
+	my @list = GetTrashContents();
+	ListArrayContents(\@list);
 }
 
 sub ListRegexTrashContents($)
 {
 	my $reg		=	shift;
-	my @List = GetRegexMatchingFiles($reg);
-	ListArrayContents(\@List);
+	my @list = GetRegexMatchingFiles($reg);
+	ListArrayContents(\@list);
 }
 
 sub ListArrayContents($)
 {
 	my $ref		=	shift;
-	my @List = @{$ref};
+	my @list = @{$ref};
 
-	if(scalar(@List) == 0) {
+	if(scalar(@list) == 0) {
 		return;
 	}
 	my %dates;
-	foreach my $p (@List) {
+	foreach my $p (@list) {
 		$dates{$p->{DATE}} = $p;
 	}
 
-	printf("%-${name_width}s| ", "Trash Entry");
-	printf("%-${date_width}s| ", "Deletion Date") if($ldate > 0);
-	printf("%-${size_width}s| ", "Size") if($size > 0);
+	printf("%-${ListNameWidth}s| ", "Trash Entry");
+	printf("%-${ListDateWidth}s| ", "Deletion Date") if($OptionDate > 0);
+	printf("%-${ListSizeWidth}s| ", "Size") if($OptionSize > 0);
 	printf("%s\n", "Restore Path");
-	printf("%-${name_width}s| ", "-----------");
-	printf("%-${date_width}s| ", "-------------") if($ldate > 0);
-	printf("%-${size_width}s| ", "----") if($size > 0);
+	printf("%-${ListNameWidth}s| ", "-----------");
+	printf("%-${ListDateWidth}s| ", "-------------") if($OptionDate > 0);
+	printf("%-${ListSizeWidth}s| ", "----") if($OptionSize > 0);
 	printf("%s\n", "------------");
 
 	foreach my $date (sort keys %dates) {
@@ -445,7 +450,7 @@ sub ListArrayContents($)
 
 sub PrintTrashSize()
 {
-	my $sz  = GetTrashSize($home_trash);
+	my $sz  = GetTrashSize($HomeTrash);
 
 	PrintTrashSizeLine("Home Trash", $sz);
 
@@ -464,8 +469,8 @@ sub PrintTrashSizeLine($$)
 
 	my $sz_color = SizeColor($sz);
 
-	$dev = Crop(sprintf("%-${dev_width}s", $dev), $dev_width);
-	$sz  = Crop(sprintf("%-${sz_width}s",$sz), $sz_width);
+	$dev = Crop(sprintf("%-${SDevWidth}s", $dev), $SDevWidth);
+	$sz  = Crop(sprintf("%-${SSizeWidth}s",$sz), $SSizeWidth);
 
 	PrintColored("$sz", $sz_color);
 	PrintColored("| ", "reset");
@@ -475,7 +480,7 @@ sub PrintTrashSizeLine($$)
 sub SizeColor($)
 {
 	my $sz		=	shift;
-	if($human == 0) {
+	if($OptionHumanReadable == 0) {
 		$sz = HumanReadable($sz);
 	}
 	if($sz =~ /P/) {
@@ -529,7 +534,7 @@ sub GetTrashSize($)
 		}
 	}
 
-	$sz = HumanReadable($sz) if($human > 0);
+	$sz = HumanReadable($sz) if($OptionHumanReadable > 0);
 
 	return $sz;
 }
@@ -542,7 +547,7 @@ sub GetLatestMatchingFile($)
 {
 	my $file	=	shift;
 
-	my @List = GetTrashContents();
+	my @list = GetTrashContents();
 	my @dates;
 	my $search_path = 0;
 
@@ -552,7 +557,7 @@ sub GetLatestMatchingFile($)
 
 	my @remove_list = ();
 
-	foreach my $p (@List) {
+	foreach my $p (@list) {
 		if($search_path == 1) {
 			if($p->{PATH} eq $file) {
 				push @remove_list, $p;
@@ -583,37 +588,37 @@ sub GetRegexMatchingFiles($) {
 		$dir = dirname($reg);
 	}
 	$reg = PrepareRegex(basename($reg));
-	my @List = GetTrashContents();
-	my @Matched = ();
-	foreach my $p (@List) {
+	my @list = GetTrashContents();
+	my @matched = ();
+	foreach my $p (@list) {
 		if($dir ne "") {
 			my $d = dirname($p->{PATH});
 			next if($dir ne "$d");
 		}
 		if($p->{NAME} =~ $reg) {
-			push @Matched, $p;
+			push @matched, $p;
 		}
 	}
-	return @Matched;
+	return @matched;
 }
 
 sub GetTrashContents()
 {
-	my $trsh = $home_trash;
-	my @List = ();
-	push @List, GetSpecificTrashContents($trsh);
+	my $trsh = $HomeTrash;
+	my @list = ();
+	push @list, GetSpecificTrashContents($trsh);
 	my @devs = GetDeviceList();
 	foreach my $dev (@devs) {
 		next if($dev eq "/" or $dev eq "/home");
-		push @List, GetSpecificTrashContents(GetDeviceTrash($dev));
+		push @list, GetSpecificTrashContents(GetDeviceTrash($dev));
 	}
-	return @List;
+	return @list;
 }
 
 sub GetSpecificTrashContents($) {
 	my $trash_dir	=	shift;
 	my @list = <$trash_dir/info/*.trashinfo>;
-	my @TrashList = ();
+	my @trash_list = ();
 	foreach my $info (@list) {
 		my $name = basename($info);
 		if($name =~ /^(.+).trashinfo$/) {
@@ -628,30 +633,30 @@ sub GetSpecificTrashContents($) {
 		$p->{IN_TRASH_NAME} = $name;
 		$p->{INFO_PATH} = "$trash_dir/info/$name.trashinfo";
 		$p->{IN_TRASH_PATH} = "$trash_dir/files/$name";
-		if($trash_dir eq $home_trash) {
+		if($trash_dir eq $HomeTrash) {
 			$p->{DEV} = "HOME";
 		} else {
 			$p->{DEV} = InDevice($trash_dir);
 			$p->{PATH} = $p->{DEV} . "/" . $p->{PATH};
 		}
 		$p->{NAME} = basename($p->{PATH});
-		if($size > 0) {
+		if($OptionSize > 0) {
 			$p->{SIZE} = EntrySize($p->{IN_TRASH_PATH});
-			$p->{SIZE} = HumanReadable($p->{SIZE}) if($human > 0);
+			$p->{SIZE} = HumanReadable($p->{SIZE}) if($OptionHumanReadable > 0);
 		} else {
 			$p->{SIZE} = 0;
 		}
-		push @TrashList, $p;
+		push @trash_list, $p;
 	}
-	return @TrashList;
+	return @trash_list;
 }
 
 sub GetLatestDeleted()
 {
-	my @List  = GetTrashContents();
+	my @list  = GetTrashContents();
 	my @dates = ();
 
-	foreach my $p (@List) {
+	foreach my $p (@list) {
 		push @dates, $p->{DATE};
 	}
 
@@ -662,7 +667,7 @@ sub GetLatestDeleted()
 	@dates = sort @dates;
 	my $latest = $dates[$#dates];
 	my @latest_info;
-	foreach my $p (@List) {
+	foreach my $p (@list) {
 		if($p->{DATE} eq $latest) {
 			push @latest_info, $p;
 		}
@@ -709,14 +714,14 @@ sub PutTrashinfo($)
 	}
 	print INFO "[Trash Info]\n";
 	my $infile_path = $entry->{PATH};
-	if($entry->{TRASH} ne $home_trash) {
+	if($entry->{TRASH} ne $HomeTrash) {
 		my $dev = InDevice($entry->{PATH});
 		if($entry->{PATH} =~ /^$dev\/(.+)$/) {
 			$infile_path = $1;
 		}
 	}
 	print INFO "Path=$infile_path\n";
-	print INFO "DeletionDate=$current_date\n";
+	print INFO "DeletionDate=$CurrentDate\n";
 
 	close(INFO);
 
@@ -760,18 +765,18 @@ sub PrintTrashinfo($)
 	if(not defined($p->{PATH})) {
 		return;
 	}
-	my $name = Crop(sprintf("%-${name_width}s", $p->{NAME}), $name_width);
-	my $date = Crop(sprintf("%-${date_width}s", $p->{DATE}), $date_width);
-	my $path = Crop(sprintf("%-${path_width}s", $p->{PATH}), $path_width);
-	my $sz   = Crop(sprintf("%-${size_width}s", $p->{SIZE}), $size_width);
+	my $name = Crop(sprintf("%-${ListNameWidth}s", $p->{NAME}), $ListNameWidth);
+	my $date = Crop(sprintf("%-${ListDateWidth}s", $p->{DATE}), $ListDateWidth);
+	my $path = Crop(sprintf("%-${ListPathWidth}s", $p->{PATH}), $ListPathWidth);
+	my $sz   = Crop(sprintf("%-${ListSizeWidth}s", $p->{SIZE}), $ListSizeWidth);
 
 	PrintColored("$name", FileTypeColor($p->{IN_TRASH_PATH}));
 	PrintColored(" |", "reset");
-	if($ldate > 0) {
+	if($OptionDate > 0) {
 		PrintColored(" $date", "Yellow");
 		PrintColored(" |", "reset");
 	}
-	if($size > 0) {
+	if($OptionSize > 0) {
 		my $sz_color = SizeColor($p->{SIZE});
 		PrintColored(" $sz", SizeColor($p->{SIZE}));
 		PrintColored(" |", "reset");
@@ -783,10 +788,10 @@ sub RemoveTrashinfo
 {
 	my $entry	=	shift;
 
-	if($force == 0 and GetUserPermission("Remove $entry->{NAME} for trash?") == 0) {
+	if($OptionForce == 0 and GetUserPermission("Remove $entry->{NAME} for trash?") == 0) {
 		return;
 	}
-	print "Removing from trash: `$entry->{PATH}'\n" if($verbose > 0);
+	print "Removing from trash: `$entry->{PATH}'\n" if($OptionVerbose > 0);
 	SysDelete($entry->{IN_TRASH_PATH}, "-rf");
 	SysDelete($entry->{INFO_PATH}, "-rf");
 }
@@ -799,12 +804,12 @@ sub UndoTrashinfo($)
 	my $to_path   = $entry->{PATH};
 	my $info_path = $entry->{INFO_PATH};
 
-	if($warn > 0 and GetUserPermission("Restore $to_path?") == 0) {
+	if($OptionInteractive > 0 and GetUserPermission("Restore $to_path?") == 0) {
 		return;
 	}
 
 	if(-e $to_path) {
-		if($force == 0 and GetUserPermission("Overwrite file $to_path?") == 0) {
+		if($OptionForce == 0 and GetUserPermission("Overwrite file $to_path?") == 0) {
 			return;
 		}
 	}
@@ -819,7 +824,7 @@ sub UndoTrashinfo($)
 		print "Error restoring $to_path\n";
 		return;
 	}
-	print "Restored: $to_path\n" if($verbose > 0);
+	print "Restored: $to_path\n" if($OptionVerbose > 0);
 }
 
 
@@ -839,15 +844,15 @@ sub GetTrashDir($)
 	my $path	=	shift;
 	$path = AbsolutePath($path);
 	if(InHome($path)) {
-		return $home_trash;
+		return $HomeTrash;
 	}
 	my $dev = InDevice($path);
 	if($dev eq "/" or $dev eq "/home") {
-		return $home_trash;
+		return $HomeTrash;
 	}
 	my $trash = "$dev/.Trash";
 	if(-d $trash and -k $trash and !-l $trash and -w $trash) {
-		$trash = "$trash/$user_id";
+		$trash = "$trash/$UserID";
 		unless(-d "$trash") {
 			mkdir "$trash";
 			mkdir "$trash/files";
@@ -856,7 +861,7 @@ sub GetTrashDir($)
 		}
 		return $trash;
 	}
-	$trash = "$dev/.Trash-$user_id";
+	$trash = "$dev/.Trash-$UserID";
 	unless(-d $trash) {
 		mkdir "$trash";
 		mkdir "$trash/files";
@@ -875,7 +880,7 @@ sub InDevice($)
 {
 	my $path	=	shift;
 	my @matched;
-	foreach my $device (@dlist) {
+	foreach my $device (@DevList) {
 		if($path =~ /$device.+/) {
 			push @matched, $device;
 		}
@@ -896,14 +901,14 @@ sub InDevice($)
 sub GetDeviceList()
 {
 	my @list = split(/\n/,`df`);
-	my @dlist;
+	my @dev_list;
 	foreach my $e (@list) {
 		my @tmp = split(/\s+/,$e);
 		if($tmp[0] =~ /\/dev\/.+/) {
-			push @dlist, $tmp[$#tmp];
+			push @dev_list, $tmp[$#tmp];
 		}
 	}
-	return @dlist;
+	return @dev_list;
 }
 
 ##############################################################################
@@ -912,70 +917,70 @@ sub GetDeviceList()
 
 sub SetEnvirnment()
 {
-	$user_name = `id -un`;
-	chomp($user_name);
-	$user_id   = int(`id -u`);
-	$home = $ENV{HOME};
-	@dlist = GetDeviceList();
-	unless(-d "$home/.local/share/Trash") {
-		SysMkdir("$home/.local/share/Trash");
-		SysMkdir("$home/.local/share/Trash/files");
-		SysMkdir("$home/.local/share/Trash/info");
-		system("touch $home/.local/share/Trash/metadata");
+	$UserName = `id -un`;
+	chomp($UserName);
+	$UserID   = int(`id -u`);
+	$Home = $ENV{HOME};
+	@DevList = GetDeviceList();
+	unless(-d "$Home/.local/share/Trash") {
+		SysMkdir("$Home/.local/share/Trash");
+		SysMkdir("$Home/.local/share/Trash/files");
+		SysMkdir("$Home/.local/share/Trash/info");
+		system("touch $Home/.local/share/Trash/metadata");
 	}
-	$home_trash = "$home/.local/share/Trash";
+	$HomeTrash = "$Home/.local/share/Trash";
 	my $x = `date --rfc-3339=seconds`;
 	my @tmp = split(/ /, $x);
 	my $date = $tmp[0];
 	my $time = $tmp[1];
 	@tmp = split(/-/,$time);
 	$time = "$tmp[0]";
-	$current_date = "${date}T$time";
+	$CurrentDate = "${date}T$time";
 
-	chomp($current_date);
+	chomp($CurrentDate);
 
 	Getopt::Long::Configure('bundling');
 
 	GetOptions( 
-			'e|empty'	  => \$empty,
-			'l|list'	  => \$view,
-			'f|force+'	  => \$force,
-			'r|recursive'	  => \$recursive,
-			'R|recursive'	  => \$recursive,
-			'u|undo'	  => \$undo,
-			'help'		  => \$help,
-			'i|interactive'	  => \$warn,
-			'p|permanent'	  => \$permanent,
-			'v|verbose'	  => \$verbose,
-			'x|regex'         => \$regex,
-			'color!'	  => \$color,
-			'date!'		  => \$ldate,
-			's|size'	  => \$size,
-			'h|human-readable'=> \$human,
-			'version'         => \$vers,
+			'e|empty'	  => \$OptionEmpty,
+			'l|list'	  => \$OptionList,
+			'f|force+'	  => \$OptionForce,
+			'r|recursive'	  => \$OptionRecursive,
+			'R|recursive'	  => \$OptionRecursive,
+			'u|undo'	  => \$OptionUndo,
+			'help'		  => \$OptionHelp,
+			'i|interactive'	  => \$OptionInteractive,
+			'p|permanent'	  => \$OptionPermanent,
+			'v|verbose'	  => \$OptionVerbose,
+			'x|regex'         => \$OptionRegex,
+			'color!'	  => \$OptionColor,
+			'date!'		  => \$OptionDate,
+			's|size'	  => \$OptionSize,
+			'h|human-readable'=> \$OptionHumanReadable,
+			'version'         => \$OptionVersion,
 	) == 1 or Usage();
 
 	$Term::ANSIColor::AUTORESET = 1;
 
-	if($force > 0) {
-		$warn = 0;
+	if($OptionForce > 0) {
+		$OptionInteractive = 0;
 	}
 
 	# Allow -h to stand for help.
-	if($size == 0 and $human > 0) {
-		$human = 0;
-		$help = 1;
+	if($OptionSize == 0 and $OptionHumanReadable > 0) {
+		$OptionHumanReadable = 0;
+		$OptionHelp = 1;
 	}
 
 	# Do not reserve space without -s option.
-	if($size == 0) {
-		$path_width_perc += $size_width_perc;
-		$size_width_perc = 0;
+	if($OptionSize == 0) {
+		$ListPathWidthPerc += $ListSizeWidthPerc;
+		$ListSizeWidthPerc = 0;
 	}
 
-	if($ldate == 0) {
-		$name_width_perc += $date_width_perc;
-		$date_width_perc = 0;
+	if($OptionDate == 0) {
+		$ListNameWidthPerc += $ListDateWidthPerc;
+		$ListDateWidthPerc = 0;
 	}
 
 	my $screen_width = (GetTerminalSize())[0];
@@ -983,28 +988,28 @@ sub SetEnvirnment()
 	# Adjust for each character '| '
 	$screen_width = $screen_width - 4;
 
-	$name_width = int($screen_width * $name_width_perc / 100);
-	$date_width = int($screen_width * $date_width_perc / 100);
-	$size_width = int($screen_width * $size_width_perc / 100);
-	$path_width = int($screen_width * $path_width_perc / 100);
+	$ListNameWidth = int($screen_width * $ListNameWidthPerc / 100);
+	$ListDateWidth = int($screen_width * $ListDateWidthPerc / 100);
+	$ListSizeWidth = int($screen_width * $ListSizeWidthPerc / 100);
+	$ListPathWidth = int($screen_width * $ListPathWidthPerc / 100);
 
-	if($ldate != 0 and $date_width > 22) {
-		my $overflow = $date_width - 22;
-		$name_width += (int($overflow / 2));
-		$path_width += ($overflow - int($overflow / 2));
-		$date_width = 22;
+	if($OptionDate != 0 and $ListDateWidth > 22) {
+		my $overflow = $ListDateWidth - 22;
+		$ListNameWidth += (int($overflow / 2));
+		$ListPathWidth += ($overflow - int($overflow / 2));
+		$ListDateWidth = 22;
 	}
-	if($size != 0 and $size_width > 15) {
-		$path_width += ($size_width - 15);
-		$size_width = 15;
+	if($OptionSize != 0 and $ListSizeWidth > 15) {
+		$ListPathWidth += ($ListSizeWidth - 15);
+		$ListSizeWidth = 15;
 	}
 
-	$sz_width   = int($screen_width * $sz_width_perc   / 100);
-	$dev_width  = int($screen_width * $dev_width_perc  / 100);
+	$SSizeWidth   = int($screen_width * $SSizeWidthPerc   / 100);
+	$SDevWidth  = int($screen_width * $SDevWidthPerc  / 100);
 
-	if($sz_width > 15) {
-		$dev_width += ($sz_width - 15);
-		$sz_width = 15;
+	if($SSizeWidth > 15) {
+		$SDevWidth += ($SSizeWidth - 15);
+		$SSizeWidth = 15;
 	}
 
 	# FileTypeColors
@@ -1112,7 +1117,7 @@ sub PrintColored($$)
 {
 	my $string	=	shift;
 	my $col		=	shift;
-	if($color > 0) {
+	if($OptionColor > 0) {
 		print colored($string,$col);
 	} else {
 		print "$string"
@@ -1121,7 +1126,7 @@ sub PrintColored($$)
 
 sub InitFileTypeColors()
 {
-	my %Num2Col = (
+	my %num_to_col = (
 		30	=>	"Black",
 		31	=>	"Red",
 		32	=>	"Green",
@@ -1145,7 +1150,7 @@ sub InitFileTypeColors()
 			my $fg  = int($3);
 			if($fg >= 30 and $fg <= 37) {
 				# Valid Col
-				$TypeColors{$ft} = $Num2Col{$fg};
+				$TypeColors{$ft} = $num_to_col{$fg};
 			}
 			next;
 		}
@@ -1155,7 +1160,7 @@ sub InitFileTypeColors()
 			my $fg  = int($3);
 			if($fg >= 30 and $fg <= 37) {
 				# Valid Col
-				$AttrColors{$ft} = $Num2Col{$fg};
+				$AttrColors{$ft} = $num_to_col{$fg};
 			}
 			next;
 		}
@@ -1307,7 +1312,7 @@ sub InHome($)
 {
 	my $path	=	shift;
 
-	if($path =~ /$home.+/) {
+	if($path =~ /$Home.+/) {
 		return 1;
 	}
 	return 0;
