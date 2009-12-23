@@ -33,7 +33,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.6-6";
+my $VERSION = "3.6-7";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -416,6 +416,10 @@ sub ListArrayContents($)
 	if(scalar(@List) == 0) {
 		return;
 	}
+	my %dates;
+	foreach my $p (@List) {
+		$dates{$p->{DATE}} = $p;
+	}
 
 	printf("%-${name_width}s| ", "Trash Entry");
 	printf("%-${date_width}s| ", "Deletion Date") if($ldate > 0);
@@ -426,7 +430,8 @@ sub ListArrayContents($)
 	printf("%-${size_width}s| ", "----") if($size > 0);
 	printf("%s\n", "------------");
 
-	foreach my $p (@List) {
+	foreach my $date (sort keys %dates) {
+		my $p = $dates{$date};
 		PrintTrashinfo($p);
 	}
 }
