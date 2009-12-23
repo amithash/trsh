@@ -33,7 +33,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.6-5";
+my $VERSION = "3.6-6";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -73,6 +73,7 @@ sub EntrySize($);
 sub PrintTrashSize();
 sub ListRegexTrashContents($);
 sub Crop($$);
+sub PrintTrashSizeLine($$);
 
 ##############################################################################
 #				Global Variables                             #
@@ -109,12 +110,16 @@ my $name_width;
 my $date_width;
 my $size_width;
 my $path_width;
+my $sz_width;
+my $dev_width;
 
 # Constants 
 my $name_width_perc = 25;
 my $date_width_perc = 25;
 my $size_width_perc = 10;
 my $path_width_perc = 40;
+my $sz_width_perc   = 20;
+my $dev_width_perc  = 80;
 
 ##############################################################################
 #				   MAIN		                             #
@@ -432,14 +437,58 @@ sub ListArrayContents($)
 
 sub PrintTrashSize()
 {
-	my $sz = GetTrashSize($home_trash);
-	printf("%-40s | $sz\n", "Home Trash");
+	my $sz  = GetTrashSize($home_trash);
+
+	PrintTrashSizeLine("Home Trash", $sz);
+
 	my @devs = GetDeviceList();
 	foreach my $dev (@devs) {
 		next if($dev eq "/" or $dev eq "/home");
 		$sz = GetTrashSize(GetDeviceTrash($dev));
-		print("%-40s | $sz\n", "$dev Trash");
+		PrintTrashSizeLine("$dev Trash", $sz);
 	}
+}
+
+sub PrintTrashSizeLine($$)
+{
+	my $dev		=	shift;
+	my $sz		=	shift;
+
+	my $sz_color = SizeColor($sz);
+
+	$dev = Crop(sprintf("%-${dev_width}s", $dev), $dev_width);
+	$sz  = Crop(sprintf("%-${sz_width}s",$sz), $sz_width);
+
+	if($color == 1) {
+		print color($sz_color), "$sz";
+		print color("reset"), "| ";
+		print color("reset"), "$dev\n";
+	
+	} else {
+		print "$sz | $dev\n";
+	}
+}
+
+sub SizeColor($)
+{
+	my $sz		=	shift;
+	if($human == 0) {
+		$sz = HumanReadable($sz);
+	}
+	if($sz =~ /P/) {
+		return "Red";
+	} elsif($sz =~ /T/) {
+		return "Red";
+	} elsif($sz =~ /G/) {
+		return "Red";
+	} elsif($sz =~ /M/) {
+		return "Blue";
+	} elsif($sz =~ /k/) {
+		return "Cyan";
+	} else {
+		return "Green";
+	}
+	return "reset";
 }
 
 sub GetTrashSize($)
@@ -460,7 +509,6 @@ sub GetTrashSize($)
 		print OUT "[Cached]\n";
 		print OUT "Size=$sz\n";
 		close(OUT);
-		$sz = HumanReadable($sz) if($human > 0);
 	} else {
 		open IN, "$trash_path/metadata" or die "Could not open $trash_path/metadata for read\n";
 		while(my $line = <IN>) {
@@ -472,10 +520,9 @@ sub GetTrashSize($)
 		}
 		close(IN);
 		if($sz eq "") {
-			print "WARNING BAD metadata file. Deleting it\n";
+			print "WARNING BAD metadata file. Fixing it\n";
 			SysDelete("$trash_path/metadata","-f");
-			$sz = 0;
-			$sz = "0 B" if($human > 0);
+			return GetTrashSIze($trash_path);
 		}
 	}
 
@@ -723,7 +770,8 @@ sub PrintTrashinfo($)
 			print color("reset"), " |";
 		}
 		if($size > 0) {
-			print color("Red"), " $sz";
+			my $sz_color = SizeColor($p->{SIZE});
+			print color(SizeColor($p->{SIZE})), " $sz";
 			print color("reset"), " |";
 		}
 		print color("reset"), " $path\n";
@@ -944,6 +992,25 @@ sub SetEnvirnment()
 	$date_width = int($screen_width * $date_width_perc / 100);
 	$size_width = int($screen_width * $size_width_perc / 100);
 	$path_width = int($screen_width * $path_width_perc / 100);
+
+	if($ldate != 0 and $date_width > 22) {
+		my $overflow = $date_width - 22;
+		$name_width += (int($overflow / 2));
+		$path_width += ($overflow - int($overflow / 2));
+		$date_width = 22;
+	}
+	if($size != 0 and $size_width > 15) {
+		$path_width += ($size_width - 15);
+		$size_width = 15;
+	}
+
+	$sz_width   = int($screen_width * $sz_width_perc   / 100);
+	$dev_width  = int($screen_width * $dev_width_perc  / 100);
+
+	if($sz_width > 15) {
+		$dev_width += ($sz_width - 15);
+		$sz_width = 15;
+	}
 }
 
 
@@ -1204,10 +1271,14 @@ sub HumanReadable($)
 	my $kb = 1024;
 	my $mb = 1024 * $kb;
 	my $gb = 1024 * $mb;
-	my $pb = 1024 * $gb;
+	my $tb = 1024 * $gb;
+	my $pb = 1024 * $tb;
 	if($sz > $pb) {
 		$sz = $sz / $pb;
 		return sprintf("%.3f PB", $sz);
+	} elsif($sz > $tb) {
+		$sz = $sz / $tb;
+		return sprintf("%.3f TB", $sz);
 	} elsif($sz > $gb) {
 		$sz = $sz / $gb;
 		return sprintf("%.3f GB", $sz);
