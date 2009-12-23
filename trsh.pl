@@ -33,7 +33,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.6-7";
+my $VERSION = "3.6-8";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -112,6 +112,8 @@ my $size_width;
 my $path_width;
 my $sz_width;
 my $dev_width;
+my %TypeColors;
+my %AttrColors;
 
 # Constants 
 my $name_width_perc = 25;
@@ -1016,6 +1018,9 @@ sub SetEnvirnment()
 		$dev_width += ($sz_width - 15);
 		$sz_width = 15;
 	}
+
+	# FileTypeColors
+	InitFileTypeColors();
 }
 
 
@@ -1179,16 +1184,6 @@ sub FileTypeColor($)
 
 	my $ft = "";
 
-	# XXX It would be nice to build this from
-	# dircolors
-	my %TypeColors = (
-		"gz"	=>	"Red",
-		"zip"	=>	"Red",
-		"rpm"	=>	"Red",
-		"deb"	=>	"Red",
-		"bz2"	=>	"Red",
-		"tar.gz"=>	"Red",
-	);
 	my $base = basename($name);
 	if($base =~ /^(.+)-\d+$/) {
 		$base = $1;
@@ -1198,11 +1193,11 @@ sub FileTypeColor($)
 	}
 
 	if(-l $name) {
-		return "Cyan";
+		return $AttrColors{LINK};
 	} elsif(-d $name) {
-		return "Blue";
+		return $AttrColors{DIR};
 	} elsif(-x $name) {
-		return "Green";
+		return $AttrColors{EXEC};
 	} elsif(defined($TypeColors{$ft})) {
 		return $TypeColors{$ft};
 	} else {
@@ -1321,5 +1316,48 @@ sub Crop($$)
 	my @tmp = split(//,$string);
 	my $ret = join("", @tmp[0..$width]);
 	return $ret;
+}
+
+sub InitFileTypeColors()
+{
+	my %Num2Col = (
+		30	=>	"Black",
+		31	=>	"Red",
+		32	=>	"Green",
+		33	=>	"Yellow",
+		34	=>	"Blue",
+		35	=>	"Magenta",
+		36	=>	"Cyan",
+		37	=>	"White",
+	);
+	my @dircolors = split(/\n/,`dircolors -p`);
+	foreach my $entry (@dircolors) {
+		next if($entry =~ /^\s*#/); # Ignore comments
+		next if($entry =~ /^TERM/); # Ignore terminals
+		# Remove Trailing comments.
+		if($entry =~ /([^#]+)\s*#.+$/) {
+			$entry = $1;
+		}
+		if($entry =~ /\.(.+) (\d+)[;:](\d+)$/)  {
+			my $ft  = $1;
+			my $att = int($2);
+			my $fg  = int($3);
+			if($fg >= 30 and $fg <= 37) {
+				# Valid Col
+				$TypeColors{$ft} = $Num2Col{$fg};
+			}
+			next;
+		}
+		if($entry =~ /(.+)\s+(\d\d);(\d\d)/)  {
+			my $ft  = $1;
+			my $att = int($2);
+			my $fg  = int($3);
+			if($fg >= 30 and $fg <= 37) {
+				# Valid Col
+				$AttrColors{$ft} = $Num2Col{$fg};
+			}
+			next;
+		}
+	}
 }
 
