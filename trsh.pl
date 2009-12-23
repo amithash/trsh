@@ -33,7 +33,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.6-8";
+my $VERSION = "3.6-9";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -74,6 +74,7 @@ sub PrintTrashSize();
 sub ListRegexTrashContents($);
 sub Crop($$);
 sub PrintTrashSizeLine($$);
+sub PrintColored($$);
 
 ##############################################################################
 #				Global Variables                             #
@@ -466,14 +467,9 @@ sub PrintTrashSizeLine($$)
 	$dev = Crop(sprintf("%-${dev_width}s", $dev), $dev_width);
 	$sz  = Crop(sprintf("%-${sz_width}s",$sz), $sz_width);
 
-	if($color == 1) {
-		print color($sz_color), "$sz";
-		print color("reset"), "| ";
-		print color("reset"), "$dev\n";
-	
-	} else {
-		print "$sz | $dev\n";
-	}
+	PrintColored("$sz", $sz_color);
+	PrintColored("| ", "reset");
+	PrintColored("$dev\n", "reset");
 }
 
 sub SizeColor($)
@@ -769,26 +765,18 @@ sub PrintTrashinfo($)
 	my $path = Crop(sprintf("%-${path_width}s", $p->{PATH}), $path_width);
 	my $sz   = Crop(sprintf("%-${size_width}s", $p->{SIZE}), $size_width);
 
-	if($color > 0) {
-		print color(FileTypeColor($p->{IN_TRASH_PATH})), "$name";
-		print color("reset"), " |";
-		if($ldate > 0) {
-			print color("Yellow"), " $date";
-			print color("reset"), " |";
-		}
-		if($size > 0) {
-			my $sz_color = SizeColor($p->{SIZE});
-			print color(SizeColor($p->{SIZE})), " $sz";
-			print color("reset"), " |";
-		}
-		print color("reset"), " $path\n";
-	} else {
-		print "$name";
-		print " |";
-		print " $date |" if($ldate > 0);
-		print " $sz | " if($size > 0);
-		print " $path\n";
+	PrintColored("$name", FileTypeColor($p->{IN_TRASH_PATH}));
+	PrintColored(" |", "reset");
+	if($ldate > 0) {
+		PrintColored(" $date", "Yellow");
+		PrintColored(" |", "reset");
 	}
+	if($size > 0) {
+		my $sz_color = SizeColor($p->{SIZE});
+		PrintColored(" $sz", SizeColor($p->{SIZE}));
+		PrintColored(" |", "reset");
+	}
+	PrintColored(" $path\n", "reset");
 }
 
 sub RemoveTrashinfo
@@ -1117,6 +1105,153 @@ exit;
 }
 
 ##############################################################################
+#		    Coloring and Printing Functions                          #
+##############################################################################
+
+sub PrintColored($$) 
+{
+	my $string	=	shift;
+	my $col		=	shift;
+	if($color > 0) {
+		print colored($string,$col);
+	} else {
+		print "$string"
+	}
+}
+
+sub InitFileTypeColors()
+{
+	my %Num2Col = (
+		30	=>	"Black",
+		31	=>	"Red",
+		32	=>	"Green",
+		33	=>	"Yellow",
+		34	=>	"Blue",
+		35	=>	"Magenta",
+		36	=>	"Cyan",
+		37	=>	"White",
+	);
+	my @dircolors = split(/\n/,`dircolors -p`);
+	foreach my $entry (@dircolors) {
+		next if($entry =~ /^\s*#/); # Ignore comments
+		next if($entry =~ /^TERM/); # Ignore terminals
+		# Remove Trailing comments.
+		if($entry =~ /([^#]+)\s*#.+$/) {
+			$entry = $1;
+		}
+		if($entry =~ /\.(.+) (\d+)[;:](\d+)$/)  {
+			my $ft  = $1;
+			my $att = int($2);
+			my $fg  = int($3);
+			if($fg >= 30 and $fg <= 37) {
+				# Valid Col
+				$TypeColors{$ft} = $Num2Col{$fg};
+			}
+			next;
+		}
+		if($entry =~ /(.+)\s+(\d\d);(\d\d)/)  {
+			my $ft  = $1;
+			my $att = int($2);
+			my $fg  = int($3);
+			if($fg >= 30 and $fg <= 37) {
+				# Valid Col
+				$AttrColors{$ft} = $Num2Col{$fg};
+			}
+			next;
+		}
+	}
+}
+
+
+sub Crop($$)
+{
+	my $string	=	shift;
+	my $width	=	shift;
+	$width = $width - 2;
+	if(length($string) <= $width) {
+		return $string;
+	}
+	my @tmp = split(//,$string);
+	my $ret = join("", @tmp[0..$width]);
+	return $ret;
+}
+
+sub HumanReadable($)
+{
+	my $sz = shift;
+	my $kb = 1024;
+	my $mb = 1024 * $kb;
+	my $gb = 1024 * $mb;
+	my $tb = 1024 * $gb;
+	my $pb = 1024 * $tb;
+	if($sz > $pb) {
+		$sz = $sz / $pb;
+		return sprintf("%.3f PB", $sz);
+	} elsif($sz > $tb) {
+		$sz = $sz / $tb;
+		return sprintf("%.3f TB", $sz);
+	} elsif($sz > $gb) {
+		$sz = $sz / $gb;
+		return sprintf("%.3f GB", $sz);
+	} elsif($sz > $mb) {
+		$sz = $sz / $mb;
+		return sprintf("%.3f MB", $sz);
+	} elsif($sz > $kb) {
+		$sz = $sz / $kb;
+		return sprintf("%.3f kB", $sz);
+	} else {
+		return sprintf("%.3f B", $sz);
+	}
+}
+
+
+##############################################################################
+#		            File Type Functions                              #
+##############################################################################
+
+sub FileTypeString($)
+{
+	my $path	=	shift;
+	my $what;
+	if(-d $path) {
+		$what = "directory";
+	} if(-f $path and -s $path == 0) {
+		$what = "regular empty file";
+	} else {
+		$what = "regular file";
+	}
+	return $what;
+}
+
+sub FileTypeColor($)
+{
+	my $name	=	shift;
+
+	my $ft = "";
+
+	my $base = basename($name);
+	if($base =~ /^(.+)-\d+$/) {
+		$base = $1;
+	}
+	if($base =~ /^.+\.(.+)$/) {
+		$ft = $1;
+	}
+
+	if(-l $name) {
+		return $AttrColors{LINK};
+	} elsif(-d $name) {
+		return $AttrColors{DIR};
+	} elsif(-x $name) {
+		return $AttrColors{EXEC};
+	} elsif(defined($TypeColors{$ft})) {
+		return $TypeColors{$ft};
+	} else {
+		return "reset";
+	}
+}
+
+
+##############################################################################
 #		           System Level Functions                            #
 ##############################################################################
 
@@ -1178,33 +1313,6 @@ sub InHome($)
 	return 0;
 }
 
-sub FileTypeColor($)
-{
-	my $name	=	shift;
-
-	my $ft = "";
-
-	my $base = basename($name);
-	if($base =~ /^(.+)-\d+$/) {
-		$base = $1;
-	}
-	if($base =~ /^.+\.(.+)$/) {
-		$ft = $1;
-	}
-
-	if(-l $name) {
-		return $AttrColors{LINK};
-	} elsif(-d $name) {
-		return $AttrColors{DIR};
-	} elsif(-x $name) {
-		return $AttrColors{EXEC};
-	} elsif(defined($TypeColors{$ft})) {
-		return $TypeColors{$ft};
-	} else {
-		return "reset";
-	}
-}
-
 sub GetUserPermission($)
 {
 	my $question	=	shift;
@@ -1221,20 +1329,6 @@ sub GetUserPermission($)
 			return 0;
 		}
 	}
-}
-
-sub FileTypeString($)
-{
-	my $path	=	shift;
-	my $what;
-	if(-d $path) {
-		$what = "directory";
-	} if(-f $path and -s $path == 0) {
-		$what = "regular empty file";
-	} else {
-		$what = "regular file";
-	}
-	return $what;
 }
 
 sub DirSize($)
@@ -1265,34 +1359,6 @@ sub EntrySize($)
 	return (-d $path) ? DirSize($path) : FileSize($path);
 }
 
-sub HumanReadable($)
-{
-	my $sz = shift;
-	my $kb = 1024;
-	my $mb = 1024 * $kb;
-	my $gb = 1024 * $mb;
-	my $tb = 1024 * $gb;
-	my $pb = 1024 * $tb;
-	if($sz > $pb) {
-		$sz = $sz / $pb;
-		return sprintf("%.3f PB", $sz);
-	} elsif($sz > $tb) {
-		$sz = $sz / $tb;
-		return sprintf("%.3f TB", $sz);
-	} elsif($sz > $gb) {
-		$sz = $sz / $gb;
-		return sprintf("%.3f GB", $sz);
-	} elsif($sz > $mb) {
-		$sz = $sz / $mb;
-		return sprintf("%.3f MB", $sz);
-	} elsif($sz > $kb) {
-		$sz = $sz / $kb;
-		return sprintf("%.3f kB", $sz);
-	} else {
-		return sprintf("%.3f B", $sz);
-	}
-}
-
 sub PrepareRegex($)
 {
 	my $reg		=	shift;
@@ -1303,61 +1369,5 @@ sub PrepareRegex($)
 		exit;
 	}
 	return $regex;
-}
-
-sub Crop($$)
-{
-	my $string	=	shift;
-	my $width	=	shift;
-	$width = $width - 2;
-	if(length($string) <= $width) {
-		return $string;
-	}
-	my @tmp = split(//,$string);
-	my $ret = join("", @tmp[0..$width]);
-	return $ret;
-}
-
-sub InitFileTypeColors()
-{
-	my %Num2Col = (
-		30	=>	"Black",
-		31	=>	"Red",
-		32	=>	"Green",
-		33	=>	"Yellow",
-		34	=>	"Blue",
-		35	=>	"Magenta",
-		36	=>	"Cyan",
-		37	=>	"White",
-	);
-	my @dircolors = split(/\n/,`dircolors -p`);
-	foreach my $entry (@dircolors) {
-		next if($entry =~ /^\s*#/); # Ignore comments
-		next if($entry =~ /^TERM/); # Ignore terminals
-		# Remove Trailing comments.
-		if($entry =~ /([^#]+)\s*#.+$/) {
-			$entry = $1;
-		}
-		if($entry =~ /\.(.+) (\d+)[;:](\d+)$/)  {
-			my $ft  = $1;
-			my $att = int($2);
-			my $fg  = int($3);
-			if($fg >= 30 and $fg <= 37) {
-				# Valid Col
-				$TypeColors{$ft} = $Num2Col{$fg};
-			}
-			next;
-		}
-		if($entry =~ /(.+)\s+(\d\d);(\d\d)/)  {
-			my $ft  = $1;
-			my $att = int($2);
-			my $fg  = int($3);
-			if($fg >= 30 and $fg <= 37) {
-				# Valid Col
-				$AttrColors{$ft} = $Num2Col{$fg};
-			}
-			next;
-		}
-	}
 }
 
