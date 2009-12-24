@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.6-10";
+my $VERSION = "3.6-11";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -315,12 +315,11 @@ sub RemoveFromTrashRegex($)
 sub DeleteFile($)
 {
 	my $path	=	shift;
-	$path = AbsolutePath($path);
-	my $trsh = GetTrashDir($path);
-	my $info_dir = "$trsh/info";
-	my $name= basename($path);
-	my $infoname;
-	my $success = 0;
+
+	$path       = AbsolutePath($path);
+	my $trsh    = GetTrashDir($path);
+	my $name    = basename($path);
+	my $dirname = dirname($path);
 
 	if(not(-l $path) and not(-e $path)){
 		print "Cowardly refused to delete non-existant file $path\n";
@@ -332,7 +331,6 @@ sub DeleteFile($)
 		return;
 	}
 
-	my $dirname = dirname($path);
 
 	# Error on directories without -r flag.
 	if(-d $path and $OptionRecursive == 0) {
