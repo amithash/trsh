@@ -4,7 +4,7 @@
 Summary: A Trash manager aliased to rm.
 Name: trsh
 Version: 3.6
-Release: 12
+Release: 13
 Group: Utilities
 License: GPL
 BuildArch: noarch
@@ -31,9 +31,12 @@ mkdir -p %buildroot/%_mandir/man1
 %post
 
 # Do not run the bashrc update if an upgrade.
-if [ !-z $1 && $1 -gt 1 ]
+if [ -n $1 ]
 then
-	exit 0
+	if [ $1 -gt 1 ]
+	then
+		exit 0
+	fi
 fi
 
 TRSH_SHELL=$SHELL
@@ -75,9 +78,12 @@ exit 0
 %preun
 
 # Do not run the update bashrc scripts if an update
-if [ !-z $1 && $1 -gt 0 ]
+if [ -n $1 ]
 then
-	exit 0
+	if [ $1 -gt 0 ]
+	then
+		exit 0
+	fi
 fi
 
 TRSH_SHELL=$SHELL
