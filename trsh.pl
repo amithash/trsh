@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.7-2";
+my $VERSION = "3.7-3";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -83,6 +83,8 @@ sub ListRegexTrashContents($);
 sub Crop($$);
 sub PrintTrashSizeLine($$);
 sub PrintColored($$);
+sub HumanReadableDate($);
+sub SplitDate($);
 
 ##############################################################################
 #				Global Variables                             #
@@ -106,11 +108,23 @@ my $OptionVersion	= 0;
 my $OptionPermanent	= 0;
 
 # Session information
-my $UserName;
-my $UserID;
-my $Home;
-my $HomeTrash;
-my $CurrentDate;
+my %Session = (
+	'UserName'	=>	"",
+	'UserID'	=>	"",
+	'HomePath'	=>	"",
+	'HomeTrash'	=>	"",
+	'CurrentDate'	=>	"",
+	'ListNameWidth'	=>	0,
+	'ListDateWidth'	=>	0,
+	'ListSizeWidth'	=>	0,
+	'ListPathWidth'	=>	0,
+	'SSizeWidth'	=>	0,
+	'SDevWidth'	=>	0,
+	'TypeColors'	=>	{},
+	'AttrColors'	=>	{},
+	'DevList'	=>	[],
+);
+
 my $ListNameWidth;
 my $ListDateWidth;
 my $ListSizeWidth;
@@ -265,8 +279,8 @@ sub EmptyTrash()
 
 	# Empty Home Trash
 	print "Removing all files in home trash\n" if($OptionVerbose > 0);
-	system("rm -rf $HomeTrash/info/*");
-	system("rm -rf $HomeTrash/files/*");
+	system("rm -rf $Session{HomeTrash}/info/*");
+	system("rm -rf $Session{HomeTrash}/files/*");
 
 	# Empty Devices Trash
 	my @devs = GetDeviceList();
@@ -370,7 +384,7 @@ sub DeleteFile($)
 
 	PutTrashinfo({
 			PATH=>$path, 
-			DATE=>$CurrentDate, 
+			DATE=>$Session{CurrentDate}, 
 			NAME=>$name, 
 			TRASH=>$trsh });
 
@@ -448,7 +462,7 @@ sub ListArrayContents($)
 
 sub PrintTrashSize()
 {
-	my $sz  = GetTrashSize($HomeTrash);
+	my $sz  = GetTrashSize($Session{HomeTrash});
 
 	PrintTrashSizeLine("Home Trash", $sz);
 
@@ -602,7 +616,7 @@ sub GetRegexMatchingFiles($) {
 
 sub GetTrashContents()
 {
-	my $trsh = $HomeTrash;
+	my $trsh = $Session{HomeTrash};
 	my @list = ();
 	push @list, GetSpecificTrashContents($trsh);
 	my @devs = GetDeviceList();
@@ -631,7 +645,7 @@ sub GetSpecificTrashContents($) {
 		$p->{IN_TRASH_NAME} = $name;
 		$p->{INFO_PATH} = "$trash_dir/info/$name.trashinfo";
 		$p->{IN_TRASH_PATH} = "$trash_dir/files/$name";
-		if($trash_dir eq $HomeTrash) {
+		if($trash_dir eq $Session{HomeTrash}) {
 			$p->{DEV} = "HOME";
 		} else {
 			$p->{DEV} = InDevice($trash_dir);
@@ -712,14 +726,14 @@ sub PutTrashinfo($)
 	}
 	print INFO "[Trash Info]\n";
 	my $infile_path = $entry->{PATH};
-	if($entry->{TRASH} ne $HomeTrash) {
+	if($entry->{TRASH} ne $Session{HomeTrash}) {
 		my $dev = InDevice($entry->{PATH});
 		if($entry->{PATH} =~ /^$dev\/(.+)$/) {
 			$infile_path = $1;
 		}
 	}
 	print INFO "Path=$infile_path\n";
-	print INFO "DeletionDate=$CurrentDate\n";
+	print INFO "DeletionDate=$Session{CurrentDate}\n";
 
 	close(INFO);
 
@@ -764,7 +778,7 @@ sub PrintTrashinfo($)
 		return;
 	}
 	my $name = Crop(sprintf("%-${ListNameWidth}s", $p->{NAME}), $ListNameWidth);
-	my $date = Crop(sprintf("%-${ListDateWidth}s", $p->{DATE}), $ListDateWidth);
+	my $date = Crop(sprintf("%-${ListDateWidth}s", HumanReadableDate($p->{DATE})), $ListDateWidth);
 	my $path = Crop(sprintf("%-${ListPathWidth}s", $p->{PATH}), $ListPathWidth);
 	my $sz   = Crop(sprintf("%-${ListSizeWidth}s", $p->{SIZE}), $ListSizeWidth);
 
@@ -842,15 +856,15 @@ sub GetTrashDir($)
 	my $path	=	shift;
 	$path = AbsolutePath($path);
 	if(InHome($path)) {
-		return $HomeTrash;
+		return $Session{HomeTrash};
 	}
 	my $dev = InDevice($path);
 	if($dev eq "/" or $dev eq "/home") {
-		return $HomeTrash;
+		return $Session{HomeTrash};
 	}
 	my $trash = "$dev/.Trash";
 	if(-d $trash and -k $trash and !-l $trash and -w $trash) {
-		$trash = "$trash/$UserID";
+		$trash = "$trash/$Session{UserID}";
 		unless(-d "$trash") {
 			mkdir "$trash";
 			mkdir "$trash/files";
@@ -859,7 +873,7 @@ sub GetTrashDir($)
 		}
 		return $trash;
 	}
-	$trash = "$dev/.Trash-$UserID";
+	$trash = "$dev/.Trash-$Session{UserID}";
 	unless(-d $trash) {
 		mkdir "$trash";
 		mkdir "$trash/files";
@@ -915,27 +929,28 @@ sub GetDeviceList()
 
 sub SetEnvirnment()
 {
-	$UserName = `id -un`;
-	chomp($UserName);
-	$UserID   = int(`id -u`);
-	$Home = $ENV{HOME};
+	$Session{UserName} = `id -un`;
+	chomp($Session{UserName});
+	$Session{UserID}   = int(`id -u`);
+	$Session{HomePath} = $ENV{HOME};
 	@DevList = GetDeviceList();
-	unless(-d "$Home/.local/share/Trash") {
-		SysMkdir("$Home/.local/share/Trash");
-		SysMkdir("$Home/.local/share/Trash/files");
-		SysMkdir("$Home/.local/share/Trash/info");
-		system("touch $Home/.local/share/Trash/metadata");
+	unless(-d "$Session{HomePath}/.local/share/Trash") {
+		SysMkdir("$Session{HomePath}/.local/share/Trash");
+		SysMkdir("$Session{HomePath}/.local/share/Trash/files");
+		SysMkdir("$Session{HomePath}/.local/share/Trash/info");
+		system("touch $Session{HomePath}/.local/share/Trash/metadata");
 	}
-	$HomeTrash = "$Home/.local/share/Trash";
+	$Session{HomeTrash} = "$Session{HomePath}/.local/share/Trash";
 	my $x = `date --rfc-3339=seconds`;
+	chomp($x);
 	my @tmp = split(/ /, $x);
 	my $date = $tmp[0];
 	my $time = $tmp[1];
 	@tmp = split(/-/,$time);
 	$time = "$tmp[0]";
-	$CurrentDate = "${date}T$time";
+	$Session{CurrentDate} = "${date}T$time";
 
-	chomp($CurrentDate);
+	chomp($Session{CurrentDate});
 
 	Getopt::Long::Configure('bundling');
 
@@ -965,7 +980,10 @@ sub SetEnvirnment()
 	}
 
 	# Allow -h to stand for help.
-	if($OptionSize == 0 and $OptionHumanReadable > 0) {
+	if($OptionSize == 0 and $OptionList == 0 and $OptionHumanReadable > 0) {
+		$OptionHumanReadable = 0;
+		$OptionHelp = 1;
+	} elsif($OptionList > 0 and $OptionDate == 0 and $OptionHumanReadable > 0) {
 		$OptionHumanReadable = 0;
 		$OptionHelp = 1;
 	}
@@ -991,11 +1009,11 @@ sub SetEnvirnment()
 	$ListSizeWidth = int($screen_width * $ListSizeWidthPerc / 100);
 	$ListPathWidth = int($screen_width * $ListPathWidthPerc / 100);
 
-	if($OptionDate != 0 and $ListDateWidth > 22) {
-		my $overflow = $ListDateWidth - 22;
+	if($OptionDate != 0 and $ListDateWidth > 25) {
+		my $overflow = $ListDateWidth - 25;
 		$ListNameWidth += (int($overflow / 2));
 		$ListPathWidth += ($overflow - int($overflow / 2));
-		$ListDateWidth = 22;
+		$ListDateWidth = 25;
 	}
 	if($OptionSize != 0 and $ListSizeWidth > 15) {
 		$ListPathWidth += ($ListSizeWidth - 15);
@@ -1310,7 +1328,7 @@ sub InHome($)
 {
 	my $path	=	shift;
 
-	if($path =~ /$Home.+/) {
+	if($path =~ /$Session{HomePath}.+/) {
 		return 1;
 	}
 	return 0;
@@ -1372,5 +1390,71 @@ sub PrepareRegex($)
 		exit;
 	}
 	return $regex;
+}
+
+sub HumanReadableDate($)
+{
+	my $tdate	=	shift;
+#	2009-12-28T11:39:25
+
+	my $date = SplitDate($tdate);
+	my $on = "AM";
+	my $mod_hour = $date->{HOUR};
+
+	if($date->{HOUR} == 0) {
+		$on = "AM";
+		$mod_hour = 12;
+	} elsif($date->{HOUR} == 12) {
+		$on = "PM";
+	} elsif($date->{HOUR} > 12) {
+		$on = "PM";
+		$mod_hour = $date->{HOUR} - 12;
+	}
+
+	if($OptionHumanReadable == 1) {
+		my $desc = "";
+		my $today = SplitDate($Session{CurrentDate});
+		if($date->{YEAR} < $today->{YEAR}) {
+			my $diff = $today->{YEAR} - $date->{YEAR};
+			$desc = "$diff Years old";
+		} elsif($date->{MONTH} < $today->{MONTH}) {
+			my $diff = $today->{MONTH} - $date->{MONTH};
+			$desc = "$diff months old";
+		} elsif($date->{DATE} < ($today->{DATE} - 1)) {
+			my $diff = $today->{DATE} - $date->{DATE};
+			$desc = "$diff days old";
+		} elsif($date->{DATE} == ($today->{DATE} - 1)) {
+			$desc = "Yesterday";
+		} elsif($desc->{DATE} == $today->{DATE}) {
+			$desc = "Today";
+		} else {
+			$desc  = "Unknown";
+		}
+
+		return "$desc";
+	}
+
+	return "$mod_hour:$date->{MINUTE}:$date->{SECOND}$on $date->{MONTH}/$date->{DATE}/$date->{YEAR}";
+}
+
+sub SplitDate($)
+{
+	my $tdate	=	shift;
+
+	my @tmp = split(/T/,$tdate);
+	$tdate = $tmp[0];
+	my $ttime = $tmp[1];
+	my @hdate = split(/-/,$tdate);
+	my @htime = split(/:/,$ttime);
+
+	my %date = (
+	HOUR   => int($htime[0]),
+	MINUTE => int($htime[1]),
+	SECOND => int($htime[2]),
+	DATE   => int($hdate[2]),
+	MONTH  => int($hdate[1]),
+	YEAR   => int($hdate[0]),
+	);
+	return \%date;
 }
 
