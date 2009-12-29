@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.7-8";
+my $VERSION = "3.7-9";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -450,7 +450,7 @@ sub ListArrayContents($)
 	printf("%-${ListSizeWidth}s| ", "----") if($OptionSize > 0);
 	printf("%s\n", "------------");
 
-	foreach my $date (sort keys %dates) {
+	foreach my $date (sort {$b cmp $a} keys %dates) {
 		my $p = $dates{$date};
 		PrintTrashinfo($p);
 	}
