@@ -29,7 +29,7 @@
 Summary: A Trash manager aliased to rm.
 Name: trsh
 Version: 3.7
-Release: 5
+Release: 6
 Group: Utilities
 License: GPL
 BuildArch: noarch
@@ -61,7 +61,7 @@ mkdir -p %buildroot/%_mandir/man1
 %post
 
 # Do not run the bashrc update if an upgrade.
-if [ -n $1 ]
+if [ $1 ]
 then
 	if [ $1 -gt 1 ]
 	then
@@ -114,7 +114,7 @@ exit 0
 %preun
 
 # Do not run the update bashrc scripts if an update
-if [ -n $1 ]
+if [ $1 ]
 then
 	if [ $1 -gt 0 ]
 	then
