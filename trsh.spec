@@ -29,7 +29,7 @@
 Summary: A Trash manager aliased to rm.
 Name: trsh
 Version: 3.7
-Release: 6
+Release: 7
 Group: Utilities
 License: GPL
 BuildArch: noarch
@@ -149,6 +149,9 @@ rm -f %buildroot/%_mandir/man1/trsh.1.gz
 
 exit 0
 
+#####################################################################################
+#			           Verify Script                                    #
+#####################################################################################
 %verifyscript
 
 TRSH_SHELL=$SHELL
