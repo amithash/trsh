@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.7-4";
+my $VERSION = "3.7-5";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -1395,7 +1395,6 @@ sub PrepareRegex($)
 sub HumanReadableDate($)
 {
 	my $tdate	=	shift;
-#	2009-12-28T11:39:25
 
 	my $date = SplitDate($tdate);
 	my $on = "AM";
@@ -1429,13 +1428,11 @@ sub HumanReadableDate($)
 			$desc = "$diff days old";
 		} elsif($date->{DATE} == ($today->{DATE} - 1)) {
 			$desc = "Yesterday";
-		} elsif($desc->{DATE} == $today->{DATE}) {
+		} elsif($date->{DATE} == $today->{DATE}) {
 			$desc = "Today";
 		} else {
 			$desc  = "Unknown";
 		}
-
-		
 
 		$ret = "$desc";
 	} else {
