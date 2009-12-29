@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.7-7";
+my $VERSION = "3.7-8";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -1255,7 +1255,7 @@ sub FileTypeColor($)
 		$base = $1;
 	}
 	if($base =~ /^.+\.(.+)$/) {
-		$ft = $1;
+		$ft = lc($1);
 	}
 
 	if(-l $name) {
