@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.7-3";
+my $VERSION = "3.7-4";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -1411,6 +1411,10 @@ sub HumanReadableDate($)
 		$mod_hour = $date->{HOUR} - 12;
 	}
 
+	my $tmph = $OptionHumanReadable;
+	$OptionHumanReadable = 1;
+	my $ret = "";
+
 	if($OptionHumanReadable == 1) {
 		my $desc = "";
 		my $today = SplitDate($Session{CurrentDate});
@@ -1431,10 +1435,16 @@ sub HumanReadableDate($)
 			$desc  = "Unknown";
 		}
 
-		return "$desc";
-	}
+		
 
-	return "$mod_hour:$date->{MINUTE}:$date->{SECOND}$on $date->{MONTH}/$date->{DATE}/$date->{YEAR}";
+		$ret = "$desc";
+	} else {
+		$ret = "$mod_hour:$date->{MINUTE}:$date->{SECOND}$on $date->{MONTH}/$date->{DATE}/$date->{YEAR}";
+	}
+	$OptionHumanReadable = $tmph;
+
+	return $ret;
+
 }
 
 sub SplitDate($)
