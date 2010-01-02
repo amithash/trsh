@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.7-9";
+my $VERSION = "3.7-10";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -1417,21 +1417,32 @@ sub HumanReadableDate($)
 	if($OptionHumanReadable == 1) {
 		my $desc = "";
 		my $today = SplitDate($Session{CurrentDate});
-		if($date->{YEAR} < $today->{YEAR}) {
-			my $diff = $today->{YEAR} - $date->{YEAR};
-			$desc = "$diff Years old";
-		} elsif($date->{MONTH} < $today->{MONTH}) {
-			my $diff = $today->{MONTH} - $date->{MONTH};
-			$desc = "$diff months old";
-		} elsif($date->{DATE} < ($today->{DATE} - 1)) {
-			my $diff = $today->{DATE} - $date->{DATE};
-			$desc = "$diff days old";
-		} elsif($date->{DATE} == ($today->{DATE} - 1)) {
-			$desc = "Yesterday";
-		} elsif($date->{DATE} == $today->{DATE}) {
+		my $days = DiffDate($date, $today);
+		if($days == 0) {
 			$desc = "Today";
+		} elsif($days == 1) {
+			$desc = "Yesterday";
+		} elsif($days < 7) {
+			$desc = "$days days old";
+		} elsif($days < 30) {
+			my $weeks = int($days / 7);
+			if($weeks == 1) {
+				$desc = "Last week";
+			} else {
+				$desc = "$weeks weeks old";
+			}
+		} elsif($days < 365) {
+			my $months = int($days / 30);
+			if($months == 1) {
+				$desc = "Last month";
+			} else {
+				$desc = "$months months old";
+			}
+		} elsif($days < (365 * 2)) {
+			$desc = "Last year";
 		} else {
-			$desc  = "Unknown";
+			my $years = int($days / 365);
+			$desc = "$years years old";
 		}
 
 		$ret = "$desc";
@@ -1455,13 +1466,64 @@ sub SplitDate($)
 	my @htime = split(/:/,$ttime);
 
 	my %date = (
-	HOUR   => int($htime[0]),
-	MINUTE => int($htime[1]),
-	SECOND => int($htime[2]),
-	DATE   => int($hdate[2]),
-	MONTH  => int($hdate[1]),
-	YEAR   => int($hdate[0]),
+	HOUR   => int($htime[0]) + 0,
+	MINUTE => int($htime[1]) + 0,
+	SECOND => int($htime[2]) + 0,
+	DATE   => int($hdate[2]) + 0,
+	MONTH  => int($hdate[1]) + 0,
+	YEAR   => int($hdate[0]) + 0,
 	);
 	return \%date;
 }
 
+sub DiffDate
+{
+	my $date1 = shift;
+	my $date2 = shift;
+
+	if($date1->{YEAR} == $date2->{YEAR}) {
+		return Date2Days($date2) - Date2Days($date1);
+	}
+	my $days = Year2Days($date1) - Date2Days($date1);
+	for(my $i = $date1->{YEAR} + 1; $i < $date2->{YEAR}; $i++) {
+		$days += Date2Days($date1);
+	}
+	$days += Date2Days($date2);
+}
+
+sub Date2Days
+{
+	my $date	=	shift;
+	my %days_month = (
+		1	=>	31,
+		2	=>	28,
+		3	=>	31,
+		4	=>	30,
+		5	=>	31,
+		6	=>	30,
+		7	=>	31,
+		8	=>	31,
+		9	=>	30,
+		10	=>	31,
+		11	=>	30,
+		12	=>	31
+	);
+	if($date->{YEAR} % 4 == 0) {
+		$days_month{2} = $days_month{2} + 1;
+	}
+	my $days = 0;
+	for(my $i=1; $i < $date->{MONTH}; $i++) {
+		$days += $days_month{$i};
+	}
+	$days += $date->{DATE};
+	
+	return $days - 1;
+}
+sub Year2Days
+{
+	my $date	=	shift;
+	if($date->{YEAR} % 4 == 0) {
+		return 366;
+	}
+	return 365;
+}
