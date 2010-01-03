@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.8-3";
+my $VERSION = "3.8-4";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -85,7 +85,7 @@ sub PrintTrashSizeLine($$);
 sub PrintColored($$);
 sub HumanReadableDate($);
 sub SplitDate($);
-sub SetWidths();
+sub SetWidths($);
 
 ##############################################################################
 #				Global Variables                             #
@@ -103,7 +103,7 @@ my $OptionVerbose	= 0;
 my $OptionRecursive	= 0;
 my $OptionColor		= 1;
 my $OptionDate		= 1;
-my $OptionHumanReadable = 0;
+my $OptionHumanReadable = 1;
 my $OptionRegex		= 0;
 my $OptionVersion	= 0;
 my $OptionPermanent	= 0;
@@ -965,7 +965,7 @@ sub SetEnvirnment()
 			'r|recursive'	  => \$OptionRecursive,
 			'R|recursive'	  => \$OptionRecursive,
 			'u|undo'	  => \$OptionUndo,
-			'help'		  => \$OptionHelp,
+			'h|help'	  => \$OptionHelp,
 			'i|interactive'	  => \$OptionInteractive,
 			'p|permanent'	  => \$OptionPermanent,
 			'v|verbose'	  => \$OptionVerbose,
@@ -973,7 +973,7 @@ sub SetEnvirnment()
 			'color!'	  => \$OptionColor,
 			'date!'		  => \$OptionDate,
 			's|size'	  => \$OptionSize,
-			'h|human-readable'=> \$OptionHumanReadable,
+			'human!'          => \$OptionHumanReadable,
 			'version'         => \$OptionVersion,
 	) == 1 or Usage();
 
@@ -981,15 +981,6 @@ sub SetEnvirnment()
 
 	if($OptionForce > 0) {
 		$OptionInteractive = 0;
-	}
-
-	# Allow -h to stand for help.
-	if($OptionSize == 0 and $OptionList == 0 and $OptionHumanReadable > 0) {
-		$OptionHumanReadable = 0;
-		$OptionHelp = 1;
-	} elsif($OptionList > 0 and $OptionDate == 0 and $OptionHumanReadable > 0) {
-		$OptionHumanReadable = 0;
-		$OptionHelp = 1;
 	}
 
 	# Do not reserve space without -s option.
@@ -1144,7 +1135,7 @@ sub PrintColored($$)
 	}
 }
 
-sub SetWidths()
+sub SetWidths($)
 {
 	my $ref	=	shift;
 	my @list = @{$ref};
@@ -1469,8 +1460,6 @@ sub HumanReadableDate($)
 		$mod_hour = $date->{HOUR} - 12;
 	}
 
-	my $tmph = $OptionHumanReadable;
-	$OptionHumanReadable = 1;
 	my $ret = "";
 
 	if($OptionHumanReadable == 1) {
@@ -1508,7 +1497,6 @@ sub HumanReadableDate($)
 	} else {
 		$ret = "$mod_hour:$date->{MINUTE}:$date->{SECOND}$on $date->{MONTH}/$date->{DATE}/$date->{YEAR}";
 	}
-	$OptionHumanReadable = $tmph;
 
 	return $ret;
 }
