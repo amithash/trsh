@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.8-2";
+my $VERSION = "3.8-3";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -85,6 +85,7 @@ sub PrintTrashSizeLine($$);
 sub PrintColored($$);
 sub HumanReadableDate($);
 sub SplitDate($);
+sub SetWidths();
 
 ##############################################################################
 #				Global Variables                             #
@@ -456,57 +457,6 @@ sub ListArrayContents($)
 	foreach my $date (sort {$b cmp $a} keys %dates) {
 		my $p = $dates{$date};
 		PrintTrashinfo($p);
-	}
-}
-
-sub SetWidths
-{
-	my $ref	=	shift;
-	my @list = @{$ref};
-	my $name_w = length("Trash Entry ");
-	my $date_w = length("Deletion Date ");
-	my $size_w = length("Size ");
-	my $path_w = length("Restore Path ");
-
-	foreach my $p (@list) {
-		my $date = HumanReadableDate($p->{DATE});
-		my $name = $p->{NAME};
-		my $size = $p->{SIZE};
-		my $path = $p->{PATH};
-		if(length("$date") > $date_w) {
-			$date_w = length("$date ");
-		}
-		if(length("$name") > $name_w) {
-			$name_w = length("$name ");
-		}
-		if(length("$size") > $size_w) {
-			$size_w = length("$size ");
-		}
-		if(length("$path") > $path_w) {
-			$path_w = length("$path ");
-		}
-	}
-	if($name_w < $ListNameWidth) {
-		if($OptionDate == 1) {
-			$ListDateWidth += ($ListNameWidth - $name_w);
-		} elsif($OptionSize == 1) {
-			$ListSizeWidth += ($ListNameWidth - $name_w);
-		} else {
-			$ListPathWidth += ($ListNameWidth - $name_w);
-		}
-		$ListNameWidth = $name_w;
-	}
-	if($OptionDate > 0 and $date_w < $ListDateWidth) {
-		if($OptionSize > 0) {
-			$ListSizeWidth += ($ListDateWidth - $date_w);
-		} else {
-			$ListPathWidth += ($ListDateWidth - $date_w);
-		}
-		$ListDateWidth = $date_w;
-	}
-	if($OptionSize > 0 and $size_w < $ListSizeWidth) {
-		$ListPathWidth += ($ListSizeWidth - $size_w);
-		$ListSizeWidth = $size_w;
 	}
 }
 
@@ -1194,6 +1144,57 @@ sub PrintColored($$)
 	}
 }
 
+sub SetWidths()
+{
+	my $ref	=	shift;
+	my @list = @{$ref};
+	my $name_w = length("Trash Entry ");
+	my $date_w = length("Deletion Date ");
+	my $size_w = length("Size ");
+	my $path_w = length("Restore Path ");
+
+	foreach my $p (@list) {
+		my $date = HumanReadableDate($p->{DATE});
+		my $name = $p->{NAME};
+		my $size = $p->{SIZE};
+		my $path = $p->{PATH};
+		if(length("$date") > $date_w) {
+			$date_w = length("$date ");
+		}
+		if(length("$name") > $name_w) {
+			$name_w = length("$name ");
+		}
+		if(length("$size") > $size_w) {
+			$size_w = length("$size ");
+		}
+		if(length("$path") > $path_w) {
+			$path_w = length("$path ");
+		}
+	}
+	if($name_w < $ListNameWidth) {
+		if($OptionDate == 1) {
+			$ListDateWidth += ($ListNameWidth - $name_w);
+		} elsif($OptionSize == 1) {
+			$ListSizeWidth += ($ListNameWidth - $name_w);
+		} else {
+			$ListPathWidth += ($ListNameWidth - $name_w);
+		}
+		$ListNameWidth = $name_w;
+	}
+	if($OptionDate > 0 and $date_w < $ListDateWidth) {
+		if($OptionSize > 0) {
+			$ListSizeWidth += ($ListDateWidth - $date_w);
+		} else {
+			$ListPathWidth += ($ListDateWidth - $date_w);
+		}
+		$ListDateWidth = $date_w;
+	}
+	if($OptionSize > 0 and $size_w < $ListSizeWidth) {
+		$ListPathWidth += ($ListSizeWidth - $size_w);
+		$ListSizeWidth = $size_w;
+	}
+}
+
 sub InitFileTypeColors()
 {
 	my %num_to_col = (
@@ -1446,6 +1447,10 @@ sub PrepareRegex($)
 	return $regex;
 }
 
+##############################################################################
+#		           Date related functions                            #
+##############################################################################
+
 sub HumanReadableDate($)
 {
 	my $tdate	=	shift;
@@ -1580,3 +1585,4 @@ sub Year2Days
 	}
 	return 365;
 }
+
