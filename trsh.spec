@@ -29,7 +29,7 @@
 Summary: A Trash manager aliased to rm.
 Name: trsh
 Version: 3.7
-Release: 10
+Release: 11
 Group: Utilities
 License: GPL
 BuildArch: noarch
