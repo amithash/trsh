@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.8-1";
+my $VERSION = "3.8-2";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -354,7 +354,7 @@ sub DeleteFile($)
 
 
 	if($OptionInteractive > 0 and GetUserPermission("Delete $path? ") == 0) {
-		next;
+		return;
 	}
 
 	# Always ask for permission for write-protected files
