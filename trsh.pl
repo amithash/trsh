@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.8-4";
+my $VERSION = "3.8-5";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -103,10 +103,11 @@ my $OptionVerbose	= 0;
 my $OptionRecursive	= 0;
 my $OptionColor		= 1;
 my $OptionDate		= 1;
-my $OptionHumanReadable = 1;
+my $OptionHumanReadable = 0;
 my $OptionRegex		= 0;
 my $OptionVersion	= 0;
 my $OptionPermanent	= 0;
+my $OptionRelativeDate	= 1;
 
 # Session information
 my %Session = (
@@ -965,15 +966,16 @@ sub SetEnvirnment()
 			'r|recursive'	  => \$OptionRecursive,
 			'R|recursive'	  => \$OptionRecursive,
 			'u|undo'	  => \$OptionUndo,
-			'h|help'	  => \$OptionHelp,
+			'help'		  => \$OptionHelp,
 			'i|interactive'	  => \$OptionInteractive,
 			'p|permanent'	  => \$OptionPermanent,
 			'v|verbose'	  => \$OptionVerbose,
 			'x|regex'         => \$OptionRegex,
 			'color!'	  => \$OptionColor,
 			'date!'		  => \$OptionDate,
+			'relative-date!'  => \$OptionRelativeDate,
 			's|size'	  => \$OptionSize,
-			'human!'          => \$OptionHumanReadable,
+			'h|human'         => \$OptionHumanReadable,
 			'version'         => \$OptionVersion,
 	) == 1 or Usage();
 
@@ -1092,6 +1094,12 @@ Print the deletion date with the trash listing (-l)
 
 --nodate
 Do not print the deletion date with the trash listing (-l)
+
+--relative-date (Default)
+Display date in listings as a relative figure in words.
+
+--norelative-date
+Display the real date in listings.
 
 -x|--regex
 Considers input as perl regex rather than names or paths.
@@ -1462,7 +1470,7 @@ sub HumanReadableDate($)
 
 	my $ret = "";
 
-	if($OptionHumanReadable == 1) {
+	if($OptionRelativeDate == 1) {
 		my $desc = "";
 		my $today = SplitDate($Session{CurrentDate});
 		my $days = DiffDate($date, $today);
