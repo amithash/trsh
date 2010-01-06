@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.8-6";
+my $VERSION = "3.8-7";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -287,8 +287,7 @@ sub EmptyTrash()
 	# Empty Devices Trash
 	my @devs = GetDeviceList();
 	foreach my $dev (@devs) {
-		# Ignore these two as they go 
-		# to the home trash
+
 		if($dev eq "/" or $dev eq "/home") {
 			next;
 		}
@@ -922,7 +921,13 @@ sub GetDeviceList()
 	foreach my $e (@list) {
 		my @tmp = split(/\s+/,$e);
 		if($tmp[0] =~ /\/dev\/.+/) {
-			push @dev_list, $tmp[$#tmp];
+			my $dev = $tmp[$#tmp];
+
+			# Ignore devices which are not writable.
+			unless(-w $dev) {
+				next;
+			}
+			push @dev_list, $dev;
 		}
 	}
 	return @dev_list;
@@ -1588,9 +1593,11 @@ sub Glob
 	my @list = glob($pattern);
 	my @ret;
 	foreach my $f (@list) {
-		next if($f eq ".");
-		next if($f eq "..");
-		push @ret, $f;
+		my $file = AbsolutePath($f);
+		my $base = basename($file);
+		next if($base eq ".");
+		next if($base eq "..");
+		push @ret, $file;
 	}
 	return @ret;
 }
