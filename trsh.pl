@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.8-8";
+my $VERSION = "3.8-9";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -915,28 +915,7 @@ sub InDevice($)
 sub GetDeviceList()
 {
 	my @list = split(/\n/,`df`);
-	my @dev_list;
-	shift @list;
-	foreach my $e (@list) {
-		my @tmp = split(/\s+/,$e);
-		my $mnt = $tmp[$#tmp];
-		my $device = $tmp[0];
-		unless(-w $mnt) {
-			next;
-		}
-		if(IsMountIgnored($mnt) == 1) {
-			next;
-		}
 
-		push @dev_list, $mnt;
-		$SystemDevices{$mnt} = 1;
-	}
-	return @dev_list;
-}
-
-sub IsMountIgnored
-{
-	my $mnt	=	shift;
 	my %ignored = (
 		'/'	=>	1,
 		'/home'	=>	1,
@@ -952,10 +931,23 @@ sub IsMountIgnored
 		'/sbin'	=>	1,
 		'/tmp'	=>	1,
 	);
-	if(defined($ignored{$mnt})) {
-		return 1;
+	my @dev_list;
+	shift @list;
+	foreach my $e (@list) {
+		my @tmp = split(/\s+/,$e);
+		my $mnt = $tmp[$#tmp];
+		my $device = $tmp[0];
+		unless(-w $mnt) {
+			next;
+		}
+		if(defined($ignored{$mnt})) {
+			next;
+		}
+
+		push @dev_list, $mnt;
+		$SystemDevices{$mnt} = 1;
 	}
-	return 0;
+	return @dev_list;
 }
 
 ##############################################################################
