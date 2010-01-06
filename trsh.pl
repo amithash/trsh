@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.8-7";
+my $VERSION = "3.8-8";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -86,6 +86,7 @@ sub PrintColored($$);
 sub HumanReadableDate($);
 sub SplitDate($);
 sub SetWidths($);
+sub GetTrashSize($);
 
 ##############################################################################
 #				Global Variables                             #
@@ -136,6 +137,7 @@ my $SDevWidth;
 my %TypeColors;
 my %AttrColors;
 my @DevList;
+my %SystemDevices;
 
 # Constants 
 my $ListNameWidthPerc = 25;
@@ -285,8 +287,7 @@ sub EmptyTrash()
 	system("rm -rf $Session{HomeTrash}/files/*");
 
 	# Empty Devices Trash
-	my @devs = GetDeviceList();
-	foreach my $dev (@devs) {
+	foreach my $dev (@DevList) {
 
 		if($dev eq "/" or $dev eq "/home") {
 			next;
@@ -470,8 +471,7 @@ sub PrintTrashSize()
 
 	PrintTrashSizeLine("Home Trash", $sz);
 
-	my @devs = GetDeviceList();
-	foreach my $dev (@devs) {
+	foreach my $dev (@DevList) {
 		next if($dev eq "/" or $dev eq "/home");
 		$sz = GetTrashSize(GetDeviceTrash($dev));
 		PrintTrashSizeLine("$dev Trash", $sz);
@@ -546,7 +546,7 @@ sub GetTrashSize($)
 		if($sz eq "") {
 			print "WARNING BAD metadata file. Fixing it\n";
 			SysDelete("$trash_path/metadata","-f");
-			return GetTrashSIze($trash_path);
+			return GetTrashSize($trash_path);
 		}
 	}
 
@@ -623,8 +623,7 @@ sub GetTrashContents()
 	my $trsh = $Session{HomeTrash};
 	my @list = ();
 	push @list, GetSpecificTrashContents($trsh);
-	my @devs = GetDeviceList();
-	foreach my $dev (@devs) {
+	foreach my $dev (@DevList) {
 		next if($dev eq "/" or $dev eq "/home");
 		push @list, GetSpecificTrashContents(GetDeviceTrash($dev));
 	}
@@ -858,15 +857,15 @@ sub GetDeviceTrash($)
 sub GetTrashDir($)
 {
 	my $path	=	shift;
-	$path = AbsolutePath($path);
-	if(InHome($path)) {
-		return $Session{HomeTrash};
-	}
 	my $dev = InDevice($path);
-	if($dev eq "/" or $dev eq "/home") {
+
+	if($dev eq $Session{HomePath}) {
 		return $Session{HomeTrash};
 	}
+
 	my $trash = "$dev/.Trash";
+
+	# Tests defined by freeDesktop.org's trash specification.
 	if(-d $trash and -k $trash and !-l $trash and -w $trash) {
 		$trash = "$trash/$Session{UserID}";
 		unless(-d "$trash") {
@@ -877,6 +876,8 @@ sub GetTrashDir($)
 		}
 		return $trash;
 	}
+
+	# If not defined...
 	$trash = "$dev/.Trash-$Session{UserID}";
 	unless(-d $trash) {
 		mkdir "$trash";
@@ -896,41 +897,65 @@ sub InDevice($)
 {
 	my $path	=	shift;
 	my @matched;
-	foreach my $device (@DevList) {
-		if($path =~ /$device.+/) {
-			push @matched, $device;
-		}
+	my $dev = AbsolutePath($path);
+
+	while($dev ne "/") {
+		last if(defined($SystemDevices{$dev}));
+		last if($dev eq $Session{HomePath});
+		$dev = dirname($dev);
 	}
-	my $outermost = "NULL";
-	foreach my $match (@matched) {
-		if($outermost eq "NULL") {
-			$outermost = $match;
-			next;
-		}
-		if($match =~ /$outermost.+/) {
-			$outermost = $match;
-		}
+
+	if($dev eq "/") {
+		print "ERROR: Could not figure out what device $path belongs to.\n";
+		exit;
 	}
-	return $outermost;
+	return $dev;
 }
 
 sub GetDeviceList()
 {
 	my @list = split(/\n/,`df`);
 	my @dev_list;
+	shift @list;
 	foreach my $e (@list) {
 		my @tmp = split(/\s+/,$e);
-		if($tmp[0] =~ /\/dev\/.+/) {
-			my $dev = $tmp[$#tmp];
-
-			# Ignore devices which are not writable.
-			unless(-w $dev) {
-				next;
-			}
-			push @dev_list, $dev;
+		my $mnt = $tmp[$#tmp];
+		my $device = $tmp[0];
+		unless(-w $mnt) {
+			next;
 		}
+		if(IsMountIgnored($mnt) == 1) {
+			next;
+		}
+
+		push @dev_list, $mnt;
+		$SystemDevices{$mnt} = 1;
 	}
 	return @dev_list;
+}
+
+sub IsMountIgnored
+{
+	my $mnt	=	shift;
+	my %ignored = (
+		'/'	=>	1,
+		'/home'	=>	1,
+		'/dev'	=>	1,
+		'/sys'	=>	1,
+		'/usr'	=>	1,
+		'/var'	=>	1,
+		'/boot'	=>	1,
+		'/etc'	=>	1,
+		'/lib'	=>	1,
+		'/opt'	=>	1,
+		'/proc'	=>	1,
+		'/sbin'	=>	1,
+		'/tmp'	=>	1,
+	);
+	if(defined($ignored{$mnt})) {
+		return 1;
+	}
+	return 0;
 }
 
 ##############################################################################
