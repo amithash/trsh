@@ -139,7 +139,7 @@ fi
 ############################### TEST 004 ################################
 TEST="Delete directories"
 NUM="4A"
-FILE="____test_3"
+FILE=".____test_3"
 mkdir $FILE
 trsh $FILE > /dev/null 2> /dev/null
 # -r is not provided. $FILE must not be trashed.

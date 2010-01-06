@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.8-5";
+my $VERSION = "3.8-6";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -401,7 +401,7 @@ sub DeleteRegex($)
 		$dir = cwd();
 	}
 	$reg = PrepareRegex(basename($reg));
-	foreach my $file (<$dir/*>) {
+	foreach my $file (Glob("$dir/* $dir/.*")) {
 		if($file =~ $reg) {
 			if($OptionInteractive > 0 and GetUserPermission("Delete $file? ") == 0) {
 				next;
@@ -634,7 +634,7 @@ sub GetTrashContents()
 
 sub GetSpecificTrashContents($) {
 	my $trash_dir	=	shift;
-	my @list = <$trash_dir/info/*.trashinfo>;
+	my @list = Glob("$trash_dir/info/*.trashinfo $trash_dir/info/.*.trashinfo");
 	my @trash_list = ();
 	foreach my $info (@list) {
 		my $name = basename($info);
@@ -1580,5 +1580,18 @@ sub Year2Days
 		return 366;
 	}
 	return 365;
+}
+
+sub Glob
+{
+	my $pattern	=	shift;
+	my @list = glob($pattern);
+	my @ret;
+	foreach my $f (@list) {
+		next if($f eq ".");
+		next if($f eq "..");
+		push @ret, $f;
+	}
+	return @ret;
 }
 
