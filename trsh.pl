@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.8-9";
+my $VERSION = "3.8-10";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -74,7 +74,7 @@ sub AddEscapes($);
 sub RemoveFromTrashRegex($);
 sub DeleteRegex($);
 sub UndoRegex($);
-sub HumanReadable($);
+sub HumanReadableSize($);
 sub DirSize($);
 sub FileSize($);
 sub EntrySize($);
@@ -87,6 +87,7 @@ sub HumanReadableDate($);
 sub SplitDate($);
 sub SetWidths($);
 sub GetTrashSize($);
+sub MakeTrashDir($);
 
 ##############################################################################
 #				Global Variables                             #
@@ -282,16 +283,14 @@ sub EmptyTrash()
 	}
 
 	# Empty Home Trash
-	print "Removing all files in home trash\n" if($OptionVerbose > 0);
-	system("rm -rf $Session{HomeTrash}/info/*");
-	system("rm -rf $Session{HomeTrash}/files/*");
+	if(-d $Session{HomeTrash}) {
+		print "Removing all files in home trash\n" if($OptionVerbose > 0);
+		system("rm -rf $Session{HomeTrash}/info/*");
+		system("rm -rf $Session{HomeTrash}/files/*");
+	}
 
 	# Empty Devices Trash
 	foreach my $dev (@DevList) {
-
-		if($dev eq "/" or $dev eq "/home") {
-			next;
-		}
 		my $trsh = GetDeviceTrash($dev);
 		unless(-d $trsh) {
 			next;
@@ -403,10 +402,6 @@ sub DeleteRegex($)
 	$reg = PrepareRegex(basename($reg));
 	foreach my $file (Glob("$dir/* $dir/.*")) {
 		if($file =~ $reg) {
-			if($OptionInteractive > 0 and GetUserPermission("Delete $file? ") == 0) {
-				next;
-			}
-			print "Deleting $file from Trash\n" if($OptionVerbose > 0);
 			DeleteFile($file);
 		}
 	}
@@ -497,7 +492,7 @@ sub SizeColor($)
 {
 	my $sz		=	shift;
 	if($OptionHumanReadable == 0) {
-		$sz = HumanReadable($sz);
+		$sz = HumanReadableSize($sz);
 	}
 	if($sz =~ /P/) {
 		return "Red";
@@ -522,6 +517,12 @@ sub GetTrashSize($)
 	my $calculate_trash = 0;
 
 	my $sz = "";
+
+	unless (-d $trash_path) {
+		$sz = 0;
+		$sz = HumanReadableSize($sz) if($OptionHumanReadable > 0);
+		return $sz;
+	}
 
 	my $info_mtime = (stat("$trash_path/info"))[9];
 	my $metadata_mtime = (stat("$trash_path/metadata"))[9];
@@ -550,7 +551,7 @@ sub GetTrashSize($)
 		}
 	}
 
-	$sz = HumanReadable($sz) if($OptionHumanReadable > 0);
+	$sz = HumanReadableSize($sz) if($OptionHumanReadable > 0);
 
 	return $sz;
 }
@@ -632,6 +633,12 @@ sub GetTrashContents()
 
 sub GetSpecificTrashContents($) {
 	my $trash_dir	=	shift;
+
+	# Return an empty list if the trash dir does not exist.
+	unless(-d $trash_dir) {
+		return ();
+	}
+
 	my @list = Glob("$trash_dir/info/*.trashinfo $trash_dir/info/.*.trashinfo");
 	my @trash_list = ();
 	foreach my $info (@list) {
@@ -657,7 +664,7 @@ sub GetSpecificTrashContents($) {
 		$p->{NAME} = basename($p->{PATH});
 		if($OptionSize > 0) {
 			$p->{SIZE} = EntrySize($p->{IN_TRASH_PATH});
-			$p->{SIZE} = HumanReadable($p->{SIZE}) if($OptionHumanReadable > 0);
+			$p->{SIZE} = HumanReadableSize($p->{SIZE}) if($OptionHumanReadable > 0);
 		} else {
 			$p->{SIZE} = 0;
 		}
@@ -722,7 +729,12 @@ sub PutTrashinfo($)
 	my $entry	=	shift;
 	my $success = 0;
 	my $infoname;
+
+	MakeTrashDir($entry->{TRASH});
+
 	my $infodir = "$entry->{TRASH}/info";
+	my $filesdir = "$entry->{TRASH}/files";
+
 	while($success == 0) {
 		$infoname = GetInfoName($infodir, $entry->{NAME});
 		$success = sysopen INFO, "$infodir/$infoname",  O_RDWR|O_EXCL|O_CREAT;
@@ -747,7 +759,7 @@ sub PutTrashinfo($)
 		# THIS SHOULD NEVER HAPPEN!
 		print "REGEX FAILED!\n";
 	}
-	$success = SysMove($entry->{PATH}, "$entry->{TRASH}/files/$in_trash_name");
+	$success = SysMove($entry->{PATH}, "$filesdir/$in_trash_name");
 	if($success != 0) {
 		print "Recovering from failed delete\n";
 		SysDelete("$infodir/$infoname","-f");
@@ -868,24 +880,23 @@ sub GetTrashDir($)
 	# Tests defined by freeDesktop.org's trash specification.
 	if(-d $trash and -k $trash and !-l $trash and -w $trash) {
 		$trash = "$trash/$Session{UserID}";
-		unless(-d "$trash") {
-			mkdir "$trash";
-			mkdir "$trash/files";
-			mkdir "$trash/info";
-			system("touch $trash/metadata");
-		}
 		return $trash;
 	}
 
 	# If not defined...
 	$trash = "$dev/.Trash-$Session{UserID}";
-	unless(-d $trash) {
-		mkdir "$trash";
-		mkdir "$trash/files";
-		mkdir "$trash/info";
-		system("touch $trash/metadata");
-	}
 	return $trash;
+}
+
+sub MakeTrashDir($)
+{
+	my $root	=	shift;
+	unless(-d "$root") {
+		mkdir "$root";
+		mkdir "$root/files";
+		mkdir "$root/info";
+		system("touch $root/metadata");
+	}
 }
 
 
@@ -960,14 +971,13 @@ sub SetEnvirnment()
 	chomp($Session{UserName});
 	$Session{UserID}   = int(`id -u`);
 	$Session{HomePath} = $ENV{HOME};
-	@DevList = GetDeviceList();
-	unless(-d "$Session{HomePath}/.local/share/Trash") {
-		SysMkdir("$Session{HomePath}/.local/share/Trash");
-		SysMkdir("$Session{HomePath}/.local/share/Trash/files");
-		SysMkdir("$Session{HomePath}/.local/share/Trash/info");
-		system("touch $Session{HomePath}/.local/share/Trash/metadata");
-	}
 	$Session{HomeTrash} = "$Session{HomePath}/.local/share/Trash";
+	@DevList = GetDeviceList();
+
+	# Specification states that the Home trash must be created.
+	MakeTrashDir($Session{HomeTrash});
+
+	# Get current date/time
 	my $x = `date --rfc-3339=seconds`;
 	chomp($x);
 	my @tmp = split(/ /, $x);
@@ -976,6 +986,7 @@ sub SetEnvirnment()
 	@tmp = split(/-/,$time);
 	$time = "$tmp[0]";
 	$Session{CurrentDate} = "${date}T$time";
+
 
 	chomp($Session{CurrentDate});
 
@@ -1273,7 +1284,7 @@ sub Crop($$)
 	return $ret;
 }
 
-sub HumanReadable($)
+sub HumanReadableSize($)
 {
 	my $sz = shift;
 	my $kb = 1024;
