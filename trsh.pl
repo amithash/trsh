@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.8-12";
+my $VERSION = "3.8-13";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -535,7 +535,7 @@ sub GetTrashSize($)
 
 	# If info was modified after metadata
 	if(! -e "$trash_path/metadata" or $info_mtime > $metadata_mtime) {
-		UpdateSizeMetadata($trash_path);
+		$sz = UpdateSizeMetadata($trash_path);
 	} else {
 		$sz = GetSizeMetadata($trash_path);
 		if($sz eq "BAD") {
@@ -558,6 +558,7 @@ sub UpdateSizeMetadata($)
 	print OUT "[Cached]\n";
 	print OUT "Size=$sz\n";
 	close(OUT);
+	return $sz;
 }
 
 sub GetSizeMetadata($)
