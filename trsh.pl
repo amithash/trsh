@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.8-10";
+my $VERSION = "3.8-11";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -438,7 +438,11 @@ sub ListArrayContents($)
 	SetWidths(\@list);
 
 	foreach my $p (@list) {
-		$dates{$p->{DATE}} = $p;
+		if(defined($dates{$p->{DATE}})) {
+			push @{$dates{$p->{DATE}}}, $p;
+		} else {
+			$dates{$p->{DATE}} = [$p];
+		}
 	}
 
 	printf("%-${ListNameWidth}s| ", "Trash Entry");
@@ -451,8 +455,9 @@ sub ListArrayContents($)
 	printf("%s\n", "------------");
 
 	foreach my $date (sort {$b cmp $a} keys %dates) {
-		my $p = $dates{$date};
-		PrintTrashinfo($p);
+		foreach my $p (@{$dates{$date}}) {
+			PrintTrashinfo($p);
+		}
 	}
 }
 
@@ -467,7 +472,6 @@ sub PrintTrashSize()
 	PrintTrashSizeLine("Home Trash", $sz);
 
 	foreach my $dev (@DevList) {
-		next if($dev eq "/" or $dev eq "/home");
 		$sz = GetTrashSize(GetDeviceTrash($dev));
 		PrintTrashSizeLine("$dev Trash", $sz);
 	}
@@ -624,8 +628,8 @@ sub GetTrashContents()
 	my $trsh = $Session{HomeTrash};
 	my @list = ();
 	push @list, GetSpecificTrashContents($trsh);
+
 	foreach my $dev (@DevList) {
-		next if($dev eq "/" or $dev eq "/home");
 		push @list, GetSpecificTrashContents(GetDeviceTrash($dev));
 	}
 	return @list;
@@ -670,6 +674,7 @@ sub GetSpecificTrashContents($) {
 		}
 		push @trash_list, $p;
 	}
+
 	return @trash_list;
 }
 
