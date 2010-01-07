@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.8-11";
+my $VERSION = "3.8-12";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -88,6 +88,8 @@ sub SplitDate($);
 sub SetWidths($);
 sub GetTrashSize($);
 sub MakeTrashDir($);
+sub UpdateSizeMetadata($);
+sub GetSizeMetadata($);
 
 ##############################################################################
 #				Global Variables                             #
@@ -533,22 +535,10 @@ sub GetTrashSize($)
 
 	# If info was modified after metadata
 	if(! -e "$trash_path/metadata" or $info_mtime > $metadata_mtime) {
-		$sz = DirSize($trash_path);
-		open OUT, "+>$trash_path/metadata" or die "Could not open $trash_path/metadata for write\n";
-		print OUT "[Cached]\n";
-		print OUT "Size=$sz\n";
-		close(OUT);
+		UpdateSizeMetadata($trash_path);
 	} else {
-		open IN, "$trash_path/metadata" or die "Could not open $trash_path/metadata for read\n";
-		while(my $line = <IN>) {
-			chomp($line);
-			if($line =~ /^Size=(\d+)$/) {
-				$sz = $1;
-				last;
-			}
-		}
-		close(IN);
-		if($sz eq "") {
+		$sz = GetSizeMetadata($trash_path);
+		if($sz eq "BAD") {
 			print "WARNING BAD metadata file. Fixing it\n";
 			SysDelete("$trash_path/metadata","-f");
 			return GetTrashSize($trash_path);
@@ -558,6 +548,41 @@ sub GetTrashSize($)
 	$sz = HumanReadableSize($sz) if($OptionHumanReadable > 0);
 
 	return $sz;
+}
+
+sub UpdateSizeMetadata($)
+{
+	my $trash	=	shift;
+	my $sz = DirSize($trash);
+	open OUT, "+>$trash/metadata" or die "Could not open $trash/metadata for write\n";
+	print OUT "[Cached]\n";
+	print OUT "Size=$sz\n";
+	close(OUT);
+}
+
+sub GetSizeMetadata($)
+{
+	my $trash	=	shift;
+	my $sz = "";
+	my $valid = 0;
+
+	open IN, "$trash/metadata" or die "Could not open $trash/metadata for read\n";
+	while(my $line = <IN>) {
+		chomp($line);
+		if($line =~ /^Size=(\d+)$/) {
+			$sz = $1;
+			$valid = 1;
+			last;
+		}
+	}
+
+	close(IN);
+
+	if($valid == 1) {
+		return $sz;
+	} else {
+		return "BAD";
+	}
 }
 
 ##############################################################################
@@ -641,6 +666,11 @@ sub GetSpecificTrashContents($) {
 	# Return an empty list if the trash dir does not exist.
 	unless(-d $trash_dir) {
 		return ();
+	}
+
+	if($OptionList > 0 and $OptionSize > 0) {
+		# Dummy call to update metadata.
+		my $size = GetTrashSize($trash_dir);
 	}
 
 	my @list = Glob("$trash_dir/info/*.trashinfo $trash_dir/info/.*.trashinfo");
