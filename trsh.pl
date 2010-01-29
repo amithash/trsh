@@ -5,7 +5,7 @@
 ##############################################################################
 
 ##############################################################################
-# Copyright 2008-2009 Amithash Prasad                                        *
+# Copyright 2008-2010 Amithash Prasad                                        *
 #									     *
 # this file is part of trsh.						     *
 #                                                                            *
@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.9-1";
+my $VERSION = "9.1-2";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -402,7 +402,7 @@ sub DeleteRegex($)
 		$dir = cwd();
 	}
 	$reg = PrepareRegex(basename($reg));
-	foreach my $file (Glob("$dir/* $dir/.*")) {
+	foreach my $file (Glob("$dir/*", "$dir/.*")) {
 		if($file =~ $reg) {
 			DeleteFile($file);
 		}
@@ -674,7 +674,7 @@ sub GetSpecificTrashContents($) {
 		my $size = GetTrashSize($trash_dir);
 	}
 
-	my @list = Glob("$trash_dir/info/*.trashinfo $trash_dir/info/.*.trashinfo");
+	my @list = Glob("$trash_dir/info/*.trashinfo", "$trash_dir/info/.*.trashinfo");
 	my @trash_list = ();
 	foreach my $info (@list) {
 		my $name = basename($info);
@@ -931,7 +931,7 @@ sub MakeTrashDir($)
 		mkdir "$root";
 		mkdir "$root/files";
 		mkdir "$root/info";
-		system("touch $root/metadata");
+		system("touch \"$root/metadata\"");
 	}
 }
 
@@ -981,7 +981,7 @@ sub GetDeviceList()
 	my @dev_list;
 	shift @list;
 	foreach my $e (@list) {
-		my @tmp = split(/\s+/,$e);
+		my @tmp = split(/% /,$e);
 		my $mnt = $tmp[$#tmp];
 		my $device = $tmp[0];
 		unless(-w $mnt) {
@@ -1653,15 +1653,19 @@ sub Year2Days
 
 sub Glob
 {
-	my $pattern	=	shift;
-	my @list = glob($pattern);
+	my @patterns	=	@_;
 	my @ret;
-	foreach my $f (@list) {
-		my $file = AbsolutePath($f);
-		my $base = basename($file);
-		next if($base eq ".");
-		next if($base eq "..");
-		push @ret, $file;
+	foreach my $pattern (@patterns) {
+		$pattern = AddEscapes($pattern);
+		$pattern =~ s/ /\\ /g;
+		my @list = glob($pattern);
+		foreach my $f (@list) {
+			my $file = AbsolutePath($f);
+			my $base = basename($file);
+			next if($base eq ".");
+			next if($base eq "..");
+			push @ret, $file;
+		}
 	}
 	return @ret;
 }
