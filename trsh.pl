@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.9-4";
+my $VERSION = "3.9-5";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -630,19 +630,11 @@ sub GetLatestMatchingFile($)
 
 sub GetRegexMatchingFiles($) {
 	my $reg		=	shift;
-	my $dir = "";
-	if($reg =~ /\//) {
-		$dir = dirname($reg);
-	}
-	$reg = PrepareRegex(basename($reg));
+	$reg = PrepareRegex($reg);
 	my @list = GetTrashContents();
 	my @matched = ();
 	foreach my $p (@list) {
-		if($dir ne "") {
-			my $d = dirname($p->{PATH});
-			next if($dir ne "$d");
-		}
-		if($p->{NAME} =~ $reg) {
+		if($p->{PATH} =~ $reg) {
 			push @matched, $p;
 		}
 	}
@@ -1507,6 +1499,7 @@ sub PrepareRegex($)
 {
 	my $reg		=	shift;
 	$reg =~ s/\$$//;
+	$reg =~ s/\//\\\//g;
 	my $regex = eval { qr/($reg)/ };
 	if($@) {
 		print "ERROR: Invalid regex: $reg\n$@\n";
