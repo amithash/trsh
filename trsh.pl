@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.9-3";
+my $VERSION = "3.9-4";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -1507,7 +1507,7 @@ sub PrepareRegex($)
 {
 	my $reg		=	shift;
 	$reg =~ s/\$$//;
-	my $regex = eval { qr/($reg)$/ };
+	my $regex = eval { qr/($reg)/ };
 	if($@) {
 		print "ERROR: Invalid regex: $reg\n$@\n";
 		exit;
