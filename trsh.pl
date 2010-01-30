@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.9-5";
+my $VERSION = "3.9-6";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -55,7 +55,6 @@ sub AbsolutePath($);
 sub GetTrashDir($);
 sub ListTrashContents();
 sub GetTrashinfoPath($);
-sub GetLatestDeleted();
 sub PrintTrashinfo($);
 sub Usage();
 sub Version();
@@ -64,7 +63,6 @@ sub EmptyTrash();
 sub RemoveFromTrash($);
 sub UndoLatestFiles();
 sub UndoFile($);
-sub GetLatestMatchingFile($);
 sub GetUserPermission($);
 sub FileTypeColor($);
 sub SysMove($$);
@@ -90,6 +88,12 @@ sub GetTrashSize($);
 sub MakeTrashDir($);
 sub UpdateSizeMetadata($);
 sub GetSizeMetadata($);
+sub GetLatestMatchingFile($);
+sub GetRegexMatchingFiles($);
+sub GetLatestDeleted();
+sub GetTrashContents();
+sub GetSpecificTrashContents($);
+
 
 ##############################################################################
 #				Global Variables                             #
