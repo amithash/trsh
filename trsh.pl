@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.9-7";
+my $VERSION = "3.9-8";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -647,7 +647,8 @@ sub GetLatestMatchingFile($)
 	return $return;
 }
 
-sub GetRegexMatchingFiles($) {
+sub GetRegexMatchingFiles($)
+{
 	my $reg		=	shift;
 	$reg = PrepareRegex($reg);
 	my @list = GetTrashContents();
@@ -672,7 +673,8 @@ sub GetTrashContents()
 	return @list;
 }
 
-sub GetSpecificTrashContents($) {
+sub GetSpecificTrashContents($)
+{
 	my $trash_dir	=	shift;
 
 	# Return an empty list if the trash dir does not exist.
