@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.9-6";
+my $VERSION = "3.9-7";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -93,7 +93,22 @@ sub GetRegexMatchingFiles($);
 sub GetLatestDeleted();
 sub GetTrashContents();
 sub GetSpecificTrashContents($);
-
+sub ListArrayContents($);
+sub SizeColor($);
+sub GetTrashinfo($);
+sub PutTrashinfo($);
+sub GetInfoName($$);
+sub RemoveTrashinfo($);
+sub UndoTrashinfo($);
+sub GetDeviceTrash($);
+sub PrintColored($$);
+sub InitFileTypeColors();
+sub FileTypeString($);
+sub PrepareRegex($);
+sub DiffDate($$);
+sub Date2Days($);
+sub Year2Days($);
+# sub Glob(...); Takes infinite arguments;
 
 ##############################################################################
 #				Global Variables                             #
@@ -843,7 +858,7 @@ sub PrintTrashinfo($)
 	PrintColored(" $path\n", "reset");
 }
 
-sub RemoveTrashinfo
+sub RemoveTrashinfo($)
 {
 	my $entry	=	shift;
 
@@ -1596,7 +1611,7 @@ sub SplitDate($)
 	return \%date;
 }
 
-sub DiffDate
+sub DiffDate($$)
 {
 	my $date1 = shift;
 	my $date2 = shift;
@@ -1611,7 +1626,7 @@ sub DiffDate
 	$days += Date2Days($date2);
 }
 
-sub Date2Days
+sub Date2Days($)
 {
 	my $date	=	shift;
 	my %days_month = (
@@ -1639,7 +1654,7 @@ sub Date2Days
 	
 	return $days - 1;
 }
-sub Year2Days
+sub Year2Days($)
 {
 	my $date	=	shift;
 	if($date->{YEAR} % 4 == 0) {
