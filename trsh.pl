@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.9-8";
+my $VERSION = "3.9-9";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -303,22 +303,31 @@ sub EmptyTrash()
 		exit;
 	}
 
+	# Set Force to 1 so that The rest of subs do not nag the user.
+	$OptionForce = 1;
+
 	# Empty Home Trash
-	if(-d $Session{HomeTrash}) {
-		print "Removing all files in home trash\n" if($OptionVerbose > 0);
-		system("rm -rf $Session{HomeTrash}/info/*");
-		system("rm -rf $Session{HomeTrash}/files/*");
-	}
+	my @dev_list = @DevList;
+	push @dev_list, $Session{HomePath};
 
 	# Empty Devices Trash
-	foreach my $dev (@DevList) {
+	foreach my $dev (@dev_list) {
 		my $trsh = GetDeviceTrash($dev);
 		unless(-d $trsh) {
 			next;
 		}
-		print "Removing all files in trash for device: $dev\n" if($OptionVerbose > 0);
-		system("rm -rf $trsh/info/*");
-		system("rm -rf $trsh/files/*");
+
+		print "Removing all files in trash : $dev\n" if($OptionVerbose > 0);
+
+		if(-e "$trsh/metadata") {
+			SysDelete("$trsh/metadata", "-f");
+			system("touch \"$trsh/metadata\"");
+		}
+
+		my @list = GetSpecificTrashContents($trsh);
+		foreach my $p (@list) {
+			RemoveTrashinfo($p);
+		}
 	}
 }
 
