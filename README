@@ -1,7 +1,7 @@
 ========================================================================================
                                     TRSH
 	 		Copyright 2008 Amithash Prasad                                         
-			       Version 3.9-10
+			       Version 3.9-11
 
 	 trsh is free software: you can redistribute it and/or modify         
 	 it under the terms of the GNU General Public License as published by   
@@ -331,8 +331,9 @@ Note you can always restore the _latest_ deleted files.
 NOTES
 --
 
-1. If you really want to use the svn snapshot, then please stick to the revision 
-   I have made available for download! Revisions are dime a dozen, and they mean nothing!
+1. If you really want to use the mercurial snapshot, then please stick to the revision 
+   I have made available for download! Revisions are dime a dozen, and they mean nothing
+   (At least for me)!
    I run the tests only for the revision I want to upload to the downloads page.
 
 2. MANUAL INSTALLATION: (These are steps which are followed by the configure and makefile scripts)
@@ -367,11 +368,11 @@ NOTES
    trsh by either doing a `make uninstall` or deleting all your trsh directories. 
    (trsh 3.x uses the same alias mechanism and same install path, so those will be overwritten)
 
-4. The svn snapshot contains some extra scripts mostly to do with making my life easier in packaging and checkins. 
+4. The mercurial snapshot contains some extra scripts mostly to do with making my life easier in packaging and checkins. 
    (You will not need them unless you want to contribute in the development, for which you will need to ask me first!
-    I am more than willing to share my work, but I need to enable the user in googlecode's subversion).
-   Along with those, there are some test scripts. these scripts are only present in the svn version (If you do an 
-   svn checkout instead of downloading the tarballs). These test the functionality of trsh so that I do not package 
+    I am more than willing to share my work, but I need to enable the user in googlecode's mercurial repo).
+   Along with those, there are some test scripts. these scripts are only present in the mercurial version (If you do an 
+   hg clone instead of downloading the tarballs). These test the functionality of trsh so that I do not package 
    a faulty trsh! test-trsh.bash tests trsh on bash. And both are run before a package is created.
 
 
