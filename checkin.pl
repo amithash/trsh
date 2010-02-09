@@ -2,6 +2,19 @@
 
 use strict;
 use warnings;
+my $hgstatus = `hg status`;
+if($hgstatus =~ /M /) {
+	goto CONTINUE;
+}
+if($hgstatus =~ /A /) {
+	goto CONTINUE;
+}
+if($hgstatus =~ /D /) {
+	goto CONTINUE;
+}
+
+CONTINUE:
+
 my $verstr = `cat VERSION`;
 $verstr =~ /(\d+)\.(\d+)-(\d+)/;
 my $main = $1;
