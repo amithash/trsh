@@ -121,7 +121,7 @@ system("cp $name.src/trsh.1.gz $name/usr/share/man/man1");
 system("cp $name.src/README $name/usr/share/doc/trsh");
 system("cp $name.src/COPYING.GPL $name/usr/share/doc/trsh/copyright");
 system("dpkg -b $name");
-system("mv $name.dpkg trsh-build");
+system("mv $name.deb trsh-build");
 system("rm -rf $name");
 
 #############################################################################################
