@@ -50,10 +50,10 @@ my $name = "trsh-$main.$sub-$rev";
 my $home = $ENV{HOME};
 system("rm -rf $home/$name") if(-d "$home/$name");
 system("rm -rf $home/$name.tar.gz") if(-e "$home/$name.tar.gz");
+system("hg archive -X mkpackage.pl -X checkin.pl -X VERSION -X test-trsh.bash $home/$name");
+chdir($home);
 system("rm -rf trsh-build") if(-d "trsh-build");
 system("mkdir trsh-build");
-system("hg archive -X mkpackage.pl -X checkin.pl -X VERSION -X test-trsh.bash $home/$name");
-chdir("$home");
 system("mv $name $name.src");
 
 #############################################################################################
