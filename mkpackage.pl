@@ -105,7 +105,6 @@ if(`which dpkg` =~ /no dpkg in/) {
 	goto EXIT;
 }
 
-system("cp -r $name.src $name");
 system("mkdir $name");
 system("mkdir $name/DEBIAN");
 system("cp $name.src/control $name/DEBIAN/");
