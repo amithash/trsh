@@ -41,39 +41,94 @@ if(-e "/bin/bash"){
 
 # Only if these tests pass, allow the person to create the package.
 
+#############################################################################################
+###################################### SETUP ################################################
+#############################################################################################
+
 print "version = $main.$sub-$rev\n";
 my $name = "trsh-$main.$sub-$rev";
 my $home = $ENV{HOME};
 system("rm -rf $home/$name") if(-d "$home/$name");
 system("rm -rf $home/$name.tar.gz") if(-e "$home/$name.tar.gz");
-system("hg archive -X mkpackage.pl -X checkin.pl -X VERSION -X test-trsh.bash $home/$name")
-chdir("$home");
-system("cp -r $name $name.src");
-system("rm $name/trsh.spec");
-system("tar -zcf $name.tar.gz $name");
-system("rm -rf $name");
 system("rm -rf trsh-build") if(-d "trsh-build");
 system("mkdir trsh-build");
-system("mv $name.tar.gz trsh-build");
-system("mv $name.src $name");
-system("mv $name/trsh.spec .");
-system("rm $name/configure.pl");
+system("hg archive -X mkpackage.pl -X checkin.pl -X VERSION -X test-trsh.bash $home/$name");
+chdir("$home");
+system("mv $name $name.src");
+
+#############################################################################################
+######################################  TGZ  ################################################
+#############################################################################################
+
+system("cp -r $name.src $name");
+system("rm $name/trsh.spec $name/control $name/postinst $name/postrm $name/prerm");
 system("tar -zcf $name.tar.gz $name");
-system("rm -r $name");
-if(`id -u` eq "0\n"){
-	unless(-d $packages_dir) {
-		print "Unknown distribution: neither of /usr/src/packages (SuSE) or /usr/src/redhat (Redhat) exists\n";
-		system("rm -r trsh.spec");
-		exit;
-	}
-	system("mv $name.tar.gz $packages_dir/SOURCES") == 0 or die "could not move source to SOURCE dir\n";
-	system("rpmbuild -bb trsh.spec") == 0 or die "rpmbuild failed\n";
-	system("mv $packages_dir/RPMS/noarch/$name.noarch.rpm trsh-build");
-	chdir("$home/trsh-build");
-	system("alien -k --scripts $name.noarch.rpm") == 0 or die "Could not create deb package.\n";
-} else {
-	print "Not a root user, no rpm or deb for you\n";
+system("rm -rf $name");
+system("mv $name.tar.gz trsh-build");
+
+#############################################################################################
+######################################  RPM  ################################################
+#############################################################################################
+
+if(`which rpmbuild` =~ /no rpmbuild in/) {
+	print "rpmbuild is not installed on the system. Skipping rpm generation.\n";
+	goto DPKG;
 }
+
+if(`id -u` ne "0\n"){
+	print "Cannot produce rpm package without root permission. Skipping rpm generation\n";
+	goto DPKG;
+}
+
+system("cp -r $name.src $name");
+system("mv $name/trsh.spec .");
+system("rm $name/configure.pl $name/control $name/postinst $name/postrm $name/prerm");
+system("tar -zcf $name.tar.gz $name");
+system("rm -rf $name");
+
+unless(-d $packages_dir) {
+	print "Unknown distribution: neither of /usr/src/packages (SuSE) or /usr/src/redhat (Redhat) exists\n";
+	system("rm -r trsh.spec");
+	exit;
+}
+system("mv $name.tar.gz $packages_dir/SOURCES") == 0 or die "could not move source to SOURCE dir\n";
+system("rpmbuild -bb trsh.spec") == 0 or die "rpmbuild failed\n";
+system("mv $packages_dir/RPMS/noarch/$name.noarch.rpm trsh-build");
+system("rm -rf $name");
+
+#############################################################################################
+######################################  DPKG  ###############################################
+#############################################################################################
+DPKG:
+if(`which dpkg` =~ /no dpkg in/) {
+	print "dpkg is not installed on the system. Skipping deb generation.\n";
+	goto EXIT;
+}
+
+system("cp -r $name.src $name");
+system("mkdir $name");
+system("mkdir $name/DEBIAN");
+system("cp $name.src/control $name/DEBIAN/");
+system("cp $name.src/postinst $name/DEBIAN/");
+system("cp $name.src/postrm $name/DEBIAN/");
+system("cp $name.src/prerm $name/DEBIAN/");
+system("mkdir -p $name/usr/bin");
+system("mkdir -p $name/usr/share/doc/trsh");
+system("mkdir -p $name/usr/share/man/man1");
+system("cp $name.src/trsh.pl $name/usr/bin");
+system("chmod +x $name/usr/bin/trsh.pl");
+system("cp $name.src/trsh.1.gz $name/usr/share/man/man1");
+system("cp $name.src/README $name/usr/share/doc/trsh");
+system("cp $name.src/COPYING.GPL $name/usr/share/doc/trsh/copyright");
+system("dpkg -b $name");
+system("mv $name.dpkg trsh-build");
+system("rm -rf $name");
+
+#############################################################################################
+######################################  END #################################################
+#############################################################################################
+EXIT:
+system("rm -rf $name.src");
 chdir("$home");
 system("rm -r trsh.spec");
 chdir("$home/trsh-build");
