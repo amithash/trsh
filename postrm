@@ -1,0 +1,12 @@
+#!/bin/bash
+RPM_INSTALL_PREFIX=
+export RPM_INSTALL_PREFIX
+
+rm -f /usr/src/packages/BUILDROOT/trsh-3.9-9.x86_64//usr/bin/trsh.pl
+rm -f /usr/src/packages/BUILDROOT/trsh-3.9-9.x86_64//usr/share/man/man1/trsh.1.gz
+
+exit 0
+
+#####################################################################################
+#			           Verify Script                                    #
+#####################################################################################
