@@ -48,4 +48,5 @@ print "REVISION($main.$sub-$rel) Checking Message (Single line):\n";
 my $message = <STDIN>;
 chomp($message);
 system("hg commit -m \"$message\"");
+system("hg push");
 
