@@ -17,16 +17,17 @@ my $main = $1;
 my $sub  = $2;
 my $rev = $3;
 
-my $srev = `svnversion`;
-if($srev =~ /M/){
+# Make sure there are no modifications. The last thing one needs is
+# version strings to not indicate the actual content in the repo!
+my $srev = `hg status`;
+if($srev =~ /M /){
 	print "There are modifications made. Please checkin and then create a package.\n";
 	exit;
 }
-system("svn update");
-$srev = `svnversion`;
-if($srev =~ /^(\d+)/){
-	$srev = $1 + 0;
-}
+
+# Make sure to pull any updates in the remote repo.
+system("hg pull");
+
 # RUN THE BASH TESTS
 if(-e "/bin/bash"){
 	if(system("./test-trsh.bash") != 0){
@@ -45,15 +46,7 @@ my $name = "trsh-$main.$sub-$rev";
 my $home = $ENV{HOME};
 system("rm -rf $home/$name") if(-d "$home/$name");
 system("rm -rf $home/$name.tar.gz") if(-e "$home/$name.tar.gz");
-system("svn export . $home/$name");
-
-# Remove checkin.pl and mkpackage.pl from it.
-
-# These scripts are not required for the user.
-system("rm $home/$name/checkin.pl");
-system("rm $home/$name/mkpackage.pl");
-system("rm $home/$name/test-trsh.bash");
-system("rm $home/$name/VERSION");
+system("hg archive -X mkpackage.pl -X checkin.pl -X VERSION -X test-trsh.bash $home/$name")
 chdir("$home");
 system("cp -r $name $name.src");
 system("rm $name/trsh.spec");
