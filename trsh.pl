@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.9-20";
+my $VERSION = "3.9-21";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -976,7 +976,7 @@ sub InDevice($)
 
 	# Assume home trash if not found.
 	if($dev eq "/") {
-		$dev = $Session("HomePath");
+		$dev = $Session{HomePath};
 	}
 
 	return $dev;
