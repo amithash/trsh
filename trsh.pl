@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.9-19";
+my $VERSION = "3.9-20";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -974,10 +974,11 @@ sub InDevice($)
 		$dev = dirname($dev);
 	}
 
+	# Assume home trash if not found.
 	if($dev eq "/") {
-		print "ERROR: Could not figure out what device $path belongs to.\n";
-		exit;
+		$dev = $Session("HomePath");
 	}
+
 	return $dev;
 }
 
