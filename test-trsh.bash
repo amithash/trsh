@@ -439,5 +439,4 @@ fi
 
 ############################  END OF TESTS  #############################
 # How do I test listing and size? They do not matter anyway
-hg revert --all
 exit_tests

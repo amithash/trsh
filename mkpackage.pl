@@ -38,6 +38,7 @@ if(-e "/bin/bash"){
 } else {
 	print "Tests are not performed for bash as the shell was not found on your system. Please install it for a better package.\n";
 }
+system("hg revert --all");
 
 # Only if these tests pass, allow the person to create the package.
 
