@@ -7,18 +7,7 @@ $verstr =~ /(\d+)\.(\d+)-(\d+)/;
 my $main = $1;
 my $sub  = $2;
 my $rel = $3;
-my $srev  = `svnversion`;
-
-if($srev =~ /^(\d+)M/){
-	# modification has occured.
-	$rel = $rel + 1;
-} elsif($srev =~ /^\d+\:(\d+)M/){
-	print "WARNING: You need to do a svn update.\n";
-	$rel = $rel + 1;
-} else{
-	print "No modifications, checkin not required.\n";
-	exit;
-}
+$rel = $rel + 1;
 open VER,"+>VERSION" or die "Could not write to VERSION\n";
 print VER "$main.$sub-$rel\n";
 close(VER);
@@ -58,5 +47,5 @@ system("mv trsh.spec.n trsh.spec");
 print "REVISION($main.$sub-$rel) Checking Message (Single line):\n";
 my $message = <STDIN>;
 chomp($message);
-system("svn ci -m \"$message\"");
+system("hg commit -m \"$message\"");
 
