@@ -62,7 +62,6 @@ exit_tests()
 	mv $TRASH_BACKUP $TRASH_HOME
 	print_results
 	rm -rf $TEST_DIR
-	hg revert --all
 	if [ $PASSED_COUNT -eq $TOTAL_COUNT ]
 	then
 		exit 0
@@ -440,5 +439,5 @@ fi
 
 ############################  END OF TESTS  #############################
 # How do I test listing and size? They do not matter anyway
-
+hg revert --all
 exit_tests
