@@ -91,7 +91,6 @@ sub RunTests
 sub MakeTGZ
 {
 	system("cp -r $name.src $name");
-	system("rm $name/trsh.spec $name/control $name/postinst $name/postrm $name/prerm");
 	system("tar -zcf $name.tar.gz $name");
 	system("rm -rf $name");
 	system("mv $name.tar.gz trsh-build");
