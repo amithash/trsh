@@ -125,11 +125,12 @@ sub MakeRPM
 	}
 
 	system("cp -r $name.src $name");
-	system("mv $name/trsh.spec .");
-	system("rm $name/configure.pl $name/control $name/postinst $name/postrm $name/prerm");
+	system("rm $name/configure.pl");
 	system("tar -zcf $name.tar.gz $name");
 	system("rm -rf $name");
 	system("mv $name.tar.gz $packages_dir/SOURCES") == 0 or die "could not move source to SOURCE dir\n";
+
+	Create_File("trsh.spec", RPM_control() . RPM_description() . RPM_prep() . RPM_post() . RPM_install() . RPM_preun() . RPM_postun() . RPM_verify() . RPM_files());
 	system("rpmbuild -bb trsh.spec") == 0 or die "rpmbuild failed\n";
 	system("mv $packages_dir/RPMS/noarch/$name.noarch.rpm trsh-build");
 	system("rm -rf $name");
@@ -160,6 +161,121 @@ sub MakeDEB
 	system("dpkg -b $name");
 	system("mv $name.deb trsh-build");
 	system("rm -rf $name");
+}
+
+sub RPM_control
+{
+	return "
+Summary: A Trash manager aliased to rm.
+Name: trsh
+Version: $main.$sub
+Release: $rev
+Group: Utilities
+License: GPL
+BuildArch: noarch
+URL: http://code.google.com/p/trsh
+Vendor: Amithash Prasad
+Packager: Amithash Prasad <amithash\@gmail.com>
+Source: \$RPM_SOURCE_DIR/trsh-$main.$sub-$rev.tar.gz
+Provides: trsh
+Requires: perl(strict), perl(warnings), perl(File::Basename), perl(File::Spec), perl(Cwd), perl(Getopt::Long), perl(Fcntl), perl(Term::ANSIColor), perl(Term::ReadKey)
+";
+}
+
+sub RPM_description
+{
+	return '
+%description
+' . GetDescString();
+}
+
+sub RPM_prep
+{
+	return '
+%prep
+rm -rf $RPM_BUILD_DIR/%name-%version-%release
+zcat $RPM_SOURCE_DIR/%name-%version-%release.tar.gz | tar -xvf -
+mkdir -p %buildroot/%_bindir
+mkdir -p %buildroot/%_mandir/man1
+';
+}
+
+sub RPM_post
+{
+	return '
+%post
+if [ $1 -gt 1 ]
+then
+	exit 0
+fi
+' . CheckRC() . AddAlias();
+}
+
+sub RPM_install
+{
+	return '
+%install
+cp $RPM_BUILD_DIR/%name-%version-%release/trsh.pl %buildroot/%_bindir
+cp $RPM_BUILD_DIR/%name-%version-%release/trsh.1.gz %buildroot/%_mandir/man1
+chmod +x %buildroot/%_bindir/trsh.pl
+exit 0
+';
+}
+
+sub RPM_preun
+{
+	return '
+%preun
+if [ $1 -gt 0 ]
+then
+	exit 0
+fi
+' . CheckRC() . RemoveAlias() . "\nexit 0\n";
+}
+
+sub RPM_postun
+{
+	return '
+%postun
+rm -f %buildroot/%_bindir/trsh.pl
+rm -f %buildroot/%_mandir/man1/trsh.1.gz
+exit 0
+';
+
+}
+
+sub RPM_verify
+{
+	return '%verifyscript\n\n' . CheckRC() . '
+RC_TEST=`grep "# TRSH" $RC_FILE | wc -l`
+if [ $RC_TEST -ne 2 ]
+then
+	echo "Alias entries not found in $RC_FILE" >&2
+	exit -127
+fi
+
+if [ ! -e %_bindir/trsh.pl ]
+then
+	echo "trsh.pl not found in %_bindir" >&2
+	exit -127
+fi
+
+if [ ! -e %_mandir/man1/trsh.1.gz ]
+then
+	echo "Man page not found in %_mandir/man1/" >&2
+	exit -127
+fi
+exit 0
+';
+}
+
+sub RPM_files
+{
+	return '
+%files
+%_bindir/trsh.pl
+%_mandir/man1/trsh.1.gz
+';
 }
 
 sub GetDescString
