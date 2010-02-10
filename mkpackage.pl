@@ -181,8 +181,7 @@ sub Create_File
 
 sub DEB_control
 {
-	return "
-Package: trsh
+	return "Package: trsh
 Version: $main.$sub-$rev
 Architecture: all
 Maintainer: Amithash Prasad <amithash\@gmail.com>

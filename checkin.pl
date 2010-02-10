@@ -57,15 +57,6 @@ while(my $entry = <SPEC>){
 system("rm trsh.spec");
 system("mv trsh.spec.n trsh.spec");
 
-open CONT, "control" or die "Could not open control file\n";
-open CONTM, "+>control.n" or die "Could not create new control file\n";
-while(my $entry = <CONT>){
-	$entry =~ s/Version\s*:\s+\d+\.\d+-\d+/Version: $main\.$sub-$rel/;
-	print CONTM "$entry";
-}
-system("rm control");
-system("mv control.n control");
-
 print "REVISION($main.$sub-$rel) Checking Message (Single line):\n";
 my $message = <STDIN>;
 chomp($message);
