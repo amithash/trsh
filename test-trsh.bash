@@ -5,7 +5,7 @@ declare -i TOTAL_COUNT=0
 declare  TRASH_HOME=""
 declare TRASH_BACKUP=""
 TEST_DIR=$HOME/____trsh____test____dir
-TRSH_OIRG="`pwd`/trsh.pl"
+TRSH_ORIG="`pwd`/trsh.pl"
 TRSH="`pwd`/trsh"
 
 trsh()
