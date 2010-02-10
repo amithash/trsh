@@ -164,10 +164,10 @@ sub GetDescString
 {
 
 return "A Trash manager aliased to rm.Trsh is a trash manager
-with an attitude! Once aliased to rm
-it provides a full wrapper to rm enabling the user to use it
-just like he/she would with rm, with extra features like trash
-listing, undo, recover, etc etc.";
+  with an attitude! Once aliased to rm
+  it provides a full wrapper to rm enabling the user to use it
+  just like he/she would with rm, with extra features like trash
+  listing, undo, recover, etc etc.";
 }
 
 sub Create_File
