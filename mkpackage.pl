@@ -128,7 +128,7 @@ sub MakeRPM
 	system("mv $name.tar.gz $packages_dir/SOURCES") == 0 or die "could not move source to SOURCE dir\n";
 
 	Create_File("trsh.spec", RPM_control() . RPM_description() . RPM_prep() . RPM_post() . RPM_install() . RPM_preun() . RPM_postun() . RPM_verify() . RPM_files());
-	system("rpmbuild -bb trsh.spec") == 0 or die "rpmbuild failed\n";
+	system("rpmbuild -bb trsh.spec > /dev/null 2> /dev/null") == 0 or die "rpmbuild failed\n";
 	system("mv $packages_dir/RPMS/noarch/$name.noarch.rpm trsh-build");
 	system("rm -rf $name");
 }
