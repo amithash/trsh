@@ -13,7 +13,8 @@ GetOptions(
 
 my $hgstatus = `hg status`;
 if($hgstatus !~ /[AMD] /) {
-	print "No changes observed. Skipping checking in."
+	print "No changes observed. Skipping checking in.\n";
+	exit;
 }
 
 my ($main,$sub,$rel) = GetVersion();
