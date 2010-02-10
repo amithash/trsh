@@ -70,7 +70,6 @@ sub RepoClean
 	if($srev =~ /[MAD] / ){
 		return 0;
 	}
-	system("hg pull");
 	return 1;
 }
 
