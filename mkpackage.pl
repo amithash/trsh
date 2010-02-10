@@ -84,7 +84,6 @@ sub RunTests
 		print "Tests are not performed for bash as the shell was not found on your system. Please install it for a better package.\n";
 		return 0;
 	}
-	system("hg revert --all");
 	return 1;
 }
 

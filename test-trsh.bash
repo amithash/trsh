@@ -5,7 +5,8 @@ declare -i TOTAL_COUNT=0
 declare  TRASH_HOME=""
 declare TRASH_BACKUP=""
 TEST_DIR=$HOME/____trsh____test____dir
-TRSH="`pwd`/trsh.pl"
+TRSH_OIRG="`pwd`/trsh.pl"
+TRSH="`pwd`/trsh"
 
 trsh()
 {
@@ -53,6 +54,8 @@ init_tests()
 
 	mkdir $TEST_DIR
 	cd $TEST_DIR
+
+	cp $TRSH_ORIG $TRSH
 	chmod +x $TRSH
 }
 
@@ -62,6 +65,7 @@ exit_tests()
 	mv $TRASH_BACKUP $TRASH_HOME
 	print_results
 	rm -rf $TEST_DIR
+	rm -f $TRSH
 	if [ $PASSED_COUNT -eq $TOTAL_COUNT ]
 	then
 		exit 0
