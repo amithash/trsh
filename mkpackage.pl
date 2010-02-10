@@ -147,6 +147,8 @@ sub MakeDEB
 	Create_File("$name/DEBIAN/control", DEB_control());
 	Create_File("$name/DEBIAN/postinst", DEB_postinst());
 	Create_File("$name/DEBIAN/prerm", DEB_prerm());
+	system("chmod 0755 $name/DEBIAN/postinst");
+	system("chmod 0755 $name/DEBIAN/prerm");
 	system("mkdir -p $name/usr/bin");
 	system("mkdir -p $name/usr/share/doc/trsh");
 	system("mkdir -p $name/usr/share/man/man1");
