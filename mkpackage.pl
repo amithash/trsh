@@ -4,6 +4,10 @@ use strict;
 use warnings;
 use Cwd;
 
+
+
+
+
 my $this_dir = cwd();
 my $home = $ENV{HOME};
 
@@ -140,10 +144,9 @@ sub MakeDEB
 
 	system("mkdir $name");
 	system("mkdir $name/DEBIAN");
-	system("cp $name.src/control $name/DEBIAN/");
-	system("cp $name.src/postinst $name/DEBIAN/");
-	system("cp $name.src/postrm $name/DEBIAN/");
-	system("cp $name.src/prerm $name/DEBIAN/");
+	Create_File("$name/DEBIAN/control", DEB_control());
+	Create_File("$name/DEBIAN/postinst", DEB_postinst());
+	Create_File("$name/DEBIAN/prerm", DEB_prerm());
 	system("mkdir -p $name/usr/bin");
 	system("mkdir -p $name/usr/share/doc/trsh");
 	system("mkdir -p $name/usr/share/man/man1");
@@ -155,5 +158,92 @@ sub MakeDEB
 	system("dpkg -b $name");
 	system("mv $name.deb trsh-build");
 	system("rm -rf $name");
+}
+
+sub GetDescString
+{
+
+return "A Trash manager aliased to rm.Trsh is a trash manager
+with an attitude! Once aliased to rm
+it provides a full wrapper to rm enabling the user to use it
+just like he/she would with rm, with extra features like trash
+listing, undo, recover, etc etc.";
+}
+
+sub Create_File
+{
+	my $file	=	shift;
+	my $cont	=	shift;
+	open OUT,"+>$file" or die "Could not create $file\n";
+	print OUT "$cont\n";
+	close(OUT);
+}
+
+sub DEB_control
+{
+	return "
+Package: trsh
+Version: $main.$sub-$rev
+Architecture: all
+Maintainer: Amithash Prasad <amithash\@gmail.com>
+Installed-Size: 100
+Section: utils
+Priority: extra
+Description: " . GetDescString();
+}
+
+sub DEB_postinst
+{
+	return "#!/bin/bash\n\n" . CheckRC() . AddAlias() . "\nexit 0\n";
+}
+
+sub DEB_prerm
+{
+	return "#!/bin/bash\n\n" . CheckRC() . RemoveAlias() . "\nexit 0\n";
+}
+
+sub RemoveAlias
+{
+	return '
+sed -e \'/.* # TRSH/d\' $RC_FILE > $RC_FILE.new
+mv $RC_FILE.new $RC_FILE
+';
+}
+
+sub AddAlias
+{
+	return '
+if [[ $SHELL_NAME -eq "bash" ]]
+	ALIAS_RM="alias rm=\"/usr/bin/trsh.pl\" # TRSH"
+	ALIAS_UNDO="alias undo=\"/usr/bin/trsh.pl -u\" # TRSH"
+elif [[ $SHELL_NAME -eq "csh" ]] || [[ $SHELL_NAME -eq "tcsh" ]]
+then
+	ALIAS_RM="alias rm \"/usr/bin/trsh.pl\" # TRSH"
+	ALIAS_UNDO="alias undo \"/usr/bin/trsh.pl -u\" # TRSH"
+else
+	exit 
+fi
+sed -e \'/.* # TRSH/d\' $RC_FILE > $RC_FILE.new
+echo $ALIAS_RM >> $RC_FILE.new
+echo $ALIAS_UNDO >> $RC_FILE.new
+mv $RC_FILE.new $RC_FILE
+';
+}
+
+sub CheckRC
+{
+	return '
+TRSH_SHELL=$SHELL
+SHELL_NAME=${TRSH_SHELL##/bin/}
+for rc in $( ls /etc/*rc* | grep $SHELL_NAME | grep -vP "\.bac$" | grep -vP "\.new$" )
+do
+	RC_FILE=$rc
+done
+if [ -z $RC_FILE ]
+then
+	echo "ERROR! No RC FILE Found"
+	exit -127
+fi
+'
 }
 
