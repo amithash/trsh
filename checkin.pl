@@ -47,16 +47,6 @@ foreach my $entry (@readme){
 close(README);
 system("rm -f README.orig trsh.pl.orig");
 
-open SPEC, "trsh.spec" or die "Could not open spec file\n";
-open SPECM, "+>trsh.spec.n" or die "Could not create new spec file\n";
-while(my $entry = <SPEC>){
-	$entry =~ s/Version\s*:\s+\d+\.\d+/Version: $main\.$sub/;
-	$entry =~ s/Release\s*:\s+\d+/Release: $rel/;
-	print SPECM "$entry";
-}
-system("rm trsh.spec");
-system("mv trsh.spec.n trsh.spec");
-
 print "REVISION($main.$sub-$rel) Checking Message (Single line):\n";
 my $message = <STDIN>;
 chomp($message);
