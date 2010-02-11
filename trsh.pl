@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.10-3";
+my $VERSION = "3.10-4";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -988,7 +988,6 @@ sub GetDeviceList()
 
 	my %ignored = (
 		'/'	=>	1,
-		'/home'	=>	1,
 		'/dev'	=>	1,
 		'/sys'	=>	1,
 		'/usr'	=>	1,
