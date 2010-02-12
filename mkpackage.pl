@@ -328,6 +328,7 @@ sub AddAlias
 {
 	return '
 if [[ $SHELL_NAME -eq "bash" ]]
+then
 	ALIAS_RM="alias rm=\"/usr/bin/trsh.pl\" # TRSH"
 	ALIAS_UNDO="alias undo=\"/usr/bin/trsh.pl -u\" # TRSH"
 elif [[ $SHELL_NAME -eq "csh" ]] || [[ $SHELL_NAME -eq "tcsh" ]]
