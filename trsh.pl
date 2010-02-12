@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.10-8";
+my $VERSION = "3.10-9";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -49,7 +49,7 @@ my $VERSION = "3.10-8";
 
 sub SetEnvirnment();
 sub InHome($);
-sub InDevice($);
+sub InDevice($$);
 sub GetDeviceList();
 sub AbsolutePath($);
 sub GetTrashDir($);
@@ -714,7 +714,7 @@ sub GetSpecificTrashContents($)
 		if($trash_dir eq $Session{HomeTrash}) {
 			$p->{DEV} = "HOME";
 		} else {
-			$p->{DEV} = InDevice($trash_dir);
+			$p->{DEV} = InDevice($trash_dir, 1);
 			$p->{PATH} = $p->{DEV} . "/" . $p->{PATH};
 		}
 		$p->{NAME} = basename($p->{PATH});
@@ -799,7 +799,7 @@ sub PutTrashinfo($)
 	print INFO "[Trash Info]\n";
 	my $infile_path = $entry->{PATH};
 	if($entry->{TRASH} ne $Session{HomeTrash}) {
-		my $dev = InDevice($entry->{PATH});
+		my $dev = InDevice($entry->{PATH}, 1);
 		if($entry->{PATH} =~ /^$dev\/(.+)$/) {
 			$infile_path = $1;
 		}
@@ -926,7 +926,7 @@ sub GetDeviceTrash($)
 sub GetTrashDir($)
 {
 	my $path	=	shift;
-	my $dev = InDevice($path);
+	my $dev = InDevice($path, 1);
 
 	if($dev eq $Session{HomePath}) {
 		return $Session{HomeTrash};
@@ -961,15 +961,18 @@ sub MakeTrashDir($)
 #		        Mounted Device Handling                              #
 ##############################################################################
 
-sub InDevice($)
+sub InDevice($$)
 {
 	my $path	=	shift;
+	my $use_home	=	shift;
 	my @matched;
 	my $dev = AbsolutePath($path);
 
 	while($dev ne "/") {
 		last if(defined($SystemDevices{$dev}));
-		last if($dev eq $Session{HomePath});
+		if($use_home != 0) {
+			last if($dev eq $Session{HomePath});
+		}
 		$dev = dirname($dev);
 	}
 
@@ -1006,7 +1009,8 @@ sub GetDeviceList()
 
 	# Do not recognize the mount on which home is
 	# present.
-	my $home_dev = InDevice($Session{HomePath});
+	my $home_dev = InDevice($Session{HomePath}, 0);
+	print "HOME DEV = $home_dev\n";
 	undef $SystemDevices{$home_dev};
 }
 
