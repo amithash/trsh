@@ -118,6 +118,7 @@ sub MakeRPM
 	system("rpmbuild -bb trsh.spec > /dev/null 2> /dev/null") == 0 or die "rpmbuild failed\n";
 	system("mv $packages_dir/RPMS/noarch/$name.noarch.rpm trsh-build");
 	system("rm -rf $name");
+	system("rm -rf $packages_dir");
 }
 
 sub MakeDEB
