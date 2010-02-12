@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.10-10";
+my $VERSION = "3.10-11";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -981,7 +981,6 @@ sub InDevice($$)
 	if($dev eq "/" and $use_home != 0) {
 		$dev = $Session{HomePath};
 	}
-
 	return $dev;
 }
 
@@ -1011,8 +1010,7 @@ sub GetDeviceList()
 	# Do not recognize the mount on which home is
 	# present.
 	my $home_dev = InDevice($Session{HomePath}, 0);
-	print "HOME DEV = $home_dev\n";
-	undef $SystemDevices{$home_dev};
+	delete $SystemDevices{$home_dev};
 }
 
 ##############################################################################
