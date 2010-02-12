@@ -268,6 +268,8 @@ then
 else
 	failed $NUM "Not all files passed are deleted"
 fi
+echo "CHECK NOW"
+sleep 10
 
 ############# END OF DELETE TESTS ########################
 
