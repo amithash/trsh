@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.10-13";
+my $VERSION = "3.10-14";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -949,7 +949,7 @@ sub MakeTrashDir($)
 {
 	my $root	=	shift;
 	unless(-d "$root") {
-		mkdir "$root";
+		system("mkdir -p $root");
 		mkdir "$root/files";
 		mkdir "$root/info";
 		system("touch \"$root/metadata\"");
