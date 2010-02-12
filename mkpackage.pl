@@ -37,6 +37,9 @@ chdir($home);
 system("rm -rf trsh-build") if(-d "trsh-build");
 system("mkdir trsh-build");
 system("mv $name $name.src");
+chdir("$name.src");
+system("gzip trsh.1");
+chdir($home);
 
 MakeTGZ();
 

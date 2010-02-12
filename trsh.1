@@ -1,0 +1,182 @@
+.TH TRSH 1 5/28/2008
+
+.SH NAME
+trsh - A wrapper for the rm command which allows trash and undo facilities.
+Note that this is NOT a recovery package, but just a wrapper to rm.
+
+.SH SYNOPSIS
+rm [OPTIONS]... [FILES]...
+
+.SH AVALIABILITY
+All UNIX Flavours and can be downloaded from: http://code.google.com/p/trsh
+Primary Dependence: perl
+
+.SH DESCRIPTION
+This manual page documents trsh a wrapper to rm. Which allows a user to move a file to a trash and restore them if needed.
+This tools was written when I accidentally deleted the source code of my home work which in the end, made me to re-write all 
+of it right from the beginning. And hence the inception of this tool, which was a direct result of the frustration which 
+resulted out of that experience. 
+.P
+As a default installation, trsh is either copied into /usr/bin/trsh.pl (For a full system install) or $HOME/.trsh.pl (For
+a user install), and then aliases are added to the shell's rc file (.bashrc for BASH or .cshrc for CSH) to create aliases
+for rm -> trsh.pl and undo -> trsh.pl -u. This allows users to use trsh as rm and the aliased command undo provides a convenient
+interface to undo a delete operation. trsh does its best to mimic rm to ease its users who would most probably be used to rm and 
+its options.
+
+.SH OPTIONS
+FILES:
+This is a list of files to recover or delete.
+.P
+-u|--undo [FILES]
+.P
+If this option is provided without any other arguments, the latest deleted file will be restored.
+.P
+If FILE/FILES are provided, the latest copy of these (If they exist in the trash) is recovered
+.P
+If used with -x, then all files in the trash matching with the regex (FILES) is recovered. 
+(For regex usage, refer the subsection on regex below)
+.P
+-p|--permanent
+.P
+Instructs trsh to permanently delete FILES and completely bypass the trash
+.P
+-i|--interactively
+.P
+This option will instruct trsh to prompt the user before deleting each and every file.
+.P
+-v|--verbose
+.P
+This option will instruct trsh to talk about whatever it is doing.
+.P
+-e|--empty [FILES]
+.P
+If this option is provided without any other arguments, Trash is emptied.
+.P
+If FILE/FILES are provided, All copies of FILE is removed permanently from the trash
+.P
+If instead a regex is provided with the -x flag, then all files in the trash matching with the regex is permanently removed.
+(For regex usage, refer the subsection on regex below)
+.P
+-r|--recursive
+.P
+This option if provided will allow directories to be deleted.
+.P
+-f|--force
+.P
+Forces any operation:
+.P
+	deletion   : overrides -i and does not prompt the user for any action. with -p passes the -f flag to /bin/rm
+.P
+	restore    : will force overwrites of files and will not ask for user permission.
+.P
+	empty file : will not ask the user's permission for each file.
+.P
+	empty trash: will not ask for confirmation from the user.
+.P
+-l|--list
+.P
+This will display the contents of the trash.
+.P
+--color (Default)
+.P
+Print listings (Refer -l) using the terminal's support for colored text.
+.P
+--nocolor
+.P
+Print listings normally without color.
+.P
+--date (Default)
+.P
+Print the deletion date with the trash listing (-l)
+.P
+--nodate
+.P
+Do not print the deletion date with the trash listing (-l)
+.P
+-s|--size
+.P
+This displays the size of the Trash directory. 
+.P
+If provided with the -l option, The size of each trash entry will also be displayed.
+.P
+-h|--human-readable
+.P
+If provided with the -s option, the size will be printed in a human readable form.
+.P
+--help
+.P
+Displays this help and exits.
+.P
+-x|--regex
+.P
+This makes trsh to assume that the provided arguments are regex's. Regex is assumed
+to be perl regex.
+.P
+rm FILES just moves FILES to the trash. By default, directories are not deleted.
+If used with the -x flag FILES are considered to be a list of regex's
+.P
+
+.SH REGEX
+A regex is accepted for deletion, restoration and emptying the trash (refer -e and -u options above).
+Please make sure to enclose all your regex'es with quites to not confuse your shell.
+
+.P
+rm -ux "some*"  # Correct
+.P
+rm -ux some*    # Wrong Bash will expand some* for you!
+.P
+The -x option is probably going to be the least used. Here is one of the scenarios where it might be useful:
+.P
+rm -x "test\\.\\d+\\.out"
+.P
+and test.1.out, test.2.out is deleted but test.A.out is left alone.
+.P
+.SH "DEFAULT INSTALLATION"
+As a default, trsh.pl will be placed in /usr/bin and this manual page is installed.
+Aliases are created in system wide ${SHELL}rc file or the user ${SHELL}rc file (For user installation) as:
+.P
+alias rm="trsh.pl"
+.P
+alias undo="trsh.pl -u"
+
+.SH EXAMPLES
+
+If you need to delete a file test1: 
+.P
+rm test1
+.P
+If you want to recover test1 from the trash:
+.P
+rm -u test1 or rm -u (As this was the latest delete)
+.P
+If you want to view the contents of the trash:
+.P
+rm -l
+.P
+If you want to check the size of the trash directory:
+.P
+rm -s
+.P
+(This is helpful to have cron jobs to periodically check the size of the trash and hence empty it)
+.P
+rm -e empties the trash.
+
+.SH AUTHOR
+Amithash Prasad {amithash@gmail.com}
+
+.SH FILES
+This follows the freeDesktop.org's Trash specifications. Thus
+each mounted device (Other than / and /home) have their own trash directory.
+
+.SH "REPORTING BUGS"
+ You can file a bug report at http://code.google.com/p/trsh/issues/list
+
+.SH COPYRIGHT
+Copyright (C) 2008-2009 Amithash Prasad 
+This is free software; See the source for copying conditions. There is NO warranty. Not even for MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE.
+
+.SH "SEE ALSO"
+rm(1)
+
+ 
