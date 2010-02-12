@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.10-16";
+my $VERSION = "3.10-17";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -1155,8 +1155,7 @@ Provide verbose output.
 
 -e|--empty [FILES]
 Removed FILES or files matching REGEX from the trash (Permanently).
-Without arguments, the trash is emptied. --force option causes trsh
-to empty the trash without prompting the user.
+Without arguments, the trash is emptied.
 
 -f|--force
 Forces any operation:
@@ -1169,32 +1168,18 @@ Forces any operation:
 -l|--list
 Display the contents of the trash.
 
---color (Default)
-Print listings (Refer -l) using the terminal's support for colored text.
---nocolor
-Print listings normally without color.
+--color (Default) (or --nocolor)
+Print listings (Refer -l) with (or without) the terminal's support for colored text.
 
---date (Default)
-Print the deletion date with the trash listing (-l)
+--date (Default) (or --nodate)
+Print (Or do not print) the deletion date with the trash listing (-l)
 
---nodate
-Do not print the deletion date with the trash listing (-l)
-
---relative-date (Default)
-Display date in listings as a relative figure in words.
-
---norelative-date
-Display the real date in listings.
+--relative-date (Default) (or --norelative-date)
+Display (or do not display) date in listings as a relative figure in words.
 
 -x|--regex
-Considers input as perl regex rather than names or paths.
-rm -x REGEX # Delete files matching REGEX
-rm -ux REGEX # Recover files in trash matching regex.
-rm -ex REGEX # Remove files in trash matching regex.
-rm -lx REGEX # List trash contents matching regex.
-Note REGEX can be expressed multiple times.
-REGEX can be a path with the file name being a regex.
-example: "/home/user/test_\\d"
+Considers all parameters (All uses) as perl regexes. So you can delete, undo or remove files
+using perl's extensive regex.
 
 -s|--size
 Display the size in bytes of the trash. 
@@ -1207,7 +1192,7 @@ If used along with -s, the file size displayed will be human readable
 --help
 Displays this help and exits.
 
-Please read the README for more information
+Please read the README or `man trsh` for more information
 USAGE
 ;
 exit;
