@@ -96,30 +96,17 @@ sub MakeTGZ
 
 sub MakeRPM
 {
-	my $packages_dir = "/usr/src/packages";
-
-	# If not opensuse, redhat.
-	unless(-d $packages_dir) {
-		$packages_dir = "/usr/src/redhat";
-	}
-
-	# If neither, not a rpm based system. Do not know how to make a package.
-	unless(-d $packages_dir) {
-		print "Unknown distribution: neither of /usr/src/packages (SuSE) or /usr/src/redhat (Redhat) exists\n";
-		return;
-	}
-
 	# Check if rpmbuild exists.
 	if(`which rpmbuild` =~ /no rpmbuild in/) {
 		print "rpmbuild is not installed on the system. Skipping rpm generation.\n";
 		return;
 	}
 
-	# Right now, I need root privs to make a build.
-	if(`id -u` ne "0\n"){
-		print "Cannot produce rpm package without root permission. Skipping rpm generation\n";
-		return;
-	}
+	my $packages_dir = "$home/packages";
+	system("rm -f $home/.rpmmacros") if(-e "$home/.rpmmacros");
+	system "echo \"%_topdir $home/packages\" > $home/.rpmmacros");
+	system("rm -rf $packages_dir") if(-d $packages_dir);
+	system("mkdir $home/packages/{BUILD,RPMS/{i386,i686,noarch},SOURCES,SPECS,SRPMS}");
 
 	system("cp -r $name.src $name");
 	system("rm $name/configure.pl");
