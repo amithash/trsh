@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.10-5";
+my $VERSION = "3.10-6";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -108,6 +108,7 @@ sub PrepareRegex($);
 sub DiffDate($$);
 sub Date2Days($);
 sub Year2Days($);
+sub Df();
 # sub Glob(...); Takes infinite arguments;
 
 ##############################################################################
@@ -147,7 +148,6 @@ my %Session = (
 	'SDevWidth'	=>	0,
 	'TypeColors'	=>	{},
 	'AttrColors'	=>	{},
-	'DevList'	=>	[],
 );
 
 my $ListNameWidth;
@@ -158,7 +158,6 @@ my $SSizeWidth;
 my $SDevWidth;
 my %TypeColors;
 my %AttrColors;
-my @DevList;
 my %SystemDevices;
 
 # Constants 
@@ -307,7 +306,7 @@ sub EmptyTrash()
 	$OptionForce = 1;
 
 	# Empty Home Trash
-	my @dev_list = @DevList;
+	my @dev_list = keys %SystemDevices;
 	push @dev_list, $Session{HomePath};
 
 	# Empty Devices Trash
@@ -501,7 +500,7 @@ sub PrintTrashSize()
 
 	PrintTrashSizeLine("Home Trash", $sz);
 
-	foreach my $dev (@DevList) {
+	foreach my $dev (keys %SystemDevices) {
 		$sz = GetTrashSize(GetDeviceTrash($dev));
 		PrintTrashSizeLine("$dev Trash", $sz);
 	}
@@ -676,7 +675,7 @@ sub GetTrashContents()
 	my @list = ();
 	push @list, GetSpecificTrashContents($trsh);
 
-	foreach my $dev (@DevList) {
+	foreach my $dev (keys %SystemDevices) {
 		push @list, GetSpecificTrashContents(GetDeviceTrash($dev));
 	}
 	return @list;
@@ -984,39 +983,26 @@ sub InDevice($)
 
 sub GetDeviceList()
 {
-	my @list = split(/\n/,`df`);
 
-	my %ignored = (
-		'/'	=>	1,
-		'/dev'	=>	1,
-		'/sys'	=>	1,
-		'/usr'	=>	1,
-		'/var'	=>	1,
-		'/boot'	=>	1,
-		'/etc'	=>	1,
-		'/lib'	=>	1,
-		'/opt'	=>	1,
-		'/proc'	=>	1,
-		'/sbin'	=>	1,
-		'/tmp'	=>	1,
+	my $df = Df();
+	
+	my %ignored_types = (
+		'tmpfs'	=>	1,
 	);
-	my @dev_list;
-	shift @list;
-	foreach my $e (@list) {
-		my @tmp = split(/% /,$e);
-		my $mnt = $tmp[$#tmp];
-		my $device = $tmp[0];
+
+	foreach my $e (keys %{$df}) {
+		my $mnt = $df->{$e}->{'Mount'};
+		my $type = $df->{$e}->{'Type'};
+		# Do not count ignored filesystem types
+		if(defined($ignored_types{$type})) {
+			next;
+		}
+		# Do not count mounts which are not writable.
 		unless(-w $mnt) {
 			next;
 		}
-		if(defined($ignored{$mnt})) {
-			next;
-		}
-
-		push @dev_list, $mnt;
 		$SystemDevices{$mnt} = 1;
 	}
-	return @dev_list;
 }
 
 ##############################################################################
@@ -1030,7 +1016,7 @@ sub SetEnvirnment()
 	$Session{UserID}   = int(`id -u`);
 	$Session{HomePath} = $ENV{HOME};
 	$Session{HomeTrash} = "$Session{HomePath}/.local/share/Trash";
-	@DevList = GetDeviceList();
+	GetDeviceList();
 
 	# Specification states that the Home trash must be created.
 	MakeTrashDir($Session{HomeTrash});
@@ -1452,6 +1438,30 @@ sub SysDelete($$)
 
 	my $ret = system("rm $flags \"$file\"");
 	return $ret;
+}
+
+sub Df()
+{
+	open IN, "df -T |" or die "Could not do a df\n";
+	my $h_l = <IN>;
+	my @header = ('Type', '1K-blocks', 'Used', 'Available', 'Use%', 'Mount');
+	my %return;
+
+	while(my $line = <IN>) {
+		my $ret = {};
+		chomp($line);
+		my @tmp = split(/\s+/,$line);
+		my $dev = shift @tmp;
+		for(my $i = 0; $i < scalar @tmp; $i++) {
+			if($i <= $#header) {
+				$ret->{$header[$i]} = $tmp[$i];
+			} else {
+				$ret->{$header[$#header]} .= " $tmp[$i]";
+			}
+		}
+		$return{$dev} = $ret;
+	}
+	return \%return;
 }
 
 sub AddEscapes($)
