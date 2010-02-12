@@ -259,7 +259,6 @@ touch $FILE1
 touch $FILE2
 touch $FILE3
 
-sleep 1
 trsh $FILE1 $FILE2 $FILE3
 
 if [ -e $TRASH_HOME/files/$FILE1 ] && [ -e $TRASH_HOME/files/$FILE2 ] && [ -e $TRASH_HOME/files/$FILE3 ]
@@ -268,8 +267,6 @@ then
 else
 	failed $NUM "Not all files passed are deleted"
 fi
-echo "CHECK NOW"
-sleep 10
 
 ############# END OF DELETE TESTS ########################
 

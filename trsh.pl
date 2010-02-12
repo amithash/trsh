@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.10-9";
+my $VERSION = "3.10-10";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -965,6 +965,7 @@ sub InDevice($$)
 {
 	my $path	=	shift;
 	my $use_home	=	shift;
+
 	my @matched;
 	my $dev = AbsolutePath($path);
 
@@ -977,7 +978,7 @@ sub InDevice($$)
 	}
 
 	# Assume home trash if not found.
-	if($dev eq "/") {
+	if($dev eq "/" and $use_home != 0) {
 		$dev = $Session{HomePath};
 	}
 
