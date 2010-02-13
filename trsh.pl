@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.10-17";
+my $VERSION = "3.10-18";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -49,7 +49,7 @@ my $VERSION = "3.10-17";
 
 sub SetEnvirnment();
 sub InHome($);
-sub InDevice($$);
+sub InDevice($);
 sub GetDeviceList();
 sub AbsolutePath($);
 sub GetTrashDir($);
@@ -714,7 +714,7 @@ sub GetSpecificTrashContents($)
 		if($trash_dir eq $Session{HomeTrash}) {
 			$p->{DEV} = "HOME";
 		} else {
-			$p->{DEV} = InDevice($trash_dir, 1);
+			$p->{DEV} = InDevice($trash_dir);
 			$p->{PATH} = $p->{DEV} . "/" . $p->{PATH};
 		}
 		$p->{NAME} = basename($p->{PATH});
@@ -799,7 +799,7 @@ sub PutTrashinfo($)
 	print INFO "[Trash Info]\n";
 	my $infile_path = $entry->{PATH};
 	if($entry->{TRASH} ne $Session{HomeTrash}) {
-		my $dev = InDevice($entry->{PATH}, 1);
+		my $dev = InDevice($entry->{PATH});
 		if($entry->{PATH} =~ /^$dev\/(.+)$/) {
 			$infile_path = $1;
 		}
@@ -926,7 +926,7 @@ sub GetDeviceTrash($)
 sub GetTrashDir($)
 {
 	my $path	=	shift;
-	my $dev = InDevice($path, 1);
+	my $dev = InDevice($path);
 
 	if($dev eq $Session{HomePath}) {
 		return $Session{HomeTrash};
@@ -961,56 +961,43 @@ sub MakeTrashDir($)
 #		        Mounted Device Handling                              #
 ##############################################################################
 
-sub InDevice($$)
+sub InDevice($)
 {
 	my $path	=	shift;
-	my $use_home	=	shift;
 
-	my @matched;
-	my $dev = AbsolutePath($path);
+	my $dev = InDir(AbsolutePath($path), [keys %SystemDevices, $Session{HomePath}]);
 
-	while($dev ne "/") {
-		last if(defined($SystemDevices{$dev}));
-		if($use_home != 0) {
-			last if($dev eq $Session{HomePath});
-		}
-		$dev = dirname($dev);
-	}
-
-	# Assume home trash if not found.
-	if($dev eq "/" and $use_home != 0) {
+	if($dev eq $Session{HomeDev} or $dev eq "/") {
 		$dev = $Session{HomePath};
 	}
 	return $dev;
 }
 
+sub InDir($$)
+{
+	my $path	=	shift;
+	my $ref_list	=	shift;
+
+	my $matched = $path;
+	while($matched ne "/" ) {
+		last if(grep $_ eq $matched, @{$ref_list});
+		$matched = dirname($matched);
+	}
+	return $matched;
+}
+
 sub GetDeviceList()
 {
-
 	my $df = Df();
 	
-	my %ignored_types = (
-		'tmpfs'	=>	1,
-	);
-
 	foreach my $e (keys %{$df}) {
 		my $mnt = $df->{$e}->{'Mount'};
-		my $type = $df->{$e}->{'Type'};
-		# Do not count ignored filesystem types
-		if(defined($ignored_types{$type})) {
-			next;
-		}
 		# Do not count mounts which are not writable.
 		unless(-w $mnt) {
 			next;
 		}
 		$SystemDevices{$mnt} = 1;
 	}
-
-	# Do not recognize the mount on which home is
-	# present.
-	my $home_dev = InDevice($Session{HomePath}, 0);
-	delete $SystemDevices{$home_dev};
 }
 
 ##############################################################################
@@ -1025,6 +1012,7 @@ sub SetEnvirnment()
 	$Session{HomePath} = $ENV{HOME};
 	$Session{HomeTrash} = "$Session{HomePath}/.local/share/Trash";
 	GetDeviceList();
+	$Session{HomeDev}   = InDir($Session{HomePath},[keys %SystemDevices]);
 
 	# Specification states that the Home trash must be created.
 	MakeTrashDir($Session{HomeTrash});
