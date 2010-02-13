@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.10-19";
+my $VERSION = "3.10-20";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -976,7 +976,7 @@ sub InDevice($)
 {
 	my $path	=	shift;
 
-	my $dev = InDir(AbsolutePath($path), [keys %SystemDevices, $Session{HomePath}]);
+	my $dev = InDir(AbsolutePath($path), [keys %SystemDevices]);
 
 	if($dev eq "/") {
 		$dev = $Session{HomeDev};
