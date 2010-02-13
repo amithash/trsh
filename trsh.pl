@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.10-20";
+my $VERSION = "3.10-21";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -1155,6 +1155,7 @@ sub Usage()
 	print <<USAGE
 TRSH VERSION $VERSION
 AUTHOR: Amithash Prasad <amithash\@gmail.com>
+Copyright 2009 under the terms of GPLv3
 
 USAGE: rm [OPTIONS]... [FILES]...
 FILES: A list of files to recover or delete.
