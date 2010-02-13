@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.10-18";
+my $VERSION = "3.10-19";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -109,6 +109,7 @@ sub DiffDate($$);
 sub Date2Days($);
 sub Year2Days($);
 sub Df();
+sub DebugDump();
 # sub Glob(...); Takes infinite arguments;
 
 ##############################################################################
@@ -132,6 +133,7 @@ my $OptionRegex		= 0;
 my $OptionVersion	= 0;
 my $OptionPermanent	= 0;
 my $OptionRelativeDate	= 1;
+my $OptionDebug         = 0;
 
 # Session information
 my %Session = (
@@ -180,6 +182,10 @@ if($OptionHelp > 0) {
 
 if($OptionVersion > 0) {
 	Version();
+}
+
+if($OptionDebug > 0) {
+	DebugDump()
 }
 
 # List specific files
@@ -286,6 +292,10 @@ sub UndoRegex($)
 {
 	my $reg		=	shift;
 	my @list = GetRegexMatchingFiles($reg);
+	if(scalar @list == 0) {
+		print "No files matching /$reg/ found\n";
+		exit;
+	}
 	foreach my $p (@list) {
 		print "Restoring $p->{PATH}\n" if($OptionVerbose > 0);
 		UndoTrashinfo($p);
@@ -311,10 +321,9 @@ sub EmptyTrash()
 
 	# Empty Devices Trash
 	foreach my $dev (@dev_list) {
+		next if($dev eq $Session{HomeDev});
 		my $trsh = GetDeviceTrash($dev);
-		unless(-d $trsh) {
-			next;
-		}
+		next unless(-d $trsh);
 
 		print "Removing all files in trash : $dev\n" if($OptionVerbose > 0);
 
@@ -375,13 +384,11 @@ sub DeleteFile($)
 		return;
 	}
 
-
 	# Error on directories without -r flag.
 	if(-d $path and $OptionRecursive == 0) {
 		print "trsh: cannot remove `$path': Is a directory\n";
 		return;
 	}
-
 
 	if($OptionInteractive > 0 and GetUserPermission("Delete $path? ") == 0) {
 		return;
@@ -501,6 +508,7 @@ sub PrintTrashSize()
 	PrintTrashSizeLine("Home Trash", $sz);
 
 	foreach my $dev (keys %SystemDevices) {
+		next if($dev eq $Session{HomeDev});
 		$sz = GetTrashSize(GetDeviceTrash($dev));
 		PrintTrashSizeLine("$dev Trash", $sz);
 	}
@@ -671,11 +679,11 @@ sub GetRegexMatchingFiles($)
 
 sub GetTrashContents()
 {
-	my $trsh = $Session{HomeTrash};
 	my @list = ();
-	push @list, GetSpecificTrashContents($trsh);
+	push @list, GetSpecificTrashContents($Session{HomeTrash});
 
 	foreach my $dev (keys %SystemDevices) {
+		next if($dev eq $Session{HomeDev});
 		push @list, GetSpecificTrashContents(GetDeviceTrash($dev));
 	}
 	return @list;
@@ -703,7 +711,7 @@ sub GetSpecificTrashContents($)
 			$name = $1;
 		} else {
 			# This should never happen
-			print "REGEX ERROR!\n";
+			print "REGEX ERROR! LINE: " . __LINE__ . "\n";
 			return ();
 		}
 		my $p = GetTrashinfo($info);
@@ -761,7 +769,7 @@ sub GetLatestDeleted()
 sub GetTrashinfo($)
 {
 	my $trashinfo	=	shift;
-	open IN, "$trashinfo" or return "ERROR: Could not open $trashinfo";
+	open IN, "$trashinfo" or return "ERROR: Could not open $trashinfo, LINE: " . __LINE__ . "\n";
 	my %ret;
 	while(my $line = <IN>) {
 		chomp($line);
@@ -814,7 +822,7 @@ sub PutTrashinfo($)
 		$in_trash_name = $1;
 	} else {
 		# THIS SHOULD NEVER HAPPEN!
-		print "REGEX FAILED!\n";
+		print "REGEX FAILED! LINE: " . __LINE__ . "\n";
 	}
 	$success = SysMove($entry->{PATH}, "$filesdir/$in_trash_name");
 	if($success != 0) {
@@ -896,10 +904,10 @@ sub UndoTrashinfo($)
 		if($OptionForce == 0 and GetUserPermission("Overwrite file $to_path?") == 0) {
 			return;
 		}
+		SysDelete($to_path, "-r -f");
 	}
 
 	SysMkdir(dirname($to_path)) unless(-d dirname($to_path));
-
 
 	my $success = SysMove($from_path, $to_path);
 	if($success == 0) {
@@ -920,6 +928,9 @@ sub UndoTrashinfo($)
 sub GetDeviceTrash($)
 {
 	my $dev		=	shift;
+	if($dev eq $Session{HomeDev}) {
+		return $Session{HomeTrash};
+	}
 	return GetTrashDir("$dev/DUMMY");
 }
 
@@ -928,7 +939,7 @@ sub GetTrashDir($)
 	my $path	=	shift;
 	my $dev = InDevice($path);
 
-	if($dev eq $Session{HomePath}) {
+	if($dev eq $Session{HomeDev}) {
 		return $Session{HomeTrash};
 	}
 
@@ -967,8 +978,8 @@ sub InDevice($)
 
 	my $dev = InDir(AbsolutePath($path), [keys %SystemDevices, $Session{HomePath}]);
 
-	if($dev eq $Session{HomeDev} or $dev eq "/") {
-		$dev = $Session{HomePath};
+	if($dev eq "/") {
+		$dev = $Session{HomeDev};
 	}
 	return $dev;
 }
@@ -1050,6 +1061,7 @@ sub SetEnvirnment()
 			's|size'	  => \$OptionSize,
 			'h|human'         => \$OptionHumanReadable,
 			'version'         => \$OptionVersion,
+			'd|debug'         => \$OptionDebug,
 	) == 1 or Usage();
 
 	$Term::ANSIColor::AUTORESET = 1;
@@ -1100,6 +1112,31 @@ sub SetEnvirnment()
 
 	# FileTypeColors
 	InitFileTypeColors();
+}
+
+sub DebugDump()
+{;
+	print <<DEBUG
+	USER            = $Session{UserName}
+	USER ID         = $Session{UserID}
+	USER HOME       = $Session{HomePath}
+	USER HOME DEV   = $Session{HomeDev}
+	USER HOME TRASH = $Session{HomeTrash}
+	TIME            = $Session{CurrentDate}
+	LIST NAME WIDTH = $ListNameWidth
+	LIST DATE WIDTH = $ListDateWidth
+	LIST SIZE WIDTH = $ListSizeWidth
+	LIST PATH WIDTH = $ListPathWidth
+	SIZE SIZE WIDTH = $SSizeWidth
+	SIZE DEV  WIDTH = $SDevWidth
+
+	RECOGNIZED DEVICES
+DEBUG
+;
+	foreach my $dev (sort keys %SystemDevices) {
+		print "\t$dev\n";
+	}
+	exit;
 }
 
 
@@ -1523,7 +1560,7 @@ sub PrepareRegex($)
 	$reg =~ s/\//\\\//g;
 	my $regex = eval { qr/($reg)/ };
 	if($@) {
-		print "ERROR: Invalid regex: $reg\n$@\n";
+		print "ERROR: Invalid regex: $reg\n$@ LINE: ".  __LINE__ . "\n";
 		exit;
 	}
 	return $regex;
