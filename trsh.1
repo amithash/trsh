@@ -93,6 +93,14 @@ Print the deletion date with the trash listing (-l)
 .P
 Do not print the deletion date with the trash listing (-l)
 .P
+--relative-date (Default)
+.P
+Print the date relative to today's date (Example, Yesterday or Last month)
+.P
+--norelative-date 
+.P
+Print the exact date of deletion
+.P
 -s|--size
 .P
 This displays the size of the Trash directory. 
@@ -117,9 +125,10 @@ If used with the -x flag FILES are considered to be a list of regex's
 .P
 
 .SH REGEX
-A regex is accepted for deletion, restoration and emptying the trash (refer -e and -u options above).
+A regex is accepted for deletion, restoration and emptying the trash (refer -e and -u options above). Essentially, any use case which takes parameters can be used with the
+-x option for trsh to assume that the parameters as a perl regex.
 Please make sure to enclose all your regex'es with quites to not confuse your shell.
-
+One note, -x can be used with the -l option to list only files matching the regex.
 .P
 rm -ux "some*"  # Correct
 .P
@@ -172,7 +181,7 @@ each mounted device (Other than / and /home) have their own trash directory.
  You can file a bug report at http://code.google.com/p/trsh/issues/list
 
 .SH COPYRIGHT
-Copyright (C) 2008-2009 Amithash Prasad 
+Copyright (C) 2008-2010 Amithash Prasad 
 This is free software; See the source for copying conditions. There is NO warranty. Not even for MERCHANTABILITY
 or FITNESS FOR A PARTICULAR PURPOSE.
 
