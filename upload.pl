@@ -4,6 +4,8 @@ use warnings;
 use Cwd;
 
 my $home = $ENV{HOME};
+my $proj = "trsh";
+my $user = "amithash";
 
 unless(-e "$home/googlecode_upload.py") {
 	print "Could not find googlecode_upload.py. Downloading it...\n";
@@ -15,25 +17,40 @@ unless(-e "$home/googlecode_upload.py") {
 
 my $gc_upload = "$home/googlecode_upload.py";
 
-my @files = <$home/trsh-build/*>;
+my $pwdf = "$home/.google-code-password";
+print "Getting password from file: $home/.google-code-password\n";
+unless(-e "$pwdf") {
+	print "Could not find file $pwdf\n";
+	print "Create the following file and place your googlecode password there...\n";
+	exit;
+}
+my $pwd = `cat $pwdf`;
+chomp($pwd);
+
+unless(-d "$home/$proj-build") {
+	print "Please make the packages with versioning in the name and place them in $home/$proj-build\n";
+	exit;
+}
+
+my @files = <$home/$proj-build/*>;
 my $rpm = "";
 my $deb = "";
 my $tgz = "";
 my $vers = "";
 foreach my $f (@files) {
-	if ($f =~ /trsh-(\d+)\.(\d+)-(\d+).tar.gz/) {
+	if ($f =~ /$proj-(\d+)\.(\d+)-(\d+).tar.gz/) {
 		$tgz = "$f";
 		$vers = "$1.$2-$3";
 	}
-	if ($f =~ /trsh-(\d+)\.(\d+)-(\d+).noarch.rpm/) {
+	if ($f =~ /$proj-(\d+)\.(\d+)-(\d+).noarch.rpm/) {
 		$rpm = "$f";
 	}
-	if ($f =~ /trsh-(\d+)\.(\d+)-(\d+).deb/) {
+	if ($f =~ /$proj-(\d+)\.(\d+)-(\d+).deb/) {
 		$deb = "$f";
 	}
 }
 if($vers eq "") {
-	print "No uploadable files present in $home/trsh-build\n";
+	print "No uploadable files present in $home/$proj-build\n";
 	exit;
 }
 
@@ -53,18 +70,11 @@ sub UploadFile
 	if($file eq "") {
 		return;
 	}
-	my $pwdf = "$home/.google-code-password";
-	print "Getting password from file: $home/.google-code-password\n";
-	unless(-e "$pwdf") {
-		print "Could not find file $pwdf\n";
-		print "Create the following file and place your googlecode password there...\n";
-		return;
-	}
-	my $pwd = `cat $pwdf`;
-	chomp($pwd);
-	print "Uploading $file\n";
+	print "Uploading $file\n\n";
 
-	system("python $gc_upload -p trsh -u amithash -w $pwd -s \"$summ\" -l Featured $file") == 0 or print "Upload failed...\n";
+	system("python $gc_upload -p $proj -u $user -w $pwd -s \"$summ\" -l Featured $file") == 0 or print "Upload failed...\n";
+
+	print "\n\n";
 }
 
 
