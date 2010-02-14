@@ -2,20 +2,13 @@
 
 use strict;
 use warnings;
-use Cwd;
 
-
-
-
-
-my $this_dir = cwd();
 my $home = $ENV{HOME};
 
 if(RepoClean() == 0) {
 	print "Repo is modified. Please checkin changes or revert changes before making a package.\n";
 	exit;
 }
-
 my ($main,$sub,$rev) = GetVersion();
 my $name = "trsh-$main.$sub-$rev";
 
@@ -24,18 +17,18 @@ if(RunTests() == 0) {
 	exit;
 }
 
-print "version = $main.$sub-$rev\n";
+print "making package for version = $main.$sub-$rev\n";
 
 # Clean junk.
 system("rm -rf $home/$name") if(-d "$home/$name");
 system("rm -rf $home/$name.tar.gz") if(-e "$home/$name.tar.gz");
+system("rm -rf $home/trsh-build") if(-d "$home/trsh-build");
+system("mkdir $home/trsh-build");
 
 # Get an archive from the repo
 system("hg archive -X mkpackage.pl -X checkin.pl -X VERSION -X test-trsh.bash $home/$name");
 
 chdir($home);
-system("rm -rf trsh-build") if(-d "trsh-build");
-system("mkdir trsh-build");
 system("mv $name $name.src");
 chdir("$name.src");
 system("gzip trsh.1");
@@ -47,11 +40,8 @@ MakeRPM();
 
 MakeDEB();
 
-system("rm -rf $name.src");
 chdir("$home");
-system("rm -r trsh.spec");
-chdir("$home/trsh-build");
-system("cp * $this_dir/");
+system("rm -rf $name.src");
 
 #############################################################################################
 ##################################### FUNCTIONS #############################################
@@ -89,6 +79,15 @@ sub RunTests
 	return 1;
 }
 
+sub IsCommandInstalled
+{
+	my $cmd		=	shift;
+	if(`which $cmd` =~ /no $cmd in/) {
+		return 0;
+	}
+	return 1;
+}
+
 sub MakeTGZ
 {
 	system("cp -r $name.src $name");
@@ -100,7 +99,7 @@ sub MakeTGZ
 sub MakeRPM
 {
 	# Check if rpmbuild exists.
-	if(`which rpmbuild` =~ /no rpmbuild in/) {
+	if(IsCommandInstalled("rpmbuild") == 0) {
 		print "rpmbuild is not installed on the system. Skipping rpm generation.\n";
 		return;
 	}
@@ -121,12 +120,13 @@ sub MakeRPM
 	system("rpmbuild -bb trsh.spec > /dev/null 2> /dev/null") == 0 or die "rpmbuild failed\n";
 	system("mv $packages_dir/RPMS/noarch/$name.noarch.rpm trsh-build");
 	system("rm -rf $name");
+	system("rm -rf trsh.spec");
 	system("rm -rf $packages_dir");
 }
 
 sub MakeDEB
 {
-	if(`which dpkg` =~ /no dpkg in/) {
+	if(IsCommandInstalled("dpkg") == 0) {
 		print "dpkg is not installed on the system. Skipping deb generation.\n";
 		return;
 	}
