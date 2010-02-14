@@ -26,7 +26,7 @@ system("rm -rf $home/trsh-build") if(-d "$home/trsh-build");
 system("mkdir $home/trsh-build");
 
 # Get an archive from the repo
-system("hg archive -X mkpackage.pl -X checkin.pl -X VERSION -X test-trsh.bash $home/$name");
+system("hg archive -X mkpackage.pl -X checkin.pl -X VERSION -X test-trsh.bash -X upload.pl $home/$name");
 
 chdir($home);
 system("mv $name $name.src");
