@@ -26,9 +26,17 @@ system("rm -rf $home/trsh-build") if(-d "$home/trsh-build");
 system("mkdir $home/trsh-build");
 
 # Get an archive from the repo
-system("hg archive -X mkpackage.pl -X checkin.pl -X VERSION -X test-trsh.bash -X upload.pl $home/$name");
-
+system("git archive --prefix=$name/ HEAD | gzip > $gome/$name.tar.gz");
 chdir($home);
+system("tar -xf $name.tar.gz");
+chdir "$name.tar.gz";
+unlink "mkpackage.pl";
+unlink "checkin.pl";
+unlink "test-trsh.bash";
+unlink "VERSION";
+chdir "$home";
+unlink "$name.tar.gz";
+
 system("mv $name $name.src");
 chdir("$name.src");
 system("gzip trsh.1");
@@ -62,8 +70,14 @@ sub GetVersion
 
 sub RepoClean
 {
-	my $srev = `hg status`;
-	if($srev =~ /[MAD] / ){
+	my $srev = `git status`;
+	if($srev =~ /modified:\s+/) {
+		return 0;
+	}
+	if($srev =~ /added:\s+/) {
+		return 0;
+	}
+	if($srev =~ /deleted:\s+/) {
 		return 0;
 	}
 	return 1;
