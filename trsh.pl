@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.12-2";
+my $VERSION = "3.12-3";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -1471,6 +1471,12 @@ sub Df()
 		chomp($line);
 		next if($line =~ /^\s*$/);
 		my @tmp = split(/\s+/,$line);
+		while(scalar(@tmp) < scalar(@header)) {
+			$line = <IN>;
+			chomp($line);
+			next if($line =~ /^\s*$/);
+			push @tmp, split(/\s+/, $line);
+		}
 		my $dev = shift @tmp;
 		for(my $i = 0; $i < scalar @tmp; $i++) {
 			if($i <= $#header) {
