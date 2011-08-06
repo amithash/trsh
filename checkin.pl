@@ -11,9 +11,9 @@ GetOptions(
 	'm|minor' => \$minor
 ) == 1 or die "Error in options.\n";
 
-my $hgstatus = `hg status`;
-if($hgstatus !~ /[AMD] /) {
-	print "No changes observed. Skipping checking in.\n";
+my $gitstatus = `git status`;
+if(not($gitstatus =~ /modified:\s+/ or $gitstatus =~ /added:\s+/ or $gitstatus =~ /deleted:\s+/)) {
+	print "No changes observed!\n";
 	exit;
 }
 
@@ -63,8 +63,8 @@ system("rm -f README.orig");
 print "REVISION($main.$sub-$rel) Checking Message (Single line):\n";
 my $message = <STDIN>;
 chomp($message);
-system("hg commit -m \"$message\"");
-system("hg push");
+system("git commit -a -m \"$message\"");
+system("git push origin master");
 
 sub GetVersion
 {
