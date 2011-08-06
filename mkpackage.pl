@@ -43,7 +43,7 @@ MakeDEB();
 chdir("$home");
 system("rm -rf $name.src");
 chdir "$home/trsh-build";
-UploadAllFiles("$name.tar.gz", "$name.deb", "$name-noarch.rpm");
+UploadAllFiles("$name.tar.gz", "$name.deb", "$name.noarch.rpm");
 print "Uploaded files to googleCode! Make sure to visit it and mark all old packages as deprecated\n";
 
 #############################################################################################
