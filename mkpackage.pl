@@ -26,7 +26,7 @@ system("rm -rf $home/trsh-build") if(-d "$home/trsh-build");
 system("mkdir $home/trsh-build");
 
 # Get an archive from the repo
-system("git archive --prefix=$name/ HEAD | gzip > $gome/$name.tar.gz");
+system("git archive --prefix=$name/ HEAD | gzip > $home/$name.tar.gz");
 chdir($home);
 system("tar -xf $name.tar.gz");
 chdir "$name.tar.gz";
