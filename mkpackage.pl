@@ -112,7 +112,14 @@ sub MakeRPM
 	system("rm -f $home/.rpmmacros") if(-e "$home/.rpmmacros");
 	Create_File("$home/.rpmmacros",'%_topdir ' . "$home/packages");
 	system("rm -rf $packages_dir") if(-d $packages_dir);
-	system("mkdir -p $home/packages/{BUILD,RPMS/{i386,i686,noarch},SOURCES,SPECS,SRPMS}");
+	system("mkdir -p $packages_dir/BUILD");
+	system("mkdir -p $packages_dir/RPMS");
+	system("mkdir -p $packages_dir/RPMS/i386");
+	system("mkdir -p $packages_dir/RPMS/i686");
+	system("mkdir -p $packages_dir/RPMS/noarch");
+	system("mkdir -p $packages_dir/SOURCES");
+	system("mkdir -p $packages_dir/SPECS");
+	system("mkdir -p $packages_dir/SRPMS");
 
 	system("cp -r $name.src $name");
 	system("rm $name/configure.pl");
