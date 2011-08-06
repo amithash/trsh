@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.12-5";
+my $VERSION = "3.12-6";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -68,7 +68,6 @@ sub FileTypeColor($);
 sub SysMove($$);
 sub SysMkdir($);
 sub SysDelete($$);
-sub AddEscapes($);
 sub RemoveFromTrashRegex($);
 sub DeleteRegex($);
 sub UndoRegex($);
@@ -329,7 +328,7 @@ sub EmptyTrash()
 
 		if(-e "$trsh/metadata") {
 			SysDelete("$trsh/metadata", "-f");
-			system("touch \"$trsh/metadata\"");
+			system("touch", "$trsh/metadata");
 		}
 
 		my @list = GetSpecificTrashContents($trsh);
@@ -960,10 +959,10 @@ sub MakeTrashDir($)
 {
 	my $root	=	shift;
 	unless(-d "$root") {
-		system("mkdir -p $root");
+		system("mkdir", "-p", "$root");
 		mkdir "$root/files";
 		mkdir "$root/info";
-		system("touch \"$root/metadata\"");
+		system("touch", "$root/metadata");
 	}
 }
 
@@ -1431,21 +1430,14 @@ sub SysMove($$)
 	my $from = shift;
 	my $to = shift;
 
-	$from = AddEscapes($from);
-	$to   = AddEscapes($to);
-
-	my $ret = system("mv \"$from\" \"$to\"");
-	return $ret;
+	return system("mv", $from, $to);
 }
 
 sub SysMkdir($)
 {
 	my $dir = shift;
 
-	$dir = AddEscapes($dir);
-
-	my $ret = system("mkdir -p \"$dir\"");
-	return $ret;
+	return system("mkdir", "-p", $dir);
 }
 
 sub SysDelete($$)
@@ -1453,10 +1445,11 @@ sub SysDelete($$)
 	my $file   = shift;
 	my $flags  = shift;
 
-	$file = AddEscapes($file);
-
-	my $ret = system("rm $flags \"$file\"");
-	return $ret;
+	if($flags =~ /^\s*$/) {
+		return system("rm", $file);
+	} else {
+		return system("rm", $flags, $file);
+	}
 }
 
 sub Df()
@@ -1488,16 +1481,6 @@ sub Df()
 		$return{$dev} = $ret;
 	}
 	return \%return;
-}
-
-sub AddEscapes($)
-{
-	my $in = shift;
-	$in =~ s/\\/\\\\/g; # back slash in file names cause problems.
-	$in =~ s/\`/\\\`/g; # Back ticks in file names cause problems.
-	$in =~ s/"/\\"/g;   # Double quotes in file names cause problems.
-	$in =~ s/\$/\\\$/g; # Escape $ signs.
-	return $in;
 }
 
 sub AbsolutePath($)
@@ -1721,7 +1704,10 @@ sub Glob
 	my @patterns	=	@_;
 	my @ret;
 	foreach my $pattern (@patterns) {
-		$pattern = AddEscapes($pattern);
+		$pattern =~ s/\\/\\\\/g;
+		$pattern =~ s/\`/\\\`/g;
+		$pattern =~ s/"/\\"/g;
+		$pattern =~ s/\$/\\\$/g;
 		$pattern =~ s/ /\\ /g;
 		my @list = glob($pattern);
 		foreach my $f (@list) {
