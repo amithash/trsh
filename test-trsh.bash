@@ -194,7 +194,7 @@ PATTERNA='~!@#$%^&*()_+'
 PATTERNB='[]\{}|' 
 PATTERNC="trsh's"
 PATTERND="\\'1234567890-="
-PATTERNE=";:\"<>?"
+PATTERNE=";:\"<>?\$"
 
 touch "$PATTERNA" 
 touch "$PATTERNB" 

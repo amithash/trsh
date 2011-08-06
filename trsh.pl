@@ -1489,6 +1489,7 @@ sub AddEscapes($)
 	$in =~ s/\\/\\\\/g; # back slash in file names cause problems.
 	$in =~ s/\`/\\\`/g; # Back ticks in file names cause problems.
 	$in =~ s/"/\\"/g;   # Double quotes in file names cause problems.
+	$in =~ s/\$/\\\$/g; # Escape $ signs.
 	return $in;
 }
 
