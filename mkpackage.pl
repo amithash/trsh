@@ -82,7 +82,11 @@ sub RunTests
 sub IsCommandInstalled
 {
 	my $cmd		=	shift;
-	if(`which $cmd` =~ /no $cmd in/) {
+	my $output = `which $cmd`;
+	if($output =~ /no $cmd in/) {
+		return 0;
+	}
+	if($output =~ /^\s*$/) {
 		return 0;
 	}
 	return 1;
