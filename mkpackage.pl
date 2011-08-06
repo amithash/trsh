@@ -364,3 +364,60 @@ fi
 '
 }
 
+sub Upload
+{
+	my $user = shift;
+	my $password = shift;
+	my $file = shift;
+	my $project = "trsh";
+	my $labels = "Featured";
+	my $googlecode_upload_url = "http://support.googlecode.com/svn/trunk/scripts/googlecode_upload.py";
+	my $googlecode_upload = "googlecode_upload.py";
+	if(! -e $googlecode_upload) {
+		system("wget", $googlecode_upload_url);
+		if(! -e $googlecode_upload) {
+			return 0;
+		}
+	}
+	my $summary = "Version $main.$sub-$rev ";
+	if($file =~ /\.deb$/) {
+		$summary .= "Deb package (Ubuntu/Debian)";
+	} elsif($file =~ /\.rpm$/) {
+		$summary .= "RPM package (Fedora/SuSE)";
+	} elsif($file =~ /\.tar\.gz/) {
+		$summary .= "Source Package";
+	} else {
+		printf "Unknown file type $file\n";
+		return 0;
+	}
+	$summary = "\"$summary\"";
+	system("python", $googlecode_upload, "-u", "$user", "-w", $password, "-p", "$project", "-s", $summary, "-l", $labels, $file);
+	return 1;
+}
+
+sub UploadAllFiles
+{
+	my @files = @_;
+	print "Enter User name: ";
+	my $user = <STDIN>;
+	chomp($user);
+	if($user =~ /^\s*$/) {
+		print "Invalid user!\n";
+		return;
+	}
+	print "Enter password: ";
+	my $password = <STDIN>;
+	chomp($password);
+	if($password =~ /^\s*$/) {
+		print "Invalid password!\n";
+		return;
+	}
+	foreach my $f (@files) {
+		my $rc = Upload($user, $password, $f);
+		if($rc == 0) {
+			printf "Failed to upload $f\n";
+			return;
+		}
+	}
+}
+
