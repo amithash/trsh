@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.12-1";
+my $VERSION = "3.12-2";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -385,7 +385,7 @@ sub DeleteFile($)
 	}
 
 	# Error on directories without -r flag.
-	if(-d $path and $OptionRecursive == 0) {
+	if(-d $path and not(-l $path) and $OptionRecursive == 0) {
 		print "trsh: cannot remove `$path': Is a directory\n";
 		return;
 	}
@@ -1469,6 +1469,7 @@ sub Df()
 	while(my $line = <IN>) {
 		my $ret = {};
 		chomp($line);
+		next if($line =~ /^\s*$/);
 		my @tmp = split(/\s+/,$line);
 		my $dev = shift @tmp;
 		for(my $i = 0; $i < scalar @tmp; $i++) {
