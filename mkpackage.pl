@@ -395,25 +395,18 @@ sub Upload
 	}
 	$summary = "\"$summary\"";
 	my $rc = system("python", $googlecode_upload, "-u", "$user", "-w", $password, "-p", "$project", "-s", $summary, "-l", $labels, $file);
-	print "REturn code = $rc\n";
+	if($rc != 0) {
+		return 0;
+	}
 	return 1;
 }
 
 sub UploadAllFiles
 {
 	my @files = @_;
-	print "Enter User name: ";
-	my $user = <STDIN>;
-	chomp($user);
-	if($user =~ /^\s*$/) {
-		print "Invalid user!\n";
-		return;
-	}
-	print "Enter password: ";
-	my $password = <STDIN>;
-	chomp($password);
-	if($password =~ /^\s*$/) {
-		print "Invalid password!\n";
+	my ($user, $password) = GetUserCred();
+	if($user eq "" or $password eq "") {
+		print "Invalid cred!\n";
 		return;
 	}
 	foreach my $f (@files) {
@@ -424,4 +417,50 @@ sub UploadAllFiles
 		}
 	}
 }
+sub GetUserCred
+{
+	my $user = "";
+	my $password = "";
+	my $home = $ENV{HOME};
+	if(! -d $home) {
+		return GetUserCredPrompt();
+	}
+	my $file = "$home/.googlecode";
+	if(! -e $file) {
+		return GetUserCredPrompt();
+	}
+	open IN, "$file" or return GetUserCredPrompt();
+	while(my $line = <IN>) {
+		chomp($line);
+		if($line =~ /USER\s+=\s+(.+)\s*$/) {
+			$user = $1;
+		}
+		if($line =~ /PASSWORD\s+=\s+(.+)\s*$/) {
+			$password = $1;
+		}
+	}
+	close(IN);
+	if($user eq "" or $password eq "") {
+		return GetUserCredPrompt();
+	}
+	return ($user, $password);
+}
 
+sub GetUserCredPrompt
+{
+	print "Enter User name: ";
+	my $user = <STDIN>;
+	chomp($user);
+	if($user =~ /^\s*$/) {
+		print "Invalid user!\n";
+		return ("", "")
+	}
+	print "Enter password: ";
+	my $password = <STDIN>;
+	chomp($password);
+	if($password =~ /^\s*$/) {
+		print "Invalid password!\n";
+		return ("", "");
+	}
+	return ($user, $password);
+}

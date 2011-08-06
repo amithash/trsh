@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.12-11";
+my $VERSION = "3.12-12";
 
 ##############################################################################
 #			   Function Declarations                             #
