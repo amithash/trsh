@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.11-0";
+my $VERSION = "3.12-1";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -1637,6 +1637,11 @@ sub SplitDate($)
 	my @tmp = split(/T/,$tdate);
 	$tdate = $tmp[0];
 	my $ttime = $tmp[1];
+
+	if($ttime =~ /(.+)\+.+/) {
+		$ttime = $1;
+	}
+
 	my @hdate = split(/-/,$tdate);
 	my @htime = split(/:/,$ttime);
 
