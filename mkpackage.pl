@@ -394,7 +394,7 @@ sub Upload
 		return 0;
 	}
 	$summary = "\"$summary\"";
-	system("python", $googlecode_upload, "-u", "$user", "-w", $password, "-p", "$project", "-s", $summary, "-l", $labels, $file);
+	print("python", $googlecode_upload, "-u", "$user", "-w", $password, "-p", "$project", "-s", $summary, "-l", $labels, $file);
 	return 1;
 }
 
