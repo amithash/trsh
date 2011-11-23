@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.13-3";
+my $VERSION = "3.13-4";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -394,7 +394,7 @@ sub DeleteFile($)
 	}
 
 	# Always ask for permission for write-protected files
-	unless(-w $path) {
+	if((!-l $path) and (!-w $path) {
 		my $what_file = FileTypeString($path);
 		if($OptionForce == 0 and GetUserPermission("trsh: delete write-protected $what_file `$path'?") == 0) {
 			return;
