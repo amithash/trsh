@@ -41,7 +41,7 @@ use Fcntl;
 use Term::ANSIColor;
 use Term::ReadKey;
 
-my $VERSION = "3.14-0";
+my $VERSION = "3.14-1";
 
 ##############################################################################
 #			   Function Declarations                             #
@@ -1589,8 +1589,7 @@ sub DirCount($)
 	opendir($fd, $path) or die "$!\n";
 	for my $item (readdir($fd)) {
 		next if($item =~ /^\.\.?$/);
-		my $path = "$path/$item";
-		$cnt += ((-d $path) ? DirCount($path) : 1);
+		$cnt += 1;
 	}
 	return $cnt;
 }
