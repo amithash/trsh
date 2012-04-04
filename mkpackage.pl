@@ -2,8 +2,16 @@
 
 use strict;
 use warnings;
+use Getopt::Long;
 
 my $home = $ENV{HOME};
+
+my $upload = 1;
+my $src_delete = 1;
+GetOptions(
+	'upload!' => \$upload,
+	'src-delete!' => \$src_delete
+);
 
 if(RepoClean() == 0) {
 	print "Repo is modified. Please checkin changes or revert changes before making a package.\n";
@@ -51,8 +59,11 @@ MakeDEB();
 chdir("$home");
 system("rm -rf $name.src");
 chdir "$home/trsh-build";
-UploadAllFiles("$name.tar.gz", "$name.deb", "$name.noarch.rpm");
-print "Uploaded files to googleCode! Make sure to visit it and mark all old packages as deprecated\n";
+
+if($upload) {
+	#UploadAllFiles("$name.tar.gz", "$name.deb", "$name.noarch.rpm");
+	print "Uploaded files to googleCode! Make sure to visit it and mark all old packages as deprecated\n";
+}
 
 #############################################################################################
 ##################################### FUNCTIONS #############################################
