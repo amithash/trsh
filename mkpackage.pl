@@ -398,7 +398,7 @@ sub CheckRC
 	return '
 TRSH_SHELL=$SHELL
 SHELL_NAME=${TRSH_SHELL##/bin/}
-for rc in $( ls /etc/*rc* | grep $SHELL_NAME | grep -vP "\.bac$" | grep -vP "\.new$" )
+for rc in $( ls /etc/*rc* | grep $SHELL_NAME | grep -vP "\.bac$" | grep -vP "\.new$" | grep -vP "\.dpkg" )
 do
 	RC_FILE=$rc
 done
