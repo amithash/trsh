@@ -9,11 +9,13 @@ my $home = $ENV{HOME};
 my $upload = 1;
 my $rpm = 1;
 my $deb = 1;
+my $debug = 0;
 
 GetOptions(
 	'upload!' => \$upload,
 	'rpm!' => \$rpm,
 	'deb!' => \$deb,
+	'debug' => \$debug
 );
 
 if(RepoClean() == 0) {
@@ -201,7 +203,9 @@ sub MakeDEB
 	system("cp $name.src/COPYING.GPL $name/usr/share/doc/trsh/copyright");
 	system("dpkg -b $name");
 	system("mv $name.deb trsh-build");
-	system("rm -rf $name");
+	if($debug == 0) {
+		system("rm -rf $name");
+	}
 }
 
 sub RPM_control
