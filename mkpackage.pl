@@ -72,10 +72,10 @@ chdir "$home/trsh-build";
 if($upload) {
 	my @pkgs = ("$name.tar.gz");
 	if($rpm) {
-		push @pkgs, "$name.rpm";
+		push @pkgs, "$name.noarch.rpm";
 	}
 	if($deb) {
-		push @pkgs, "$name.noarch.rpm";
+		push @pkgs, "$name.deb";
 	}
 	UploadAllFiles(@pkgs);
 	print "Uploaded files to googleCode! Make sure to visit it and mark all old packages as deprecated\n";
