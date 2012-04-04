@@ -7,10 +7,13 @@ use Getopt::Long;
 my $home = $ENV{HOME};
 
 my $upload = 1;
-my $src_delete = 1;
+my $rpm = 1;
+my $deb = 1;
+
 GetOptions(
 	'upload!' => \$upload,
-	'src-delete!' => \$src_delete
+	'rpm!' => \$rpm,
+	'deb!' => \$deb,
 );
 
 if(RepoClean() == 0) {
@@ -52,16 +55,27 @@ chdir($home);
 
 MakeTGZ();
 
-MakeRPM();
+if($rpm) {
+	MakeRPM();
+}
 
-MakeDEB();
+if($deb) {
+	MakeDEB();
+}
 
 chdir("$home");
 system("rm -rf $name.src");
 chdir "$home/trsh-build";
 
 if($upload) {
-	#UploadAllFiles("$name.tar.gz", "$name.deb", "$name.noarch.rpm");
+	my @pkgs = ("$name.tar.gz");
+	if($rpm) {
+		push @pkgs, "$name.rpm";
+	}
+	if($deb) {
+		push @pkgs, "$name.noarch.rpm";
+	}
+	UploadAllFiles(@pkgs);
 	print "Uploaded files to googleCode! Make sure to visit it and mark all old packages as deprecated\n";
 }
 
