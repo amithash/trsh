@@ -223,7 +223,7 @@ Vendor: Amithash Prasad
 Packager: Amithash Prasad <amithash\@gmail.com>
 Source: \$RPM_SOURCE_DIR/trsh-$main.$sub-$rev.tar.gz
 Provides: trsh
-Requires: perl(strict), perl(warnings), perl(File::Basename), perl(File::Spec), perl(Cwd), perl(Getopt::Long), perl(Fcntl), perl(Term::ANSIColor), perl(Term::ReadKey)
+Requires: libfile-basename-perl, libfile-spec-perl, libcwd-perl, libgetopt-long-perl, libfcntl-perl , libterm-ansicolor-perl, libterm-readkey-perl
 ";
 }
 
