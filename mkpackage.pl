@@ -351,7 +351,7 @@ Maintainer: Amithash Prasad <amithash\@gmail.com>
 Installed-Size: 100
 Section: utils
 Priority: extra
-Depends: perl, libfile-basename-perl, libfile-spec-perl, libcwd-perl, libgetopt-long-perl, libfcntl-perl , libterm-ansicolor-perl, libterm-readkey-perl
+Depends: perl, libterm-readkey-perl
 Description: " . GetDescString();
 }
 
