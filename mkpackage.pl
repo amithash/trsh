@@ -459,7 +459,7 @@ sub Upload
 	my $file = shift;
 	my $project = "trsh";
 	my $labels = "Featured";
-	my $googlecode_upload_url = "http://support.googlecode.com/svn/trunk/scripts/googlecode_upload.py";
+	my $googlecode_upload_url = "https://support.googlecode.com/svn-history/r70/trunk/scripts/googlecode_upload.py";
 	my $googlecode_upload = "googlecode_upload.py";
 	if(! -e $googlecode_upload) {
 		system("wget", $googlecode_upload_url);
