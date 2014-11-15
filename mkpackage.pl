@@ -253,7 +253,7 @@ if [ $1 -gt 1 ]
 then
 	exit 0
 fi
-' . CheckRC() . AddAlias();
+' . AddAlias();
 }
 
 sub RPM_install
@@ -275,7 +275,7 @@ if [ $1 -gt 0 ]
 then
 	exit 0
 fi
-' . CheckRC() . RemoveAlias() . "\nexit 0\n";
+' . RemoveAlias() . "\nexit 0\n";
 }
 
 sub RPM_postun
@@ -291,7 +291,19 @@ exit 0
 
 sub RPM_verify
 {
-	return '%verifyscript\n\n' . CheckRC() . '
+	return '%verifyscript\n\n' . '
+TRSH_SHELL=$SHELL
+SHELL_NAME=${TRSH_SHELL##/bin/}
+for rc in $( ls /etc/*rc* | grep $SHELL_NAME | grep -vP "\.bac$" | grep -vP "\.new$" | grep -vP "\.dpkg" )
+do
+	RC_FILE=$rc
+done
+if [ -z $RC_FILE ]
+then
+	echo "ERROR! No RC FILE Found"
+	exit -127
+fi
+
 RC_TEST=`grep "# TRSH" $RC_FILE | wc -l`
 if [ $RC_TEST -ne 2 ]
 then
@@ -357,58 +369,95 @@ Description: " . GetDescString();
 
 sub DEB_postinst
 {
-	return "#!/bin/bash\n\n" . CheckRC() . AddAlias() . "\nexit 0\n";
+	return "#!/bin/bash\n\n" . AddAlias() . "\nexit 0\n";
 }
 
 sub DEB_prerm
 {
-	return "#!/bin/bash\n\n" . CheckRC() . RemoveAlias() . "\nexit 0\n";
+	return "#!/bin/bash\n\n" . RemoveAlias() . "\nexit 0\n";
 }
 
 sub RemoveAlias
 {
 	return '
-sed -e \'/.* # TRSH/d\' $RC_FILE > $RC_FILE.new
-mv $RC_FILE.new $RC_FILE
+TRSH_SHELL=$SHELL
+SHELL_NAME=${TRSH_SHELL##/bin/}
+if [[ $SHELL_NAME -eq "csh" ]] || [[ $SHELL_NAME -eq "tcsh" ]] || [[ $SHELL_NAME -eq "bash" ]]
+then
+	# Do nothing
+else
+	echo "ERROR! Unsupported shell $SHELL_NAME"
+	exit -127
+fi
+
+AT_LEAST_ONE="no"
+for rc in $( ls /etc/*rc* | grep $SHELL_NAME | grep -vP "\.bac$" | grep -vP "\.new$" | grep -vP "\.dpkg" )
+do
+	RC_FILE=$rc
+	ALIAS_RM=""
+	ALIAS_UNDO=""
+	AT_LEAST_ONE="yes"
+	if [[ $SHELL_NAME -eq "bash" ]]
+	then
+		ALIAS_RM="alias rm=\"/usr/bin/trsh.pl\" # TRSH"
+		ALIAS_UNDO="alias undo=\"/usr/bin/trsh.pl -u\" # TRSH"
+	elif [[ $SHELL_NAME -eq "csh" ]] || [[ $SHELL_NAME -eq "tcsh" ]]
+	then
+		ALIAS_RM="alias rm \"/usr/bin/trsh.pl\" # TRSH"
+		ALIAS_UNDO="alias undo \"/usr/bin/trsh.pl -u\" # TRSH"
+	fi
+	sed -e \'/.* # TRSH/d\' $RC_FILE > $RC_FILE.new
+	mv $RC_FILE.new $RC_FILE
+done
+if [[ $AT_LEAST_ONE -eq "no" ]]
+then
+	echo "ERROR! No RC FILE Found"
+	exit -127
+fi
+
 ';
 }
 
 sub AddAlias
 {
 	return '
-if [[ $SHELL_NAME -eq "bash" ]]
-then
-	ALIAS_RM="alias rm=\"/usr/bin/trsh.pl\" # TRSH"
-	ALIAS_UNDO="alias undo=\"/usr/bin/trsh.pl -u\" # TRSH"
-elif [[ $SHELL_NAME -eq "csh" ]] || [[ $SHELL_NAME -eq "tcsh" ]]
-then
-	ALIAS_RM="alias rm \"/usr/bin/trsh.pl\" # TRSH"
-	ALIAS_UNDO="alias undo \"/usr/bin/trsh.pl -u\" # TRSH"
-else
-	exit 
-fi
-sed -e \'/.* # TRSH/d\' $RC_FILE > $RC_FILE.new
-echo $ALIAS_RM >> $RC_FILE.new
-echo $ALIAS_UNDO >> $RC_FILE.new
-mv $RC_FILE.new $RC_FILE
-';
-}
-
-sub CheckRC
-{
-	return '
 TRSH_SHELL=$SHELL
 SHELL_NAME=${TRSH_SHELL##/bin/}
+if [[ $SHELL_NAME -eq "csh" ]] || [[ $SHELL_NAME -eq "tcsh" ]] || [[ $SHELL_NAME -eq "bash" ]]
+then
+	# Do nothing
+else
+	echo "ERROR! Unsupported shell $SHELL_NAME"
+	exit -127
+fi
+
+AT_LEAST_ONE="no"
 for rc in $( ls /etc/*rc* | grep $SHELL_NAME | grep -vP "\.bac$" | grep -vP "\.new$" | grep -vP "\.dpkg" )
 do
 	RC_FILE=$rc
+	ALIAS_RM=""
+	ALIAS_UNDO=""
+	AT_LEAST_ONE="yes"
+	if [[ $SHELL_NAME -eq "bash" ]]
+	then
+		ALIAS_RM="alias rm=\"/usr/bin/trsh.pl\" # TRSH"
+		ALIAS_UNDO="alias undo=\"/usr/bin/trsh.pl -u\" # TRSH"
+	elif [[ $SHELL_NAME -eq "csh" ]] || [[ $SHELL_NAME -eq "tcsh" ]]
+	then
+		ALIAS_RM="alias rm \"/usr/bin/trsh.pl\" # TRSH"
+		ALIAS_UNDO="alias undo \"/usr/bin/trsh.pl -u\" # TRSH"
+	fi
+	sed -e \'/.* # TRSH/d\' $RC_FILE > $RC_FILE.new
+	echo $ALIAS_RM >> $RC_FILE.new
+	echo $ALIAS_UNDO >> $RC_FILE.new
+	mv $RC_FILE.new $RC_FILE
 done
-if [ -z $RC_FILE ]
+if [[ $AT_LEAST_ONE -eq "no" ]]
 then
 	echo "ERROR! No RC FILE Found"
 	exit -127
 fi
-'
+';
 }
 
 sub Upload
