@@ -69,18 +69,6 @@ chdir("$home");
 system("rm -rf $name.src");
 chdir "$home/trsh-build";
 
-if($upload) {
-	my @pkgs = ("$name.tar.gz");
-	if($rpm) {
-		push @pkgs, "$name.noarch.rpm";
-	}
-	if($deb) {
-		push @pkgs, "$name.deb";
-	}
-	UploadAllFiles(@pkgs);
-	print "Uploaded files to googleCode! Make sure to visit it and mark all old packages as deprecated\n";
-}
-
 #############################################################################################
 ##################################### FUNCTIONS #############################################
 #############################################################################################
@@ -452,88 +440,3 @@ fi
 ';
 }
 
-sub Upload
-{
-	my $user = shift;
-	my $file = shift;
-	my $project = "trsh";
-	my $labels = "Featured";
-	my $googlecode_upload_url = "https://support.googlecode.com/svn-history/r70/trunk/scripts/googlecode_upload.py";
-	my $googlecode_upload = "googlecode_upload.py";
-	if(! -e $googlecode_upload) {
-		system("wget", $googlecode_upload_url);
-		if(! -e $googlecode_upload) {
-			return 0;
-		}
-	}
-	my $summary = "Version $main.$sub-$rev ";
-	if($file =~ /\.deb$/) {
-		$summary .= "Deb package (Ubuntu/Debian)";
-	} elsif($file =~ /\.rpm$/) {
-		$summary .= "RPM package (Fedora/SuSE)";
-	} elsif($file =~ /\.tar\.gz/) {
-		$summary .= "Source Package";
-	} else {
-		printf "Unknown file type $file\n";
-		return 0;
-	}
-	$summary = "\"$summary\"";
-	my $rc = system("python", $googlecode_upload, "-u", "$user", "-p", "$project", "-s", $summary, "-l", $labels, $file);
-	if($rc != 0) {
-		return 0;
-	}
-	return 1;
-}
-
-sub UploadAllFiles
-{
-	my @files = @_;
-	my ($user) = GetUserCred();
-	if($user eq "") {
-		print "Invalid cred!\n";
-		return;
-	}
-	foreach my $f (@files) {
-		my $rc = Upload($user, $f);
-		if($rc == 0) {
-			printf "Failed to upload $f\n";
-			return;
-		}
-	}
-}
-sub GetUserCred
-{
-	my $user = "";
-	my $home = $ENV{HOME};
-	if(! -d $home) {
-		return GetUserCredPrompt();
-	}
-	my $file = "$home/.googlecode";
-	if(! -e $file) {
-		return GetUserCredPrompt();
-	}
-	open IN, "$file" or return GetUserCredPrompt();
-	while(my $line = <IN>) {
-		chomp($line);
-		if($line =~ /USER\s+=\s+(.+)\s*$/) {
-			$user = $1;
-		}
-	}
-	close(IN);
-	if($user eq "" ) {
-		return GetUserCredPrompt();
-	}
-	return ($user);
-}
-
-sub GetUserCredPrompt
-{
-	print "Enter User name: ";
-	my $user = <STDIN>;
-	chomp($user);
-	if($user =~ /^\s*$/) {
-		print "Invalid user!\n";
-		return ("", "")
-	}
-	return ($user);
-}
