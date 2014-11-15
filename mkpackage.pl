@@ -455,7 +455,6 @@ fi
 sub Upload
 {
 	my $user = shift;
-	my $password = shift;
 	my $file = shift;
 	my $project = "trsh";
 	my $labels = "Featured";
@@ -479,7 +478,7 @@ sub Upload
 		return 0;
 	}
 	$summary = "\"$summary\"";
-	my $rc = system("python", $googlecode_upload, "-u", "$user", "-w", $password, "-p", "$project", "-s", $summary, "-l", $labels, $file);
+	my $rc = system("python", $googlecode_upload, "-u", "$user", "-p", "$project", "-s", $summary, "-l", $labels, $file);
 	if($rc != 0) {
 		return 0;
 	}
@@ -489,13 +488,13 @@ sub Upload
 sub UploadAllFiles
 {
 	my @files = @_;
-	my ($user, $password) = GetUserCred();
-	if($user eq "" or $password eq "") {
+	my ($user) = GetUserCred();
+	if($user eq "") {
 		print "Invalid cred!\n";
 		return;
 	}
 	foreach my $f (@files) {
-		my $rc = Upload($user, $password, $f);
+		my $rc = Upload($user, $f);
 		if($rc == 0) {
 			printf "Failed to upload $f\n";
 			return;
@@ -505,7 +504,6 @@ sub UploadAllFiles
 sub GetUserCred
 {
 	my $user = "";
-	my $password = "";
 	my $home = $ENV{HOME};
 	if(! -d $home) {
 		return GetUserCredPrompt();
@@ -520,15 +518,12 @@ sub GetUserCred
 		if($line =~ /USER\s+=\s+(.+)\s*$/) {
 			$user = $1;
 		}
-		if($line =~ /PASSWORD\s+=\s+(.+)\s*$/) {
-			$password = $1;
-		}
 	}
 	close(IN);
-	if($user eq "" or $password eq "") {
+	if($user eq "" ) {
 		return GetUserCredPrompt();
 	}
-	return ($user, $password);
+	return ($user);
 }
 
 sub GetUserCredPrompt
@@ -540,12 +535,5 @@ sub GetUserCredPrompt
 		print "Invalid user!\n";
 		return ("", "")
 	}
-	print "Enter password: ";
-	my $password = <STDIN>;
-	chomp($password);
-	if($password =~ /^\s*$/) {
-		print "Invalid password!\n";
-		return ("", "");
-	}
-	return ($user, $password);
+	return ($user);
 }
