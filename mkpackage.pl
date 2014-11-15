@@ -388,13 +388,11 @@ then
 	exit -127
 fi
 
-AT_LEAST_ONE="no"
 for rc in $( ls /etc/*rc* | grep $SHELL_NAME | grep -vP "\.bac$" | grep -vP "\.new$" | grep -vP "\.dpkg" )
 do
 	RC_FILE=$rc
 	ALIAS_RM=""
 	ALIAS_UNDO=""
-	AT_LEAST_ONE="yes"
 	if [[ $SHELL_NAME -eq "bash" ]]
 	then
 		ALIAS_RM="alias rm=\"/usr/bin/trsh.pl\" # TRSH"
@@ -407,7 +405,7 @@ do
 	sed -e \'/.* # TRSH/d\' $RC_FILE > $RC_FILE.new
 	mv $RC_FILE.new $RC_FILE
 done
-if [[ $AT_LEAST_ONE -eq "no" ]]
+if [[ -z $RC_FILE ]]
 then
 	echo "ERROR! No RC FILE Found"
 	exit -127
@@ -427,13 +425,11 @@ then
 	exit -127
 fi
 
-AT_LEAST_ONE="no"
 for rc in $( ls /etc/*rc* | grep $SHELL_NAME | grep -vP "\.bac$" | grep -vP "\.new$" | grep -vP "\.dpkg" )
 do
 	RC_FILE=$rc
 	ALIAS_RM=""
 	ALIAS_UNDO=""
-	AT_LEAST_ONE="yes"
 	if [[ $SHELL_NAME -eq "bash" ]]
 	then
 		ALIAS_RM="alias rm=\"/usr/bin/trsh.pl\" # TRSH"
@@ -448,7 +444,7 @@ do
 	echo $ALIAS_UNDO >> $RC_FILE.new
 	mv $RC_FILE.new $RC_FILE
 done
-if [[ $AT_LEAST_ONE -eq "no" ]]
+if [[ -z $RC_FILE ]]
 then
 	echo "ERROR! No RC FILE Found"
 	exit -127
