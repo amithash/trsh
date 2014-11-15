@@ -382,10 +382,8 @@ sub RemoveAlias
 	return '
 TRSH_SHELL=$SHELL
 SHELL_NAME=${TRSH_SHELL##/bin/}
-if [[ $SHELL_NAME -eq "csh" ]] || [[ $SHELL_NAME -eq "tcsh" ]] || [[ $SHELL_NAME -eq "bash" ]]
+if [[ $SHELL_NAME -ne "csh" ]] && [[ $SHELL_NAME -ne "tcsh" ]] && [[ $SHELL_NAME -ne "bash" ]]
 then
-	# Do nothing
-else
 	echo "ERROR! Unsupported shell $SHELL_NAME"
 	exit -127
 fi
@@ -423,10 +421,8 @@ sub AddAlias
 	return '
 TRSH_SHELL=$SHELL
 SHELL_NAME=${TRSH_SHELL##/bin/}
-if [[ $SHELL_NAME -eq "csh" ]] || [[ $SHELL_NAME -eq "tcsh" ]] || [[ $SHELL_NAME -eq "bash" ]]
+if [[ $SHELL_NAME -ne "csh" ]] && [[ $SHELL_NAME -ne "tcsh" ]] && [[ $SHELL_NAME -ne "bash" ]]
 then
-	# Do nothing
-else
 	echo "ERROR! Unsupported shell $SHELL_NAME"
 	exit -127
 fi
